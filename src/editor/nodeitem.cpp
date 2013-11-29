@@ -35,10 +35,12 @@
 #include <QTableWidget>
 #include <QPainter>
 
-NodeItem::NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent) :
+NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
     QGraphicsItem(parent),
     mScene(scene),
-    mNode(obj)
+    mNode(node),
+    mInputsItem(new NodeInputGroupItem(scene, node, this)),
+    mOutputsItem(new NodeOutputGroupItem(scene, node, this))
 {
     setFlag(ItemIsMovable, true);
     setFlag(ItemSendsScenePositionChanges, true);
@@ -48,6 +50,10 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent) :
     setGraphicsEffect(effect);
 #endif
 
+#if 1
+    int inputsHeight = mInputsItem->childrenBoundingRect().height();
+    int outputsHeight = mOutputsItem->childrenBoundingRect().height();
+#else
     int inputsHeight = 0;
     if (true) {
         int pinCount = mNode->inputCount();
@@ -73,6 +79,7 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent) :
             mOutputItems += outputItem;
         }
     }
+#endif
 
     QSize variablesSize;
     if (mNode->variableCount()) {
@@ -104,10 +111,15 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent) :
         }
     }
 
+#if 1
+    QRectF r = mBounds.adjusted(0, nameSize.height(), 0, 0);
+    mInputsItem->setPos(r.left() - 1, r.center().y());
+    mOutputsItem->setPos(r.right() + 1, r.center().y());
+#else
     {
         int pinHeight = NodeInputItem::size().height();
         int gap = 16;
-        int y = mBounds.adjusted(0,nameSize.height(),0,0).center().y() - inputsHeight / 2 + pinHeight / 2;
+        int y = .center().y() - inputsHeight / 2 + pinHeight / 2;
         foreach (NodeInputItem *inputItem, mInputItems) {
             inputItem->setPos(mBounds.left() - 1, y);
             y += pinHeight + gap;
@@ -123,6 +135,7 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent) :
             y += pinHeight + gap;
         }
     }
+#endif
 
 #if 0
     QTableWidget *table = new QTableWidget(mNode->variableCount(), 2);
@@ -190,18 +203,12 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent) :
 
 NodeInputItem *NodeItem::inputItem(NodeInput *input)
 {
-    foreach (NodeInputItem *item, mInputItems)
-        if (item->mInput == input)
-            return item;
-    return NULL;
+    return mInputsItem->itemFor(input);
 }
 
 NodeOutputItem *NodeItem::outputItem(NodeOutput *output)
 {
-    foreach (NodeOutputItem *item, mOutputItems)
-        if (item->mOutput == output)
-            return item;
-    return NULL;
+    return mOutputsItem->itemFor(output);
 }
 
 BaseVariableItem *NodeItem::variableItem(ScriptVariable *var)
@@ -301,9 +308,9 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 QVariant NodeItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value)
 {
     if (change == ItemPositionHasChanged && scene()) {
-        foreach (NodeInputItem *item, mInputItems)
+        foreach (NodeInputItem *item, mInputsItem->mItems)
             mScene->moved(item);
-        foreach (NodeOutputItem *item, mOutputItems)
+        foreach (NodeOutputItem *item, mOutputsItem->mItems)
             mScene->moved(item);
     }
     return QGraphicsItem::itemChange(change, value);
@@ -350,7 +357,7 @@ NodeInputItem::NodeInputItem(ScriptScene *scene, NodeInput *pin, QGraphicsItem *
 
 QRectF NodeInputItem::boundingRect() const
 {
-    QFontMetricsF fm(scene()->font());
+    QFontMetricsF fm(mScene->font());
     qreal labelWidth = fm.boundingRect(mInput->mName).width();
     QRectF r(-(size().width() + labelWidth), -size().height() / 2, size().width() + labelWidth, size().height());
     return r.adjusted(-3, -3, 3, 3); // adjust for pen width
@@ -394,7 +401,7 @@ NodeOutputItem::NodeOutputItem(ScriptScene *scene, NodeOutput *pin, QGraphicsIte
 
 QRectF NodeOutputItem::boundingRect() const
 {
-    QFontMetricsF fm(scene()->font());
+    QFontMetricsF fm(mScene->font());
     qreal labelWidth = fm.boundingRect(mOutput->mName).width();
     QRectF r(0, -size().height() / 2, size().width() + labelWidth, size().height());
     return r.adjusted(-3, -3, 3, 3); // adjust for pen width
@@ -463,6 +470,13 @@ void NodeInputGroupItem::removed(int index)
     updateLayout();
 }
 
+NodeInputItem *NodeInputGroupItem::itemFor(NodeInput *input)
+{
+    foreach (NodeInputItem *item, mItems)
+        if (item->mInput == input)
+            return item;
+}
+
 /////
 
 NodeOutputGroupItem::NodeOutputGroupItem(ScriptScene *scene, BaseNode *node, QGraphicsItem *parent) :
@@ -500,6 +514,13 @@ void NodeOutputGroupItem::removed(int index)
 {
     delete mItems.takeAt(index);
     updateLayout();
+}
+
+NodeOutputItem *NodeOutputGroupItem::itemFor(NodeOutput *output)
+{
+    foreach (NodeOutputItem *item, mItems)
+        if (item->mOutput == output)
+            return item;
 }
 
 /////

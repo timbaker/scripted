@@ -138,7 +138,7 @@ public:
 class NodeItem : public QGraphicsItem
 {
 public:
-    NodeItem(ProjectScene *scene, BaseNode *obj, QGraphicsItem *parent = 0);
+    NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent = 0);
 
     BaseNode *node() const { return mNode; }
     NodeInputItem *inputItem(NodeInput *input);
@@ -159,8 +159,8 @@ public:
     QRectF mBounds;
     BaseNode *mNode;
     QList<BaseVariableItem*> mVariableItems;
-    QList<NodeInputItem*> mInputItems;
-    QList<NodeOutputItem*> mOutputItems;
+    NodeInputGroupItem *mInputsItem;
+    NodeOutputGroupItem *mOutputsItem;
     QPointF mPreDragPosition;
 };
 
