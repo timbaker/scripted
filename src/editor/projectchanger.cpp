@@ -163,6 +163,49 @@ public:
     QString text() const { return mChanger->tr("Remove Connection"); }
 };
 
+class AddVariable : public ProjectChange
+{
+public:
+    AddVariable(ProjectChanger *changer, int index, ScriptVariable *cxn) :
+        ProjectChange(changer),
+        mIndex(index),
+        mVariable(cxn)
+    {
+    }
+
+    void redo()
+    {
+        mChanger->project()->rootNode()->insertVariable(mIndex, mVariable);
+        mChanger->afterAddVariable(mIndex, mVariable);
+    }
+
+    void undo()
+    {
+        mChanger->beforeRemoveVariable(mIndex, mVariable);
+        mChanger->project()->rootNode()->removeVariable(mVariable);
+        mChanger->afterRemoveVariable(mIndex, mVariable);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Add Variable");
+    }
+
+    int mIndex;
+    ScriptVariable *mVariable;
+};
+
+class RemoveVariable : public AddVariable
+{
+public:
+    RemoveVariable(ProjectChanger *changer, int index, ScriptVariable *cxn) :
+        AddVariable(changer, index, cxn)
+    { }
+    void redo() { AddVariable::undo(); }
+    void undo() { AddVariable::redo(); }
+    QString text() const { return mChanger->tr("Remove Variable"); }
+};
+
 class ChangeVariable : public ProjectChange
 {
 public:
@@ -1548,6 +1591,23 @@ void ProjectChanger::doMoveNode(BaseNode *node, const QPointF &pos)
 void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)
 {
     addChange(new AddConnection(this, index, cxn));
+}
+
+void ProjectChanger::doAddVariable(int index, ScriptVariable *var)
+{
+    addChange(new AddVariable(this, index, var));
+}
+
+void ProjectChanger::doRemoveVariable(ScriptVariable *var)
+{
+    int index = mProject->rootNode()->variables().indexOf(var);
+    Q_ASSERT(index != -1);
+    addChange(new RemoveVariable(this, index, var));
+}
+
+void ProjectChanger::doChangeVariable(ScriptVariable *var, const ScriptVariable *newVar)
+{
+    addChange(new ChangeVariable(this, var, newVar));
 }
 
 void ProjectChanger::doSetVariableValue(ScriptVariable *var, const QString &value)

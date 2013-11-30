@@ -26,6 +26,7 @@
 
 #include <QMimeData>
 #include <QPainter>
+#include <QScrollBar>
 #include <QStandardItemModel>
 
 class ScriptVariablesDelegate : public QAbstractItemDelegate
@@ -34,20 +35,22 @@ public:
     ScriptVariablesDelegate(ScriptVariablesView *view, QObject *parent = 0)
         : QAbstractItemDelegate(parent)
         , mView(view)
+#if 0
         , mLabelFontMetrics(mLabelFont)
+#endif
     {
+#if 0
         if (true/*mFont != mView->font()*/) {
             mFont = mView->font();
             mLabelFont = mFont.resolve(mFont);
-#if 0
             mLabelFont.setBold(true);
             if (mLabelFont.pixelSize() != -1)
                 mLabelFont.setPixelSize(mLabelFont.pixelSize() + 4);
             else if (mLabelFont.pointSize() != -1)
                 mLabelFont.setPointSize(mLabelFont.pointSize() + 1);
-#endif
             mLabelFontMetrics = QFontMetrics(mLabelFont);
         }
+#endif
     }
 
     void paint(QPainter *painter, const QStyleOptionViewItem &option,
@@ -56,13 +59,15 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option,
                    const QModelIndex &index) const;
 
+    static const int INSET = 3;
+    static const int BOXSIZE = 48;
 private:
     ScriptVariablesView *mView;
+#if 0
     QFont mFont;
     QFont mLabelFont;
     QFontMetrics mLabelFontMetrics;
-    static const int INSET = 3;
-    static const int BOXSIZE = 48;
+#endif
 };
 
 void ScriptVariablesDelegate::paint(QPainter *painter,
@@ -181,10 +186,17 @@ QVariant ScriptVariablesModel::headerData(int section, Qt::Orientation orientati
 
 QModelIndex ScriptVariablesModel::index(int row, int column, const QModelIndex &parent) const
 {
-    if (parent.isValid() || mItems.isEmpty())
+    if (parent.isValid() || (row >= mItems.size()))
         return QModelIndex();
 
     return createIndex(row, column, mItems.at(row));
+}
+
+QModelIndex ScriptVariablesModel::index(ScriptVariable *var)
+{
+    if (Item *item = itemFor(var))
+        return index(mItems.indexOf(item), 0, QModelIndex());
+    return QModelIndex();
 }
 
 QModelIndex ScriptVariablesModel::parent(const QModelIndex &child) const
@@ -215,18 +227,34 @@ QMimeData *ScriptVariablesModel::mimeData(const QModelIndexList &indexes) const
     return mimeData;
 }
 
+ScriptVariable *ScriptVariablesModel::variableAt(const QModelIndex &index)
+{
+    if (Item *item = itemAt(index))
+        return item->mVariable;
+    return 0;
+}
+
 void ScriptVariablesModel::reset()
 {
-    beginResetModel();
-    qDeleteAll(mItems);
-    mItems.clear();
-    if (mDocument) {
+    if (mItems.size()) {
+        // Do this because beginResetModel() doesn't update the selection
+        beginRemoveRows(QModelIndex(), 0, mItems.size());
+        qDeleteAll(mItems);
+        mItems.clear();
+        endRemoveRows();
+    }
+
+    if (!mDocument)
+        return;
+
+    if (int count = mDocument->project()->rootNode()->variableCount()) {
+        beginInsertRows(QModelIndex(), 0, count - 1);
         foreach (ScriptVariable *var, mDocument->project()->rootNode()->variables()) {
             Item *item = new Item(var);
             mItems += item;
         }
+        endInsertRows();
     }
-    endResetModel();
 }
 
 void ScriptVariablesModel::setDocument(Document *doc)
@@ -237,16 +265,51 @@ void ScriptVariablesModel::setDocument(Document *doc)
     mDocument = doc ? doc->asProjectDocument() : 0;
 
     if (mDocument) {
-
+        connect(mDocument->changer(), SIGNAL(afterAddVariable(int,ScriptVariable*)),
+               SLOT(afterAddVariable(int,ScriptVariable*)));
+        connect(mDocument->changer(), SIGNAL(beforeRemoveVariable(int,ScriptVariable*)),
+                SLOT(beforeRemoveVariable(int,ScriptVariable*)));
+        connect(mDocument->changer(), SIGNAL(afterChangeVariable(ScriptVariable*,const ScriptVariable*)),
+                SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
     }
 
     reset();
+}
+
+void ScriptVariablesModel::afterAddVariable(int index, ScriptVariable *var)
+{
+    beginInsertRows(QModelIndex(), index, index);
+    mItems.insert(index, new Item(var));
+    endInsertRows();
+}
+
+void ScriptVariablesModel::beforeRemoveVariable(int index, ScriptVariable *var)
+{
+    beginRemoveRows(QModelIndex(), index, index);
+    delete mItems.takeAt(index);
+    endRemoveRows();
+}
+
+void ScriptVariablesModel::afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue)
+{
+    if (!itemFor(var))
+        return; // could be a variable of a child node
+    Q_UNUSED(oldValue)
+    emit dataChanged(index(var), index(var));
 }
 
 ScriptVariablesModel::Item *ScriptVariablesModel::itemAt(const QModelIndex &index) const
 {
     if (index.isValid())
         return static_cast<Item*>(index.internalPointer());
+    return 0;
+}
+
+ScriptVariablesModel::Item *ScriptVariablesModel::itemFor(ScriptVariable *var)
+{
+    foreach (Item *item, mItems)
+        if (item->mVariable == var)
+            return item;
     return 0;
 }
 
@@ -262,9 +325,16 @@ ScriptVariablesView::ScriptVariablesView(QWidget *parent) :
     setModel(mModel);
     // item-delegate's size hint sets correct width but the item height is always
     // the height of the list view ???
-    setGridSize(QSize(64, 64));
+//    setGridSize(QSize(64, 64));
 
-//    setFixedHeight(64 + frameWidth() * 2);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+
+    QStyleOptionViewItem option;
+    option.init(this);
+
+    int itemHeight = ScriptVariablesDelegate::BOXSIZE + ScriptVariablesDelegate::INSET * 2;
+    itemHeight += option.fontMetrics.lineSpacing();
+    setFixedHeight(itemHeight + frameWidth() * 2 + horizontalScrollBar()->height());
 
     setDragDropMode(QAbstractItemView::DragOnly);
 

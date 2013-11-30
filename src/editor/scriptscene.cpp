@@ -368,14 +368,6 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
                 LuaNode *node = new LuaNode(mDocument->project()->mNextID++, def->node()->name());
                 node->initFrom(lnode);
                 node->mDefinition = def;
-#if 0
-                foreach (NodeInput *input, lnode->inputs())
-                    node->insertInput(node->inputCount(), new NodeInput(input));
-                foreach (NodeOutput *output, lnode->outputs())
-                    node->insertOutput(node->outputCount(), new NodeOutput(output));
-                foreach (ScriptVariable *var, lnode->variables())
-                    node->insertVariable(node->variableCount(), new ScriptVariable(var));
-#endif
                 node->setPos(event->scenePos());
                 //            node->mComment = tr("Added by drag-and-drop.");
                 mDocument->changer()->beginUndoCommand(mDocument->undoStack());

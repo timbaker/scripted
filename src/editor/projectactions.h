@@ -46,6 +46,10 @@ public slots:
     void preferencesDialog();
     void nodePropertiesDialog(BaseNode *node);
 
+    void addVariable();
+    void removeVariable(ScriptVariable *var);
+    void variableProperties(ScriptVariable *var);
+
     void updateActions();
 
 private:

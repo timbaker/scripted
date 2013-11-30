@@ -24,8 +24,10 @@
 #include "preferences.h"
 #include "progress.h"
 #include "project.h"
+#include "projectchanger.h"
 #include "projectdocument.h"
 #include "projectreader.h"
+#include "variablepropertiesdialog.h"
 
 #include <QFileDialog>
 #include <QFileInfo>
@@ -186,6 +188,66 @@ void ProjectActions::nodePropertiesDialog(BaseNode *node)
     NodePropertiesDialog d(MainWindow::instance());
     d.setObject(node);
     d.exec();
+}
+
+void ProjectActions::addVariable()
+{
+    VariablePropertiesDialog d(NULL, MainWindow::instance());
+    if (d.exec() == QDialog::Accepted) {
+        ScriptVariable *var = new ScriptVariable(d.type(), d.name(), QString(), QString());
+        ProjectDocument *doc = document();
+        doc->changer()->beginUndoCommand(doc->undoStack());
+        doc->changer()->doAddVariable(doc->project()->rootNode()->variableCount(), var);
+        doc->changer()->endUndoCommand();
+    }
+}
+
+void ProjectActions::removeVariable(ScriptVariable *var)
+{
+    if (QMessageBox::question(MainWindow::instance(), tr("Remove Variable"),
+                              tr("Really remove the variable \"%1\"?").arg(var->name()))
+            != QMessageBox::Yes)
+        return;
+
+    ProjectDocument *doc = document();
+    Q_ASSERT(doc->project()->rootNode()->variables().contains(var));
+    doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Variable"));
+    foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
+        foreach (ScriptVariable *var2, node->variables()) {
+            if (var2->variableRef() == var->name()) {
+                ScriptVariable newVar2(var2);
+                newVar2.setVariableRef(QString());
+                doc->changer()->doChangeVariable(var2, &newVar2);
+            }
+        }
+    }
+    doc->changer()->doRemoveVariable(var);
+    doc->changer()->endUndoMacro();
+}
+
+void ProjectActions::variableProperties(ScriptVariable *var)
+{
+    VariablePropertiesDialog d(var, MainWindow::instance());
+    if (d.exec() == QDialog::Accepted) {
+        ScriptVariable newVar(var);
+        newVar.setName(d.name());
+        newVar.setType(d.type());
+        ProjectDocument *doc = document();
+        doc->changer()->beginUndoMacro(doc->undoStack(), tr("Change Variable"));
+        if (d.name() != var->name()) {
+            foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
+                foreach (ScriptVariable *var2, node->variables()) {
+                    if (var2->variableRef() == var->name()) {
+                        ScriptVariable newVar2(var2);
+                        newVar2.setVariableRef(d.name());
+                        doc->changer()->doChangeVariable(var2, &newVar2);
+                    }
+                }
+            }
+        }
+        doc->changer()->doChangeVariable(var, &newVar);
+        doc->changer()->endUndoMacro();
+    }
 }
 
 void ProjectActions::updateActions()

@@ -51,7 +51,8 @@ SOURCES += main.cpp\
     nodepropertieslist.cpp \
     nodeconnectionslist.cpp \
     scriptmanager.cpp \
-    filesystemwatcher.cpp
+    filesystemwatcher.cpp \
+    variablepropertiesdialog.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -97,7 +98,8 @@ HEADERS  += mainwindow.h \
     nodeconnectionslist.h \
     nodepropertieslist.h \
     scriptmanager.h \
-    filesystemwatcher.h
+    filesystemwatcher.h \
+    variablepropertiesdialog.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \
@@ -105,7 +107,8 @@ FORMS    += mainwindow.ui \
     scriptvariablesdock.ui \
     scriptsdock.ui \
     luadockwidget.ui \
-    nodepropertiesdialog.ui
+    nodepropertiesdialog.ui \
+    variablepropertiesdialog.ui
 
 RESOURCES += \
     editor.qrc

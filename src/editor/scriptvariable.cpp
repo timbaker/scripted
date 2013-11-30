@@ -38,6 +38,16 @@ ScriptVariable::ScriptVariable(const ScriptVariable *other) :
 {
 }
 
+ScriptVariable::ScriptVariable(const ScriptVariable *other, BaseNode *node) :
+    mNode(node),
+    mType(other->mType),
+    mName(other->mName),
+    mValue(other->mValue),
+    mVariableRef(other->mVariableRef)
+{
+
+}
+
 bool ScriptVariable::isKnown() const
 {
     return mNode && mNode->isKnown(this);

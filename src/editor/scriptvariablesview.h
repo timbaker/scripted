@@ -38,14 +38,20 @@ public:
     QVariant data(const QModelIndex &index, int role) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     QModelIndex index(int row, int column, const QModelIndex &parent) const;
+    QModelIndex index(ScriptVariable *var);
     QModelIndex parent(const QModelIndex &child) const;
     QStringList mimeTypes() const;
     QMimeData *mimeData(const QModelIndexList &indexes) const;
+
+    ScriptVariable *variableAt(const QModelIndex &index);
 
     void reset();
 
 public slots:
     void setDocument(Document *doc);
+    void afterAddVariable(int index, ScriptVariable *var);
+    void beforeRemoveVariable(int index, ScriptVariable *var);
+    void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
 private:
     ProjectDocument *mDocument;
@@ -67,6 +73,7 @@ private:
     };
 
     Item *itemAt(const QModelIndex &index) const;
+    Item *itemFor(ScriptVariable *var);
     QList<Item*> mItems;
 };
 
@@ -75,6 +82,8 @@ class ScriptVariablesView : public QListView
     Q_OBJECT
 public:
     ScriptVariablesView(QWidget *parent = 0);
+
+    ScriptVariablesModel *model() const { return mModel; }
 
 private:
     ScriptVariablesModel *mModel;

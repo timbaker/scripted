@@ -15,34 +15,31 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPTVARIABLESDOCK_H
-#define SCRIPTVARIABLESDOCK_H
+#ifndef VARIABLEPROPERTIESDIALOG_H
+#define VARIABLEPROPERTIESDIALOG_H
 
 #include "editor_global.h"
-#include <QDockWidget>
+
+#include <QDialog>
 
 namespace Ui {
-class ScriptVariablesDock;
+class VariablePropertiesDialog;
 }
 
-class ScriptVariablesDock : public QDockWidget
+class VariablePropertiesDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit ScriptVariablesDock(QWidget *parent = 0);
-    ~ScriptVariablesDock();
+    explicit VariablePropertiesDialog(const ScriptVariable *var, QWidget *parent = 0);
+    ~VariablePropertiesDialog();
 
-private slots:
-    void selectionChanged();
-    void activated(const QModelIndex &index);
-    void properties();
-    void removeVariable();
-    void syncUI();
+    QString name() const;
+    QString type() const;
 
 private:
-    Ui::ScriptVariablesDock *ui;
-    ScriptVariable *mCurrentVar;
+    Ui::VariablePropertiesDialog *ui;
+    const ScriptVariable *mVariable;
 };
 
-#endif // SCRIPTVARIABLESDOCK_H
+#endif // VARIABLEPROPERTIESDIALOG_H

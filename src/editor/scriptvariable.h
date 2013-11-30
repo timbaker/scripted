@@ -29,6 +29,7 @@ public:
     explicit ScriptVariable(const QString &type, const QString &name,
                             const QString &value, const QString &variableRef);
     ScriptVariable(const ScriptVariable *other);
+    ScriptVariable(const ScriptVariable *other, BaseNode *node);
 
     void setNode(BaseNode *node) { mNode = node; }
     BaseNode *node() const { return mNode; }

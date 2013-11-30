@@ -106,7 +106,7 @@ void BaseNode::initFrom(BaseNode *other)
     qDeleteAll(mVariables);
     mVariables.clear();
     foreach (ScriptVariable *var, other->mVariables)
-        insertVariable(variableCount(), new ScriptVariable(var));
+        insertVariable(variableCount(), new ScriptVariable(var, 0));
 
     qDeleteAll(mInputs);
     mInputs.clear();
