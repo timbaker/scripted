@@ -163,37 +163,37 @@ public:
     QString text() const { return mChanger->tr("Remove Connection"); }
 };
 
-class SetVariableValue : public ProjectChange
+class ChangeVariable : public ProjectChange
 {
 public:
-    SetVariableValue(ProjectChanger *changer, ScriptVariable *var, const QString &value) :
+    ChangeVariable(ProjectChanger *changer, ScriptVariable *var, const ScriptVariable &value) :
         ProjectChange(changer),
         mVariable(var),
-        mNewValue(value),
-        mOldValue(var->value())
+        mNewValue(&value),
+        mOldValue(var)
     {
     }
 
     void redo()
     {
-        mVariable->setValue(mNewValue);
-        mChanger->afterSetVariableValue(mVariable, mOldValue);
+        *mVariable = ScriptVariable(&mNewValue);
+        mChanger->afterChangeVariable(mVariable, &mOldValue);
     }
 
     void undo()
     {
-        mVariable->setValue(mOldValue);
-        mChanger->afterSetVariableValue(mVariable, mNewValue);
+        *mVariable = ScriptVariable(&mOldValue);
+        mChanger->afterChangeVariable(mVariable, &mNewValue);
     }
 
     QString text() const
     {
-        return mChanger->tr("Set Variable Value");
+        return mChanger->tr("Change Variable");
     }
 
     ScriptVariable *mVariable;
-    QString mNewValue;
-    QString mOldValue;
+    ScriptVariable mNewValue;
+    ScriptVariable mOldValue;
 };
 
 #else
@@ -1552,7 +1552,16 @@ void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)
 
 void ProjectChanger::doSetVariableValue(ScriptVariable *var, const QString &value)
 {
-    addChange(new SetVariableValue(this, var, value));
+    ScriptVariable newVar(var);
+    newVar.setValue(value);
+    addChange(new ChangeVariable(this, var, newVar));
+}
+
+void ProjectChanger::doSetVariableRef(ScriptVariable *var, const QString &varName)
+{
+    ScriptVariable newVar(var);
+    newVar.setVariableRef(varName);
+    addChange(new ChangeVariable(this, var, newVar));
 }
 
 void ProjectChanger::addChange(ProjectChange *change)

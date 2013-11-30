@@ -129,7 +129,7 @@ public slots:
     void afterAddConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);
 
-    void afterSetVariableValue(ScriptVariable *var, const QString &oldValue);
+    void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
     void scriptChanged(ScriptInfo *info);
     void luaChanged(LuaInfo *info);

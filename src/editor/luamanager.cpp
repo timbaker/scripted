@@ -222,7 +222,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                                 ret->insertVariable(ret->variableCount(),
                                                     new ScriptVariable(kv[QLatin1String("type")],
                                                     kv[QLatin1String("name")],
-                                        kv[QLatin1String("value")]));
+                                        kv[QLatin1String("value")], QString()));
                                 lua_pop(L, 1); // pop value
                             }
                         }

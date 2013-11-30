@@ -100,6 +100,7 @@ public:
     void doMoveNode(BaseNode *node, const QPointF &pos);
     void doAddConnection(int index, NodeConnection *cxn);
     void doSetVariableValue(ScriptVariable *var, const QString &value);
+    void doSetVariableRef(ScriptVariable *var, const QString &varName);
     /////
 
 signals:
@@ -113,7 +114,7 @@ signals:
     void beforeRemoveConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);
 
-    void afterSetVariableValue(ScriptVariable *var, const QString &oldValue);
+    void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
 private:
     void addChange(ProjectChange *change);

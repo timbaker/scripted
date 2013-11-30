@@ -422,7 +422,8 @@ BaseVariableItem::BaseVariableItem(ScriptScene *scene, ScriptVariable *var, QGra
     QGraphicsItem(parent),
     mScene(scene),
     mVariable(var),
-    mDropHighlight(false)
+    mDropHighlight(false),
+    mRemoveVarRefImage(QLatin1String(":/images/16x16/window-close.png"))
 {
     setAcceptDrops(true);
 }
@@ -440,9 +441,29 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     if (mDropHighlight)
         color = Qt::green;
     painter->setPen(color);
-    painter->drawRect(option->rect.adjusted(100,0,0,0));
+    painter->drawRect(valueRect(option->rect));
     painter->drawText(option->rect, Qt::AlignVCenter, mVariable->name());
-    painter->drawText(option->rect.adjusted(100+3,0,-3,0), Qt::AlignVCenter, mVariable->value());
+
+    QRectF r = valueRect(option->rect).adjusted(3,0,-3,0);
+    if (mVariable->variableRef().length()) {
+        painter->drawImage(clearRefRect(option->rect), mRemoveVarRefImage);
+        painter->drawText(r, Qt::AlignVCenter,
+                          mVariable->variableRef());
+    } else
+        painter->drawText(r, Qt::AlignVCenter,
+                          mVariable->value());
+}
+
+void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        if (clearRefRect(boundingRect()).contains(event->pos())) {
+            ProjectDocument *doc = mScene->document();
+            doc->changer()->beginUndoCommand(doc->undoStack());
+            doc->changer()->doSetVariableRef(mVariable, QString());
+            doc->changer()->endUndoCommand();
+        }
+    }
 }
 
 static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
@@ -490,7 +511,7 @@ void BaseVariableItem::dropEvent(QGraphicsSceneDragDropEvent *event)
             if (ScriptVariable *var = doc->project()->resolveVariable(varName)) {
                 if (var->type() == mVariable->type()) {
                     doc->changer()->beginUndoCommand(doc->undoStack());
-                    doc->changer()->doSetVariableValue(mVariable, var->name());
+                    doc->changer()->doSetVariableRef(mVariable, var->name());
                     doc->changer()->endUndoCommand();
                     return;
                 }
@@ -512,6 +533,17 @@ QStringList BaseVariableItem::getDropData(QGraphicsSceneDragDropEvent *event)
     }
 
     return ret;
+}
+
+QRectF BaseVariableItem::valueRect(const QRectF &itemRect)
+{
+    return itemRect.adjusted(100,0,0,0);
+}
+
+QRectF BaseVariableItem::clearRefRect(const QRectF &itemRect)
+{
+    return QRectF(itemRect.right() - 16 - 2, itemRect.top() + (itemRect.height() - mRemoveVarRefImage.height()) / 2,
+                  mRemoveVarRefImage.width(), mRemoveVarRefImage.height());
 }
 
 /////

@@ -302,8 +302,9 @@ private:
         QString type = atts.value(QLatin1String("type")).toString();
         QString name = atts.value(QLatin1String("name")).toString();
         QString value = atts.value(QLatin1String("value")).toString();
+        QString varRef = atts.value(QLatin1String("varRef")).toString();
         xml.skipCurrentElement();
-        return new ScriptVariable(type, name, value);
+        return new ScriptVariable(type, name, value, varRef);
     }
 
     void readUnknownElement()

@@ -19,19 +19,22 @@
 
 #include "node.h"
 
-ScriptVariable::ScriptVariable(const QString &type, const QString &name, const QString &value) :
+ScriptVariable::ScriptVariable(const QString &type, const QString &name,
+                               const QString &value, const QString &variableRef) :
     mNode(0),
     mType(type),
     mName(name),
-    mValue(value)
+    mValue(value),
+    mVariableRef(variableRef)
 {
 }
 
 ScriptVariable::ScriptVariable(const ScriptVariable *other) :
-    mNode(0),
+    mNode(other->mNode),
     mType(other->mType),
     mName(other->mName),
-    mValue(other->mValue)
+    mValue(other->mValue),
+    mVariableRef(other->mVariableRef)
 {
 }
 

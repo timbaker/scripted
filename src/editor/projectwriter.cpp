@@ -163,7 +163,10 @@ public:
         xml.writeStartElement(QLatin1String("variable"));
         xml.writeAttribute(QLatin1String("type"), var->type());
         xml.writeAttribute(QLatin1String("name"), var->name());
-        xml.writeAttribute(QLatin1String("value"), var->value());
+        if (var->variableRef().isEmpty())
+            xml.writeAttribute(QLatin1String("value"), var->value());
+        else
+            xml.writeAttribute(QLatin1String("varRef"), var->variableRef());
         xml.writeEndElement();
     }
 

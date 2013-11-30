@@ -100,15 +100,21 @@ public:
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+
     void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
     void dragLeaveEvent(QGraphicsSceneDragDropEvent *event);
     void dropEvent(QGraphicsSceneDragDropEvent *event);
 
     QStringList getDropData(QGraphicsSceneDragDropEvent *event);
 
+    QRectF valueRect(const QRectF &itemRect);
+    QRectF clearRefRect(const QRectF &itemRect);
+
     ScriptScene *mScene;
     ScriptVariable *mVariable;
     bool mDropHighlight;
+    QImage mRemoveVarRefImage;
 };
 
 class ActorVariableItem : public BaseVariableItem

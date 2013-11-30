@@ -147,8 +147,8 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
             SLOT(afterAddConnection(int,NodeConnection*)));
     connect(mDocument->changer(), SIGNAL(afterRemoveConnection(int,NodeConnection*)),
             SLOT(afterRemoveConnection(int,NodeConnection*)));
-    connect(mDocument->changer(), SIGNAL(afterSetVariableValue(ScriptVariable*,QString)),
-            SLOT(afterSetVariableValue(ScriptVariable*,QString)));
+    connect(mDocument->changer(), SIGNAL(afterChangeVariable(ScriptVariable*,const ScriptVariable*)),
+            SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
 
     connect(luamgr(), SIGNAL(luaChanged(LuaInfo*)),
             SLOT(luaChanged(LuaInfo*)));
@@ -424,8 +424,9 @@ void ScriptScene::afterRemoveConnection(int index, NodeConnection *cxn)
     mConnectionsItem->updateConnections();
 }
 
-void ScriptScene::afterSetVariableValue(ScriptVariable *var, const QString &oldValue)
+void ScriptScene::afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue)
 {
+    Q_UNUSED(oldValue)
     foreach (NodeItem *nodeItem, mNodeItems)
         if (BaseVariableItem *varItem = nodeItem->variableItem(var))
             varItem->update();
