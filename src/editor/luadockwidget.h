@@ -54,12 +54,12 @@ private:
         {
         }
 
-        Item(LuaNodeDef *def) :
+        Item(LuaInfo *def) :
             mDefinition(def)
         {
         }
 
-        LuaNodeDef *mDefinition;
+        LuaInfo *mDefinition;
     };
 
     Item *itemAt(const QModelIndex &index) const;

@@ -28,8 +28,8 @@ NodePropertiesDialog::NodePropertiesDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    foreach (LuaNodeDef *def, LuaManager::instance()->commands()) {
-        ui->commandCombo->addItem(def->name());
+    foreach (LuaInfo *def, luamgr()->commands()) {
+        ui->commandCombo->addItem(def->node()->name());
     }
 }
 

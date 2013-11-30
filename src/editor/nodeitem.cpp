@@ -17,12 +17,14 @@
 
 #include "nodeitem.h"
 
-#include "scriptscene.h"
+#include "luamanager.h"
 #include "node.h"
 #include "project.h"
 #include "projectactions.h"
 #include "projectchanger.h"
 #include "projectdocument.h"
+#include "scriptmanager.h"
+#include "scriptscene.h"
 #include "scriptvariable.h"
 
 #include <QGraphicsDropShadowEffect>
@@ -76,7 +78,15 @@ QRectF NodeItem::boundingRect() const
 
 void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    QPen pen(Qt::black);
+    QColor color = Qt::black;
+    if (LuaNode *lnode = mNode->asLuaNode())
+        if (!lnode->mDefinition || !lnode->mDefinition->node())
+            color = Qt::red;
+    if (ScriptNode *snode = mNode->asScriptNode())
+        if (!snode->scriptInfo() || !snode->scriptInfo()->node())
+            color = Qt::red;
+
+    QPen pen(color);
     pen.setCosmetic(true);
     painter->setPen(pen);
 

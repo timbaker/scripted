@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
     new ScriptManager;
 
     new LuaManager;
-    LuaManager::instance()->readLuaFiles();
+    luamgr()->readLuaFiles();
 
     MainWindow w;
     w.show();

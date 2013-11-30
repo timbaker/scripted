@@ -16,6 +16,7 @@
  */
 
 #include "node.h"
+#include "luamanager.h"
 #include "scriptmanager.h"
 #include "scriptvariable.h"
 
@@ -126,19 +127,25 @@ void BaseNode::initFrom(BaseNode *other)
 
 /////
 
+LuaNode::LuaNode(int id, const QString &name) :
+    BaseNode(id, name),
+    mDefinition(0)
+{
+}
+
 bool LuaNode::isKnown(const ScriptVariable *var)
 {
-    return mDefinition && mDefinition->variable(var->name());
+    return mDefinition && mDefinition->node() && mDefinition->node()->variable(var->name());
 }
 
 bool LuaNode::isKnown(const NodeInput *input)
 {
-    return mDefinition && mDefinition->input(input->name());
+    return mDefinition && mDefinition->node() && mDefinition->node()->input(input->name());
 }
 
 bool LuaNode::isKnown(const NodeOutput *output)
 {
-    return mDefinition && mDefinition->output(output->name());
+    return mDefinition && mDefinition->node() && mDefinition->node()->output(output->name());
 }
 
 void LuaNode::initFrom(LuaNode *other)

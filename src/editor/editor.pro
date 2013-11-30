@@ -1,4 +1,6 @@
-include(../qtpropertybrowser/src/qtpropertybrowser.pri)
+include($$top_srcdir/scripted.pri)
+include(../lua/lua.pri)
+#include(../qtpropertybrowser/src/qtpropertybrowser.pri)
 
 QT       += core gui
 

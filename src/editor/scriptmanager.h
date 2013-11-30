@@ -22,16 +22,17 @@
 #include "filesystemwatcher.h"
 #include "singleton.h"
 
-#include <QObject>
 #include <QMap>
 #include <QTimer>
 
 class ScriptInfo
 {
 public:
+    const QString &path() const { return mPath; }
     ScriptNode *node() const { return mNode; }
 
 private:
+    QString mPath;
     ScriptNode *mNode;
 
     friend class ScriptManager;

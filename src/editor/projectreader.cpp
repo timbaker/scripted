@@ -68,7 +68,7 @@ public:
     Project *readProject(QIODevice *device, const QString &path)
     {
         mError.clear();
-        mRelativeTo = path;
+        mRelativeTo = QFileInfo(path).absolutePath();
         Project *project = 0;
 
         xml.setDevice(device);
@@ -160,17 +160,19 @@ private:
             xml.raiseError(tr("missing or invalid node ID"));
             return 0;
         }
-        const QString defName = atts.value(QLatin1String("definition")).toString();
+        const QString name = atts.value(QLatin1String("name")).toString();
         double x, y;
         if (!getDoublePair(atts, QLatin1String("pos"), x, y))
             return 0;
 
-        LuaNodeDef *def = LuaManager::instance()->command(defName);
-        LuaNode *node = new LuaNode(def, id);
+//        LuaInfo *def = luamgr()->command(defName);
+        LuaNode *node = new LuaNode(id, name);
+#if 0
         if (def)
             node->mDefinition = def;
         else
             node->mDefinition = 0; // dummy definition for "not found"
+#endif
         node->setPos(x, y);
 
         while (xml.readNextStartElement()) {
@@ -185,6 +187,10 @@ private:
             } else if (xml.name() == QLatin1String("output")) {
                 if (NodeOutput *output = readOutput())
                     node->insertOutput(node->outputCount(), output);
+            } else if (xml.name() == QLatin1String("source")) {
+                const QXmlStreamAttributes atts = xml.attributes();
+                node->setSource(getRelativeFile(atts, "file"));
+                xml.skipCurrentElement();
             } else if (xml.name() == QLatin1String("variable")) {
                 if (ScriptVariable *v = readVariable()) {
                     node->insertVariable(node->variableCount(), v);
@@ -227,6 +233,10 @@ private:
             } else if (xml.name() == QLatin1String("output")) {
                 if (NodeOutput *output = readOutput())
                     node->insertOutput(node->outputCount(), output);
+            } else if (xml.name() == QLatin1String("source")) {
+                const QXmlStreamAttributes atts = xml.attributes();
+                node->setSource(getRelativeFile(atts, "file"));
+                xml.skipCurrentElement();
             } else if (xml.name() == QLatin1String("variable")) {
                 if (ScriptVariable *p = readVariable()) {
                     node->insertVariable(node->variableCount(), p);

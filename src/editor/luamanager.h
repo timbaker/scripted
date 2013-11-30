@@ -19,9 +19,24 @@
 #define LUAMANAGER_H
 
 #include "editor_global.h"
+#include "filesystemwatcher.h"
 #include "singleton.h"
 
-#include <QObject>
+#include <Map>
+#include <QTimer>
+
+class LuaInfo
+{
+public:
+    const QString &path() const { return mPath; }
+    LuaNode *node() const { return mNode; }
+
+private:
+    QString mPath;
+    LuaNode *mNode;
+
+    friend class LuaManager;
+};
 
 class LuaManager : public QObject, public Singleton<LuaManager>
 {
@@ -29,19 +44,33 @@ class LuaManager : public QObject, public Singleton<LuaManager>
 public:
     explicit LuaManager(QObject *parent = 0);
 
-    const QList<LuaNodeDef*> &commands() const
+    LuaInfo *luaInfo(const QString &fileName, const QString &relativeTo = QString());
+    QString canonicalPath(const QString &fileName, const QString &relativeTo = QString());
+
+    const QList<LuaInfo*> &commands() const
     { return mCommands; }
-    LuaNodeDef *command(const QString &path);
 
     bool readLuaFiles();
 
 signals:
+    void luaChanged(LuaInfo *info);
 
 public slots:
+    void fileChanged(const QString &path);
+    void fileChangedTimeout();
 
 private:
-    QList<LuaNodeDef*> mCommands;
+    LuaNode *loadLua(const QString &fileName);
 
+private:
+    QMap<QString,LuaInfo*> mLuaInfo;
+    QList<LuaInfo*> mCommands;
+
+    FileSystemWatcher mFileSystemWatcher;
+    QSet<QString> mChangedFiles;
+    QTimer mChangedFilesTimer;
 };
+
+inline LuaManager *luamgr() { return LuaManager::instance(); }
 
 #endif // LUAMANAGER_H

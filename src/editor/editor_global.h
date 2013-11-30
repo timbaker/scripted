@@ -28,7 +28,7 @@ class BaseNode;
 class Document;
 class NodeConnection;
 class LuaNode;
-class LuaNodeDef;
+class LuaInfo;
 class NodeInput;
 class NodeInputItem;
 class NodeInputGroupItem;

@@ -17,9 +17,14 @@
 
 #include "projectdocument.h"
 
+#include "luamanager.h"
+#include "node.h"
+#include "project.h"
 #include "projectchanger.h"
 #include "projectwriter.h"
+#include "scriptmanager.h"
 
+#include <QFileInfo>
 #include <QUndoStack>
 
 ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
@@ -29,6 +34,19 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
     mFileName(fileName)
 {
     mUndoStack = new QUndoStack(this);
+
+    // set ScriptInfo and LuaInfo for each node
+//    QString relativeTo = QFileInfo(mFileName).absolutePath();
+    foreach (BaseNode *node, mProject->rootNode()->nodes()) {
+        if (LuaNode *lnode = node->asLuaNode()) {
+            if (LuaInfo *info = luamgr()->luaInfo(lnode->source()))
+                lnode->mDefinition = info;
+        }
+        if (ScriptNode *snode = node->asScriptNode()) {
+            if (ScriptInfo *info = scriptmgr()->scriptInfo(snode->source()))
+                snode->setScriptInfo(info);
+        }
+    }
 }
 
 void ProjectDocument::setFileName(const QString &fileName)

@@ -17,8 +17,10 @@
 
 #include "projectwriter.h"
 
+#include "luamanager.h"
 #include "node.h"
 #include "project.h"
+#include "scriptmanager.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -94,8 +96,15 @@ public:
     {
         xml.writeStartElement(QLatin1String("lua-node"));
         xml.writeAttribute(QLatin1String("id"), QString::number(node->id()));
-        xml.writeAttribute(QLatin1String("definition"), node->mDefinition->name());
+        xml.writeAttribute(QLatin1String("name"), node->name());
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
+
+        xml.writeStartElement(QLatin1String("source"));
+        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->mDefinition
+                           ? node->mDefinition->path()
+                           : node->source()));
+        xml.writeEndElement();
+
         foreach (ScriptVariable *var, node->variables())
             writeVariable(var);
         foreach (NodeInput *input, node->inputs())
@@ -113,6 +122,13 @@ public:
         xml.writeAttribute(QLatin1String("id"), QString::number(node->id()));
         xml.writeAttribute(QLatin1String("name"), node->name());
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
+
+        xml.writeStartElement(QLatin1String("source"));
+        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->scriptInfo()
+                           ? node->scriptInfo()->path()
+                           : node->source()));
+        xml.writeEndElement();
+
         foreach (ScriptVariable *var, node->variables())
             writeVariable(var);
         foreach (NodeInput *input, node->inputs())

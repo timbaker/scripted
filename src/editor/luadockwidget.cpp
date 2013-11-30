@@ -84,7 +84,7 @@ QVariant LuaItemModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DisplayRole) {
         if (Item *item = itemAt(index)) {
-            return item->mDefinition->name();
+            return item->mDefinition->node()->name();
         }
     }
 #if 0
@@ -134,7 +134,7 @@ QMimeData *LuaItemModel::mimeData(const QModelIndexList &indexes) const
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     foreach (const QModelIndex &index, indexes) {
         if (Item *item = itemAt(index)) {
-            stream << item->mDefinition->name();
+            stream << item->mDefinition->path(); // FIXME: path/to/file.lua
         }
     }
 
@@ -146,7 +146,7 @@ void LuaItemModel::reset()
 {
     beginResetModel();
     qDeleteAll(mItems);
-    foreach (LuaNodeDef *def, LuaManager::instance()->commands()) {
+    foreach (LuaInfo *def, luamgr()->commands()) {
         Item *item = new Item(def);
         mItems += item;
     }

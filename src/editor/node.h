@@ -188,39 +188,25 @@ protected:
 //    QString mComment;
 };
 
-// The template/definition of a lua node, maintained application-wide
-class LuaNodeDef : public BaseNode
-{
-public:
-    LuaNodeDef(const QString &name) :
-        BaseNode(0, name)
-    {
-    }
-
-    bool isKnown(const ScriptVariable *var) { return false; }
-    bool isKnown(const NodeInput *) { return false; }
-    bool isKnown(const NodeOutput *) { return false; }
-};
-
 class LuaNode : public BaseNode
 {
 public:
-    LuaNode(LuaNodeDef *def, int id) :
-        BaseNode(id, def->name()),
-        mDefinition(def)
-    {
-    }
+    LuaNode(int id, const QString &name);
 
     bool isKnown(const ScriptVariable *var);
     bool isKnown(const NodeInput *input);
     bool isKnown(const NodeOutput *output);
+
+    void setSource(const QString &path) { mSource = path; }
+    QString source() { return mSource; }
 
     void initFrom(LuaNode *other);
 
     virtual bool isLuaNode() { return true; }
     virtual LuaNode *asLuaNode() { return this; }
 
-    LuaNodeDef *mDefinition;
+    QString mSource; // (relative) path to .lua
+    LuaInfo *mDefinition;
 };
 
 class ScriptNode : public BaseNode
@@ -263,6 +249,9 @@ public:
     void setScriptInfo(ScriptInfo *info) { mInfo = info; }
     ScriptInfo *scriptInfo() const { return mInfo; }
 
+    void setSource(const QString &path) { mSource = path; }
+    QString source() { return mSource; }
+
     bool syncWithScriptInfo();
 
     bool isKnown(const ScriptVariable *var);
@@ -275,6 +264,7 @@ public:
     virtual ScriptNode *asScriptNode() { return this; }
 
 private:
+    QString mSource; // (relative) path to .pzs
     ScriptInfo *mInfo;
     QList<BaseNode*> mNodes;
 };
