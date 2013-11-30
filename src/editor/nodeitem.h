@@ -58,10 +58,12 @@ public:
     QRectF boundingRect() const { return QRectF(); }
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *) {}
 
+    void syncWithNode();
     void updateLayout();
 
     void added(int index);
     void removed(int index);
+    NodeInputItem *itemFor(const QString &name);
     NodeInputItem *itemFor(NodeInput *input);
 
     ScriptScene *mScene;
@@ -77,10 +79,12 @@ public:
     QRectF boundingRect() const { return QRectF(); }
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *) {}
 
+    void syncWithNode();
     void updateLayout();
 
     void added(int index);
     void removed(int index);
+    NodeOutputItem *itemFor(const QString &name);
     NodeOutputItem *itemFor(NodeOutput *output);
 
     ScriptScene *mScene;
@@ -91,7 +95,7 @@ public:
 class BaseVariableItem : public QGraphicsItem
 {
 public:
-    BaseVariableItem(NodeItem *parent, ScriptVariable *var);
+    BaseVariableItem(ScriptScene *scene, ScriptVariable *var, QGraphicsItem *parent = 0);
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
@@ -102,7 +106,7 @@ public:
 
     QStringList getDropData(QGraphicsSceneDragDropEvent *event);
 
-    NodeItem *mParent;
+    ScriptScene *mScene;
     ScriptVariable *mVariable;
     bool mDropHighlight;
 };
@@ -134,6 +138,23 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 };
 
+class VariableGroupItem : public QGraphicsItem
+{
+public:
+    VariableGroupItem(ScriptScene *scene, BaseNode *node, QGraphicsItem *parent = 0);
+
+    QRectF boundingRect() const { return QRectF(); }
+    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *) {}
+
+    BaseVariableItem *itemFor(const QString &name);
+    BaseVariableItem *itemFor(ScriptVariable *var);
+    void updateLayout();
+    void syncWithNode();
+
+    ScriptScene *mScene;
+    BaseNode *mNode;
+    QList<BaseVariableItem*> mItems;
+};
 
 class NodeItem : public QGraphicsItem
 {
@@ -155,10 +176,14 @@ public:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 
+    void scriptChanged(ScriptInfo *info);
+    void updateLayout();
+    void syncWithNode();
+
     ProjectScene *mScene;
     QRectF mBounds;
     BaseNode *mNode;
-    QList<BaseVariableItem*> mVariableItems;
+    VariableGroupItem *mVariablesItem;
     NodeInputGroupItem *mInputsItem;
     NodeOutputGroupItem *mOutputsItem;
     QPointF mPreDragPosition;

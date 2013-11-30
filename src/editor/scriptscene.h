@@ -131,6 +131,8 @@ public slots:
 
     void afterSetVariableValue(ScriptVariable *var, const QString &oldValue);
 
+    void scriptChanged(ScriptInfo *info);
+
 private:
     ProjectDocument *mDocument;
     QList<NodeItem*> mNodeItems;
@@ -140,6 +142,7 @@ private:
     NodeInputItem *mConnectTo;
     GridItem *mGridItem;
     ScriptAreaItem *mAreaItem;
+    bool mDragHasPZS;
 };
 
 #endif // SCRIPTSCENE_H

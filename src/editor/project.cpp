@@ -48,6 +48,11 @@ Project::Project() :
 #endif
 }
 
+Project::~Project()
+{
+    delete mRootNode;
+}
+
 ScriptVariable *Project::resolveVariable(const QString &name)
 {
     return mRootNode->variable(name);

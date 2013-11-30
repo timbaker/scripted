@@ -17,9 +17,25 @@
 
 #include "scriptvariable.h"
 
+#include "node.h"
+
 ScriptVariable::ScriptVariable(const QString &type, const QString &name, const QString &value) :
+    mNode(0),
     mType(type),
     mName(name),
     mValue(value)
 {
+}
+
+ScriptVariable::ScriptVariable(const ScriptVariable *other) :
+    mNode(0),
+    mType(other->mType),
+    mName(other->mName),
+    mValue(other->mValue)
+{
+}
+
+bool ScriptVariable::isKnown() const
+{
+    return mNode && mNode->isKnown(this);
 }

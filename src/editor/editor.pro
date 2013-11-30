@@ -47,7 +47,9 @@ SOURCES += main.cpp\
     luadockwidget.cpp \
     nodepropertiesdialog.cpp \
     nodepropertieslist.cpp \
-    nodeconnectionslist.cpp
+    nodeconnectionslist.cpp \
+    scriptmanager.cpp \
+    filesystemwatcher.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -91,7 +93,9 @@ HEADERS  += mainwindow.h \
     luadockwidget.h \
     nodepropertiesdialog.h \
     nodeconnectionslist.h \
-    nodepropertieslist.h
+    nodepropertieslist.h \
+    scriptmanager.h \
+    filesystemwatcher.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \

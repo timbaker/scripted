@@ -18,6 +18,7 @@
 #ifndef NODE_H
 #define NODE_H
 
+#include "editor_global.h"
 #include "scriptvariable.h"
 
 #include <QPointF>
@@ -45,6 +46,10 @@ public:
     {
     }
 
+    const QString &name() const { return mName; }
+
+    bool isKnown() const;
+
     BaseNode *mNode;
     QString mName;
 };
@@ -62,6 +67,10 @@ public:
         mName(other->mName)
     {
     }
+
+    const QString &name() const { return mName; }
+
+    bool isKnown() const;
 
     BaseNode *mNode;
     QString mName;
@@ -153,8 +162,14 @@ public:
     {
         return mVariables.size();
     }
-    void insertVariable(int index, ScriptVariable *p);
-    ScriptVariable *removeVariable(ScriptVariable *p);
+    void insertVariable(int index, ScriptVariable *var);
+    ScriptVariable *removeVariable(ScriptVariable *var);
+
+    virtual bool isKnown(const ScriptVariable *var) = 0;
+    virtual bool isKnown(const NodeInput *input) = 0;
+    virtual bool isKnown(const NodeOutput *output) = 0;
+
+    void initFrom(BaseNode *other);
 
     virtual bool isLuaNode() { return false; }
     virtual LuaNode *asLuaNode() { return NULL; }
@@ -162,7 +177,7 @@ public:
     virtual bool isScriptNode() { return false; }
     virtual ScriptNode *asScriptNode() { return NULL; }
 
-private:
+protected:
     int mID;
     QString mName;
     QList<ScriptVariable*> mVariables;
@@ -170,7 +185,7 @@ private:
     QList<NodeOutput*> mOutputs;
     QList<NodeConnection*> mConnections;
     QPointF mPosition;
-    QString mComment;
+//    QString mComment;
 };
 
 // The template/definition of a lua node, maintained application-wide
@@ -181,6 +196,10 @@ public:
         BaseNode(0, name)
     {
     }
+
+    bool isKnown(const ScriptVariable *var) { return false; }
+    bool isKnown(const NodeInput *) { return false; }
+    bool isKnown(const NodeOutput *) { return false; }
 };
 
 class LuaNode : public BaseNode
@@ -192,6 +211,12 @@ public:
     {
     }
 
+    bool isKnown(const ScriptVariable *var);
+    bool isKnown(const NodeInput *input);
+    bool isKnown(const NodeOutput *output);
+
+    void initFrom(LuaNode *other);
+
     virtual bool isLuaNode() { return true; }
     virtual LuaNode *asLuaNode() { return this; }
 
@@ -202,7 +227,8 @@ class ScriptNode : public BaseNode
 {
 public:
     ScriptNode(int id, const QString &name) :
-        BaseNode(id, name)
+        BaseNode(id, name),
+        mInfo(0)
     {
     }
 
@@ -234,9 +260,22 @@ public:
         return NULL;
     }
 
+    void setScriptInfo(ScriptInfo *info) { mInfo = info; }
+    ScriptInfo *scriptInfo() const { return mInfo; }
+
+    bool syncWithScriptInfo();
+
+    bool isKnown(const ScriptVariable *var);
+    bool isKnown(const NodeInput *input);
+    bool isKnown(const NodeOutput *output);
+
+    void initFrom(ScriptNode *other);
+
     virtual bool isScriptNode() { return true; }
     virtual ScriptNode *asScriptNode() { return this; }
 
+private:
+    ScriptInfo *mInfo;
     QList<BaseNode*> mNodes;
 };
 

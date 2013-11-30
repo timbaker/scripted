@@ -26,6 +26,7 @@ class Project
 {
 public:
     Project();
+    ~Project();
 
     ScriptNode *rootNode() const
     {

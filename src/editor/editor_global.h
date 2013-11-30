@@ -46,9 +46,16 @@ typedef QList<ProjectChange*> ProjectChangeList;
 class ProjectChanger;
 class ProjectDocument;
 class ProjectReader;
+class ScriptInfo;
 class ScriptVariable;
 
 typedef ScriptScene ProjectScene;
 typedef ScriptView ProjectView;
+
+#ifdef QT_NO_DEBUG
+inline QNoDebug noise() { return QNoDebug(); }
+#else
+inline QDebug noise() { return QDebug(QtDebugMsg); }
+#endif
 
 #endif // EDITOR_GLOBAL_H

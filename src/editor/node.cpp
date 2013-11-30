@@ -16,7 +16,22 @@
  */
 
 #include "node.h"
+#include "scriptmanager.h"
 #include "scriptvariable.h"
+
+bool NodeInput::isKnown() const
+{
+    return mNode && mNode->isKnown(this);
+}
+
+/////
+
+bool NodeOutput::isKnown() const
+{
+    return mNode && mNode->isKnown(this);
+}
+
+/////
 
 void BaseNode::insertInput(int index, NodeInput *input)
 {
@@ -67,15 +82,157 @@ ScriptVariable *BaseNode::variable(const QString &name)
     return 0;
 }
 
-void BaseNode::insertVariable(int index, ScriptVariable *p)
+void BaseNode::insertVariable(int index, ScriptVariable *var)
 {
-    Q_ASSERT(!mVariables.contains(p));
-    mVariables.insert(index, p);
+    Q_ASSERT(var->node() == NULL);
+    Q_ASSERT(!mVariables.contains(var));
+    var->setNode(this);
+    mVariables.insert(index, var);
 }
 
-ScriptVariable *BaseNode::removeVariable(ScriptVariable *p)
+ScriptVariable *BaseNode::removeVariable(ScriptVariable *var)
 {
-    int index = mVariables.indexOf(p);
+    int index = mVariables.indexOf(var);
     Q_ASSERT(index != -1);
+    var->setNode(NULL);
     return mVariables.takeAt(index);
 }
+
+void BaseNode::initFrom(BaseNode *other)
+{
+    mName = other->mName;
+
+    qDeleteAll(mVariables);
+    mVariables.clear();
+    foreach (ScriptVariable *var, other->mVariables)
+        insertVariable(variableCount(), new ScriptVariable(var));
+
+    qDeleteAll(mInputs);
+    mInputs.clear();
+    foreach (NodeInput *input, other->mInputs)
+        insertInput(inputCount(), new NodeInput(input));
+
+    qDeleteAll(mOutputs);
+    mOutputs.clear();
+    foreach (NodeOutput *output, other->mOutputs)
+        insertOutput(outputCount(), new NodeOutput(output));
+#if 0
+    qDeleteALl(mConnections);
+    mConnections.clear();
+    foreach (NodeConnection *cxn, other->mConnections)
+        insertConnection();
+#endif
+}
+
+/////
+
+bool LuaNode::isKnown(const ScriptVariable *var)
+{
+    return mDefinition && mDefinition->variable(var->name());
+}
+
+bool LuaNode::isKnown(const NodeInput *input)
+{
+    return mDefinition && mDefinition->input(input->name());
+}
+
+bool LuaNode::isKnown(const NodeOutput *output)
+{
+    return mDefinition && mDefinition->output(output->name());
+}
+
+void LuaNode::initFrom(LuaNode *other)
+{
+    BaseNode::initFrom(other);
+    mDefinition = other->mDefinition;
+}
+
+/////
+
+bool ScriptNode::syncWithScriptInfo()
+{
+    if (!mInfo || !mInfo->node()) return false;
+
+    bool changed = false;
+
+    // Sync variables
+    QList<ScriptVariable*> variables, myUnknownVariables;
+    foreach (ScriptVariable *var, mInfo->node()->variables()) {
+        if (ScriptVariable *myVar = variable(var->name()))
+            variables += myVar;
+        else {
+            variables += new ScriptVariable(var);
+            variables.last()->setNode(this);
+        }
+    }
+    foreach (ScriptVariable *myVar, mVariables) {
+        if (!variables.contains(myVar))
+            myUnknownVariables += myVar;
+    }
+    if (variables != mVariables) {
+        mVariables = variables + myUnknownVariables;
+        changed = true;
+    }
+
+    // Sync inputs
+    QList<NodeInput*> inputs, myUnknownInputs;
+    foreach (NodeInput *input, mInfo->node()->inputs()) {
+        if (NodeInput *myInput = this->input(input->name()))
+            inputs += myInput;
+        else {
+            inputs += new NodeInput(input);
+            inputs.last()->mNode = this;
+        }
+    }
+    foreach (NodeInput *myInput, mInputs) {
+        if (!inputs.contains(myInput))
+            myUnknownInputs += myInput;
+    }
+    if (inputs != mInputs) {
+        mInputs = inputs + myUnknownInputs;
+        changed = true;
+    }
+
+    // Sync outputs
+    QList<NodeOutput*> outputs, myUnknownOutputs;
+    foreach (NodeOutput *output, mInfo->node()->outputs()) {
+        if (NodeOutput *myOutput = this->output(output->name()))
+            outputs += myOutput;
+        else {
+            outputs += new NodeOutput(output);
+            outputs.last()->mNode = this;
+        }
+    }
+    foreach (NodeOutput *myOutput, mOutputs) {
+        if (!outputs.contains(myOutput))
+            myUnknownOutputs += myOutput;
+    }
+    if (outputs != mOutputs) {
+        mOutputs = outputs + myUnknownOutputs;
+        changed = true;
+    }
+
+    return changed;
+}
+
+bool ScriptNode::isKnown(const ScriptVariable *var)
+{
+    return mInfo && mInfo->node()->variable(var->name());
+}
+
+bool ScriptNode::isKnown(const NodeInput *input)
+{
+    return mInfo && mInfo->node()->input(input->name());
+}
+
+bool ScriptNode::isKnown(const NodeOutput *output)
+{
+    return mInfo && mInfo->node()->output(output->name());
+}
+
+void ScriptNode::initFrom(ScriptNode *other)
+{
+    BaseNode::initFrom(other);
+    // don't want the child nodes...
+}
+

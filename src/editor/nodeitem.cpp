@@ -39,6 +39,7 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
     QGraphicsItem(parent),
     mScene(scene),
     mNode(node),
+    mVariablesItem(new VariableGroupItem(scene, node, this)),
     mInputsItem(new NodeInputGroupItem(scene, node, this)),
     mOutputsItem(new NodeOutputGroupItem(scene, node, this))
 {
@@ -51,6 +52,7 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
 #endif
 
 #if 1
+#elif 0
     int inputsHeight = mInputsItem->childrenBoundingRect().height();
     int outputsHeight = mOutputsItem->childrenBoundingRect().height();
 #else
@@ -81,6 +83,10 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
     }
 #endif
 
+#if 1
+#elif 0
+    QSize variablesSize = mVariablesItem->childrenBoundingRect().size().toSize();
+#else
     QSize variablesSize;
     if (mNode->variableCount()) {
         int maxWidth = 0, totalHeight = 0;
@@ -94,13 +100,22 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
         totalHeight -= gap;
         variablesSize = QSize(maxWidth, totalHeight);
     }
+#endif
 
+#if 1
+    updateLayout();
+#else
     QSize nameSize = QFontMetrics(mScene->font()).boundingRect(mNode->name()).size() + QSize(6, 6);
 
     int variablesPadding = 8;
     mBounds = QRectF(0, 0, qMax(nameSize.width(), variablesSize.width() + variablesPadding * 2),
                      nameSize.height() + qMax(variablesSize.height() + variablesPadding * 2, qMax(inputsHeight, outputsHeight)));
+#endif
 
+#if 1
+#elif 0
+    mVariablesItem->setPos(variablesPadding, nameSize.height() + variablesPadding);
+#else
     {
         int x = variablesPadding;
         int y = mBounds.top() + nameSize.height() + variablesPadding;
@@ -110,8 +125,10 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
             y += item->boundingRect().height() + gap;
         }
     }
+#endif
 
 #if 1
+#elif 0
     QRectF r = mBounds.adjusted(0, nameSize.height(), 0, 0);
     mInputsItem->setPos(r.left() - 1, r.center().y());
     mOutputsItem->setPos(r.right() + 1, r.center().y());
@@ -213,10 +230,7 @@ NodeOutputItem *NodeItem::outputItem(NodeOutput *output)
 
 BaseVariableItem *NodeItem::variableItem(ScriptVariable *var)
 {
-    foreach (BaseVariableItem *item, mVariableItems)
-        if (item->mVariable == var)
-            return item;
-    return NULL;
+    return mVariablesItem->itemFor(var);
 }
 
 QRectF NodeItem::boundingRect() const
@@ -344,6 +358,48 @@ void NodeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
     ProjectActions::instance()->nodePropertiesDialog(mNode);
 }
 
+void NodeItem::scriptChanged(ScriptInfo *info)
+{
+    if (ScriptNode *node = mNode->asScriptNode()) {
+        if (node->syncWithScriptInfo())
+            syncWithNode();
+    }
+}
+
+void NodeItem::updateLayout()
+{
+    prepareGeometryChange();
+
+    int inputsHeight = mInputsItem->childrenBoundingRect().height();
+    int outputsHeight = mOutputsItem->childrenBoundingRect().height();
+    QSize variablesSize = mVariablesItem->childrenBoundingRect().size().toSize();
+    QSize nameSize = QFontMetrics(mScene->font()).boundingRect(mNode->name()).size() + QSize(6, 6);
+    int variablesPadding = 8;
+
+    mBounds = QRectF(0, 0, qMax(nameSize.width(), variablesSize.width() + variablesPadding * 2),
+                     nameSize.height() + qMax(variablesSize.height() + variablesPadding * 2, qMax(inputsHeight, outputsHeight)));
+
+    mVariablesItem->setPos(variablesPadding, nameSize.height() + variablesPadding);
+
+    QRectF r = mBounds.adjusted(0, nameSize.height(), 0, 0);
+    mInputsItem->setPos(r.left() - 1, r.center().y());
+    mOutputsItem->setPos(r.right() + 1, r.center().y());
+}
+
+void NodeItem::syncWithNode()
+{
+    mVariablesItem->syncWithNode();
+    mVariablesItem->updateLayout();
+
+    mInputsItem->syncWithNode();
+    mInputsItem->updateLayout();
+
+    mOutputsItem->syncWithNode();
+    mOutputsItem->updateLayout();
+
+    updateLayout();
+}
+
 /////
 
 NodeInputItem::NodeInputItem(ScriptScene *scene, NodeInput *pin, QGraphicsItem *parent) :
@@ -374,8 +430,10 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
+    if (!mInput->isKnown())
+        color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
-        color = color.lighter(175);
+        color = color.lighter();
     painter->fillPath(path, color);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -418,8 +476,10 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
+    if (!mOutput->isKnown())
+        color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
-        color = color.lighter(175);
+        color = color.lighter();
     painter->fillPath(path, color);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -442,6 +502,21 @@ NodeInputGroupItem::NodeInputGroupItem(ScriptScene *scene, BaseNode *node, QGrap
     for (int i = 0; i < mNode->inputCount(); i++)
         added(i);
     updateLayout();
+}
+
+void NodeInputGroupItem::syncWithNode()
+{
+    QList<NodeInputItem*> items, unknowns;
+    foreach (NodeInput *input, mNode->inputs()) {
+        NodeInputItem *item = itemFor(input->name());
+        if (item == 0)
+            item = new NodeInputItem(mScene, input, this);
+        items += item;
+    }
+    foreach (NodeInputItem *item, mItems)
+        if (!items.contains(item))
+            unknowns += item;
+    mItems = items + unknowns;
 }
 
 void NodeInputGroupItem::updateLayout()
@@ -470,11 +545,20 @@ void NodeInputGroupItem::removed(int index)
     updateLayout();
 }
 
+NodeInputItem *NodeInputGroupItem::itemFor(const QString &name)
+{
+    foreach (NodeInputItem *item, mItems)
+        if (item->mInput->name() == name)
+            return item;
+    return 0;
+}
+
 NodeInputItem *NodeInputGroupItem::itemFor(NodeInput *input)
 {
     foreach (NodeInputItem *item, mItems)
         if (item->mInput == input)
             return item;
+    return 0;
 }
 
 /////
@@ -488,6 +572,21 @@ NodeOutputGroupItem::NodeOutputGroupItem(ScriptScene *scene, BaseNode *node, QGr
     for (int i = 0; i < mNode->outputCount(); i++)
         added(i);
     updateLayout();
+}
+
+void NodeOutputGroupItem::syncWithNode()
+{
+    QList<NodeOutputItem*> items, unknowns;
+    foreach (NodeOutput *output, mNode->outputs()) {
+        NodeOutputItem *item = itemFor(output->name());
+        if (item == 0)
+            item = new NodeOutputItem(mScene, output, this);
+        items += item;
+    }
+    foreach (NodeOutputItem *item, mItems)
+        if (!items.contains(item))
+            unknowns += item;
+    mItems = items + unknowns;
 }
 
 void NodeOutputGroupItem::updateLayout()
@@ -516,18 +615,27 @@ void NodeOutputGroupItem::removed(int index)
     updateLayout();
 }
 
+NodeOutputItem *NodeOutputGroupItem::itemFor(const QString &name)
+{
+    foreach (NodeOutputItem *item, mItems)
+        if (item->mOutput->name() == name)
+            return item;
+    return 0;
+}
+
 NodeOutputItem *NodeOutputGroupItem::itemFor(NodeOutput *output)
 {
     foreach (NodeOutputItem *item, mItems)
         if (item->mOutput == output)
             return item;
+    return 0;
 }
 
 /////
 
-BaseVariableItem::BaseVariableItem(NodeItem *parent, ScriptVariable *var) :
+BaseVariableItem::BaseVariableItem(ScriptScene *scene, ScriptVariable *var, QGraphicsItem *parent) :
     QGraphicsItem(parent),
-    mParent(parent),
+    mScene(scene),
     mVariable(var),
     mDropHighlight(false)
 {
@@ -541,8 +649,12 @@ QRectF BaseVariableItem::boundingRect() const
 
 void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    QColor color = Qt::black;
+    if (!mVariable->isKnown())
+        color = Qt::red;
     if (mDropHighlight)
-        painter->setPen(Qt::green);
+        color = Qt::green;
+    painter->setPen(color);
     painter->drawRect(option->rect.adjusted(100,0,0,0));
     painter->drawText(option->rect, Qt::AlignVCenter, mVariable->name());
     painter->drawText(option->rect.adjusted(100+3,0,-3,0), Qt::AlignVCenter, mVariable->value());
@@ -556,7 +668,7 @@ void BaseVariableItem::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
         QStringList varNames = getDropData(event);
         bool accept = false;
         foreach (QString varName, varNames) {
-            if (ScriptVariable *var = mParent->mScene->document()->project()->resolveVariable(varName)) {
+            if (ScriptVariable *var = mScene->document()->project()->resolveVariable(varName)) {
                 if (var->type() == mVariable->type()) {
                     accept = true;
                     break;
@@ -583,7 +695,7 @@ void BaseVariableItem::dragLeaveEvent(QGraphicsSceneDragDropEvent *event)
 
 void BaseVariableItem::dropEvent(QGraphicsSceneDragDropEvent *event)
 {
-    ProjectDocument *doc = mParent->mScene->document();
+    ProjectDocument *doc = mScene->document();
 
     mDropHighlight = false;
 
@@ -619,3 +731,54 @@ QStringList BaseVariableItem::getDropData(QGraphicsSceneDragDropEvent *event)
 
 /////
 
+VariableGroupItem::VariableGroupItem(ScriptScene *scene, BaseNode *node, QGraphicsItem *parent) :
+    QGraphicsItem(parent),
+    mScene(scene),
+    mNode(node)
+{
+    setFlag(ItemHasNoContents, true);
+    syncWithNode();
+    updateLayout();
+}
+
+BaseVariableItem *VariableGroupItem::itemFor(const QString &name)
+{
+    foreach (BaseVariableItem *item, mItems)
+        if (item->mVariable->name() == name)
+            return item;
+    return 0;
+}
+
+BaseVariableItem *VariableGroupItem::itemFor(ScriptVariable *var)
+{
+    foreach (BaseVariableItem *item, mItems)
+        if (item->mVariable == var)
+            return item;
+    return 0;
+}
+
+void VariableGroupItem::updateLayout()
+{
+    int gap = 4;
+    int y = 0;
+    foreach (BaseVariableItem *item, mItems) {
+        item->setPos(0, y);
+        y += item->boundingRect().height() + gap;
+    }
+}
+
+void VariableGroupItem::syncWithNode()
+{
+    QList<BaseVariableItem*> items, unknowns;
+    foreach (ScriptVariable *var, mNode->variables()) {
+        // FIXME: check for changing type
+        BaseVariableItem *item = itemFor(var->name());
+        if (item == 0)
+            item = new BaseVariableItem(mScene, var, this);
+        items += item;
+    }
+    foreach (BaseVariableItem *item, mItems)
+        if (!items.contains(item))
+            unknowns += item;
+    mItems = items + unknowns;
+}

@@ -23,10 +23,13 @@
 #include "project.h"
 #include "projectchanger.h"
 #include "projectdocument.h"
+#include "scriptmanager.h"
 
+#include <QFileInfo>
 #include <QGraphicsSceneDragDropEvent>
 #include <QStyleOptionGraphicsItem>
 #include <QMimeData>
+#include <QUrl>
 #include <QtMath>
 
 ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
@@ -146,6 +149,9 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
             SLOT(afterRemoveConnection(int,NodeConnection*)));
     connect(mDocument->changer(), SIGNAL(afterSetVariableValue(ScriptVariable*,QString)),
             SLOT(afterSetVariableValue(ScriptVariable*,QString)));
+
+    connect(scriptmgr(), SIGNAL(scriptChanged(ScriptInfo*)),
+            SLOT(scriptChanged(ScriptInfo*)));
 
     mConnectionsItem->updateConnections();
 }
@@ -285,8 +291,19 @@ void ScriptScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 {
     qDebug() << event->mimeData()->formats();
 
+    mDragHasPZS = false;
+    foreach (const QUrl &url, event->mimeData()->urls()) {
+        QFileInfo info(url.toLocalFile());
+        if (!info.exists()) continue;
+        if (!info.isFile()) continue;
+        if (info.suffix() != QLatin1String("pzs")) continue;
+        mDragHasPZS = true;
+        break;
+    }
+
     if (!event->mimeData()->hasFormat(COMMAND_MIME_TYPE) &&
-            !event->mimeData()->hasFormat(VARIABLE_MIME_TYPE)) {
+            !event->mimeData()->hasFormat(VARIABLE_MIME_TYPE) &&
+            !mDragHasPZS) {
         event->ignore();
         return;
     }
@@ -298,7 +315,8 @@ void ScriptScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
 {
     QGraphicsScene::dragMoveEvent(event);
 
-    if (!event->isAccepted() && event->mimeData()->hasFormat(COMMAND_MIME_TYPE)) {
+    if (!event->isAccepted() &&
+            (event->mimeData()->hasFormat(COMMAND_MIME_TYPE) || mDragHasPZS)) {
         event->accept();
         event->setDropAction(Qt::CopyAction);
     }
@@ -313,6 +331,25 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
 {
     if (event->mimeData()->hasFormat(VARIABLE_MIME_TYPE)) {
         QGraphicsScene::dropEvent(event);
+        return;
+    }
+
+    if (mDragHasPZS) {
+        foreach (const QUrl &url, event->mimeData()->urls()) {
+            QFileInfo info(url.toLocalFile());
+            if (!info.exists()) continue;
+            if (!info.isFile()) continue;
+            if (info.suffix() != QLatin1String("pzs")) continue;
+            if (ScriptInfo *scriptInfo = scriptmgr()->scriptInfo(info.absoluteFilePath())) {
+                ScriptNode *node = new ScriptNode(mDocument->project()->mNextID++, scriptInfo->node()->name());
+                node->initFrom(scriptInfo->node());
+                node->setPos(event->scenePos());
+                node->setScriptInfo(scriptInfo);
+                mDocument->changer()->beginUndoCommand(mDocument->undoStack());
+                mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
+                mDocument->changer()->endUndoCommand();
+            }
+        }
         return;
     }
 
@@ -379,7 +416,6 @@ void ScriptScene::afterAddConnection(int index, NodeConnection *cxn)
 void ScriptScene::afterRemoveConnection(int index, NodeConnection *cxn)
 {
     mConnectionsItem->updateConnections();
-
 }
 
 void ScriptScene::afterSetVariableValue(ScriptVariable *var, const QString &oldValue)
@@ -387,6 +423,12 @@ void ScriptScene::afterSetVariableValue(ScriptVariable *var, const QString &oldV
     foreach (NodeItem *nodeItem, mNodeItems)
         if (BaseVariableItem *varItem = nodeItem->variableItem(var))
             varItem->update();
+}
+
+void ScriptScene::scriptChanged(ScriptInfo *info)
+{
+    foreach (NodeItem *item, mNodeItems)
+        item->scriptChanged(info);
 }
 
 /////

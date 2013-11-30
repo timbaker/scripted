@@ -22,6 +22,7 @@
 #include "documentmanager.h"
 #include "preferences.h"
 #include "progress.h"
+#include "scriptmanager.h"
 
 int main(int argc, char *argv[])
 {
@@ -41,6 +42,7 @@ int main(int argc, char *argv[])
 
     new Preferences;
     new DocumentManager;
+    new ScriptManager;
 
     new LuaManager;
     LuaManager::instance()->readLuaFiles();

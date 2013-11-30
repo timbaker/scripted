@@ -18,6 +18,8 @@
 #ifndef SCRIPTVARIABLE_H
 #define SCRIPTVARIABLE_H
 
+#include "editor_global.h"
+
 #include <QList>
 #include <QString>
 
@@ -25,12 +27,10 @@ class ScriptVariable
 {
 public:
     explicit ScriptVariable(const QString &type, const QString &name, const QString &value);
-    ScriptVariable(const ScriptVariable *other) :
-        mType(other->mType),
-        mName(other->mName),
-        mValue(other->mValue)
-    {
-    }
+    ScriptVariable(const ScriptVariable *other);
+
+    void setNode(BaseNode *node) { mNode = node; }
+    BaseNode *node() const { return mNode; }
 
     void setType(const QString &type) { mType = type; }
     const QString &type() const { return mType; }
@@ -41,7 +41,10 @@ public:
     void setValue(const QString &value) { mValue = value; }
     const QString &value() const { return mValue; }
 
+    bool isKnown() const;
+
 private:
+    BaseNode *mNode;
     QString mName; // --> User-assigned name in a script
     QString mType; // --> Number, String, Actor, etc
     QString mValue;
