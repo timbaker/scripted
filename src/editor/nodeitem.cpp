@@ -143,6 +143,14 @@ void NodeItem::scriptChanged(ScriptInfo *info)
     }
 }
 
+void NodeItem::luaChanged(LuaInfo *info)
+{
+    if (LuaNode *node = mNode->asLuaNode()) {
+        if (node->syncWithLuaInfo())
+            syncWithNode();
+    }
+}
+
 void NodeItem::updateLayout()
 {
     prepareGeometryChange();

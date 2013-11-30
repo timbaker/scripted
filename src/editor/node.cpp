@@ -148,6 +148,73 @@ bool LuaNode::isKnown(const NodeOutput *output)
     return mDefinition && mDefinition->node() && mDefinition->node()->output(output->name());
 }
 
+// FIXME: this is 99% identical to ScriptNode::syncWithScriptInfo()
+bool LuaNode::syncWithLuaInfo()
+{
+    if (!mDefinition || !mDefinition->node()) return false;
+
+    bool changed = false;
+
+    // Sync variables
+    QList<ScriptVariable*> variables, myUnknownVariables;
+    foreach (ScriptVariable *var, mDefinition->node()->variables()) {
+        if (ScriptVariable *myVar = variable(var->name()))
+            variables += myVar;
+        else {
+            variables += new ScriptVariable(var);
+            variables.last()->setNode(this);
+        }
+    }
+    foreach (ScriptVariable *myVar, mVariables) {
+        if (!variables.contains(myVar))
+            myUnknownVariables += myVar;
+    }
+    if (variables != mVariables) {
+        mVariables = variables + myUnknownVariables;
+        changed = true;
+    }
+
+    // Sync inputs
+    QList<NodeInput*> inputs, myUnknownInputs;
+    foreach (NodeInput *input, mDefinition->node()->inputs()) {
+        if (NodeInput *myInput = this->input(input->name()))
+            inputs += myInput;
+        else {
+            inputs += new NodeInput(input);
+            inputs.last()->mNode = this;
+        }
+    }
+    foreach (NodeInput *myInput, mInputs) {
+        if (!inputs.contains(myInput))
+            myUnknownInputs += myInput;
+    }
+    if (inputs != mInputs) {
+        mInputs = inputs + myUnknownInputs;
+        changed = true;
+    }
+
+    // Sync outputs
+    QList<NodeOutput*> outputs, myUnknownOutputs;
+    foreach (NodeOutput *output, mDefinition->node()->outputs()) {
+        if (NodeOutput *myOutput = this->output(output->name()))
+            outputs += myOutput;
+        else {
+            outputs += new NodeOutput(output);
+            outputs.last()->mNode = this;
+        }
+    }
+    foreach (NodeOutput *myOutput, mOutputs) {
+        if (!outputs.contains(myOutput))
+            myUnknownOutputs += myOutput;
+    }
+    if (outputs != mOutputs) {
+        mOutputs = outputs + myUnknownOutputs;
+        changed = true;
+    }
+
+    return changed;
+}
+
 void LuaNode::initFrom(LuaNode *other)
 {
     BaseNode::initFrom(other);

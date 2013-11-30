@@ -200,6 +200,8 @@ public:
     void setSource(const QString &path) { mSource = path; }
     QString source() { return mSource; }
 
+    bool syncWithLuaInfo();
+
     void initFrom(LuaNode *other);
 
     virtual bool isLuaNode() { return true; }

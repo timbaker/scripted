@@ -132,6 +132,7 @@ public slots:
     void afterSetVariableValue(ScriptVariable *var, const QString &oldValue);
 
     void scriptChanged(ScriptInfo *info);
+    void luaChanged(LuaInfo *info);
 
 private:
     ProjectDocument *mDocument;

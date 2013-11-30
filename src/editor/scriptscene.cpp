@@ -150,6 +150,8 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
     connect(mDocument->changer(), SIGNAL(afterSetVariableValue(ScriptVariable*,QString)),
             SLOT(afterSetVariableValue(ScriptVariable*,QString)));
 
+    connect(luamgr(), SIGNAL(luaChanged(LuaInfo*)),
+            SLOT(luaChanged(LuaInfo*)));
     connect(scriptmgr(), SIGNAL(scriptChanged(ScriptInfo*)),
             SLOT(scriptChanged(ScriptInfo*)));
 
@@ -433,6 +435,16 @@ void ScriptScene::scriptChanged(ScriptInfo *info)
 {
     foreach (NodeItem *item, mNodeItems)
         item->scriptChanged(info);
+
+    mAreaItem->updateBounds();
+}
+
+void ScriptScene::luaChanged(LuaInfo *info)
+{
+    foreach (NodeItem *item, mNodeItems)
+        item->luaChanged(info);
+
+    mAreaItem->updateBounds();
 }
 
 /////

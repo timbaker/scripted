@@ -175,6 +175,7 @@ public:
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 
     void scriptChanged(ScriptInfo *info);
+    void luaChanged(LuaInfo *info);
     void updateLayout();
     void syncWithNode();
 
