@@ -75,6 +75,8 @@ public:
 
         if (xml.readNextStartElement() && xml.name() == QLatin1String("script")) {
             project = readProject();
+            if (project)
+                project->rootNode()->setName(QFileInfo(path).baseName());
         } else {
             xml.raiseError(tr("Not a script file."));
         }
@@ -302,7 +304,7 @@ private:
         QString type = atts.value(QLatin1String("type")).toString();
         QString name = atts.value(QLatin1String("name")).toString();
         QString value = atts.value(QLatin1String("value")).toString();
-        QString varRef = atts.value(QLatin1String("varRef")).toString();
+        QString varRef = atts.value(QLatin1String("reference")).toString();
         xml.skipCurrentElement();
         return new ScriptVariable(type, name, value, varRef);
     }

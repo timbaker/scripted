@@ -166,7 +166,7 @@ public:
         if (var->variableRef().isEmpty())
             xml.writeAttribute(QLatin1String("value"), var->value());
         else
-            xml.writeAttribute(QLatin1String("varRef"), var->variableRef());
+            xml.writeAttribute(QLatin1String("reference"), var->variableRef());
         xml.writeEndElement();
     }
 
