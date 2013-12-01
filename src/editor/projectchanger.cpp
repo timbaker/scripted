@@ -39,7 +39,8 @@ namespace ProjectChanges
 #if 1
 enum ChangeId
 {
-    ID_RenameNode = 1,
+    ID_MoveNode = 1,
+    ID_RenameNode,
     ID_RenameInput,
     ID_RenameOutput
 };
@@ -111,6 +112,17 @@ public:
         mNode->setPos(mOldPos);
         mChanger->afterMoveNode(mNode, mNewPos);
     }
+
+    bool merge(ProjectChange *other)
+    {
+        MoveNode *o = (MoveNode*) other;
+        if (!(o->mNode == mNode))
+            return false;
+        mNewPos = o->mNewPos;
+        return true;
+    }
+
+    int id() const { return ID_MoveNode; }
 
     QString text() const
     {

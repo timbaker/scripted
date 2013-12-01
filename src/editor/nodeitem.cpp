@@ -141,7 +141,7 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     QGraphicsItem::mouseReleaseEvent(event);
     if (mPreDragPosition != pos()) {
-        mScene->document()->changer()->beginUndoCommand(mScene->document()->undoStack());
+        mScene->document()->changer()->beginUndoCommand(mScene->document()->undoStack(), true);
         mScene->document()->changer()->doMoveNode(mNode, pos());
         mScene->document()->changer()->endUndoCommand();
     }
