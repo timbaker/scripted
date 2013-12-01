@@ -159,7 +159,7 @@ void ProjectTreeModel::beforeRemoveNode(int index, BaseNode *node)
 void ProjectTreeModel::afterRenameNode(BaseNode *node, const QString &oldName)
 {
     Q_UNUSED(oldName);
-    QModelIndex index = index(node);
+    QModelIndex index = this->index(node);
     Q_ASSERT(index.isValid());
     emit dataChanged(index, index);
 }
@@ -211,10 +211,7 @@ ProjectTreeModel::Item *ProjectTreeModel::toItem(BaseNode *node) const
 {
     if (!mRoot)
         return 0;
-    foreach (Item *item, mRoot->children)
-        if (item->node == node)
-            return item;
-    return 0;
+   return mRoot->find(node);
 }
 
 QModelIndex ProjectTreeModel::index(Item *item) const

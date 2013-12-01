@@ -52,6 +52,7 @@ public:
 private slots:
     void afterAddNode(int index, BaseNode *node);
     void beforeRemoveNode(int index, BaseNode *node);
+    void afterRenameNode(BaseNode *node, const QString &oldName);
 
 private:
     class Item
@@ -69,6 +70,16 @@ private:
             node(object)
         {
             parent->children.insert(index, this);
+        }
+
+        Item *find(BaseNode *node)
+        {
+            if (node == this->node)
+                return this;
+            foreach (Item *child, children)
+                if (Item *item = child->find(node))
+                    return item;
+            return 0;
         }
 
         Item *parent;
