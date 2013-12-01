@@ -27,10 +27,6 @@ NodePropertiesDialog::NodePropertiesDialog(QWidget *parent) :
     mNode(0)
 {
     ui->setupUi(this);
-
-    foreach (LuaInfo *def, luamgr()->commands()) {
-        ui->commandCombo->addItem(def->node()->name());
-    }
 }
 
 NodePropertiesDialog::~NodePropertiesDialog()
@@ -38,9 +34,14 @@ NodePropertiesDialog::~NodePropertiesDialog()
     delete ui;
 }
 
-void NodePropertiesDialog::setObject(BaseNode *object)
+void NodePropertiesDialog::setNode(BaseNode *node)
 {
-    mNode = object;
+    mNode = node;
+    ui->nameEdit->setText(mNode->name());
+    if (LuaNode *lnode = mNode->asLuaNode())
+        ui->sourceEdit->setText(lnode->source());
+    if (ScriptNode *snode = mNode->asScriptNode())
+        ui->sourceEdit->setText(snode->source());
     setPropertiesTable();
     setConnectionsTable();
 }

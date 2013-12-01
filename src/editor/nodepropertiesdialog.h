@@ -33,7 +33,7 @@ public:
     explicit NodePropertiesDialog(QWidget *parent = 0);
     ~NodePropertiesDialog();
 
-    void setObject(BaseNode *object);
+    void setNode(BaseNode *node);
     void setPropertiesTable();
     void setConnectionsTable();
 

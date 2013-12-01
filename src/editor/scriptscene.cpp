@@ -347,6 +347,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
                 node->initFrom(scriptInfo->node());
                 node->setPos(event->scenePos());
                 node->setScriptInfo(scriptInfo);
+                node->setSource(scriptInfo->path());
                 mDocument->changer()->beginUndoCommand(mDocument->undoStack());
                 mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
                 mDocument->changer()->endUndoCommand();

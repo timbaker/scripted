@@ -44,7 +44,7 @@ void ProjectTreeDock::activated(const QModelIndex &index)
 {
     if (BaseNode *node = ui->treeView->model()->toNode(index)) {
         NodePropertiesDialog d(MainWindow::instance());
-        d.setObject(node);
+        d.setNode(node);
         d.exec();
     }
 }

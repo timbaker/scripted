@@ -23,7 +23,7 @@
 
 Project::Project() :
     mNextID(1),
-    mRootNode(new ScriptNode(0, QLatin1String("something")))
+    mRootNode(new ScriptNode(0, QLatin1String("FIXME")))
 {
 #if 0
     int i = 0;

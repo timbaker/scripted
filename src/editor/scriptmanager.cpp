@@ -52,6 +52,7 @@ ScriptInfo *ScriptManager::scriptInfo(const QString &fileName, const QString &re
         return 0;
 
     ScriptInfo *info = new ScriptInfo;
+    info->mPath = path;
     info->mNode = node;
     mScriptInfo[path] = info;
     mFileSystemWatcher.addPath(path);

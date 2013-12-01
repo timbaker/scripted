@@ -186,7 +186,7 @@ void ProjectActions::preferencesDialog()
 void ProjectActions::nodePropertiesDialog(BaseNode *node)
 {
     NodePropertiesDialog d(MainWindow::instance());
-    d.setObject(node);
+    d.setNode(node);
     d.exec();
 }
 
