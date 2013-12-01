@@ -53,7 +53,8 @@ SOURCES += main.cpp\
     scriptmanager.cpp \
     filesystemwatcher.cpp \
     variablepropertiesdialog.cpp \
-    undoredobuttons.cpp
+    undoredobuttons.cpp \
+    scenescriptdialog.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -101,7 +102,8 @@ HEADERS  += mainwindow.h \
     scriptmanager.h \
     filesystemwatcher.h \
     variablepropertiesdialog.h \
-    undoredobuttons.h
+    undoredobuttons.h \
+    scenescriptdialog.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \
@@ -110,7 +112,8 @@ FORMS    += mainwindow.ui \
     scriptsdock.ui \
     luadockwidget.ui \
     nodepropertiesdialog.ui \
-    variablepropertiesdialog.ui
+    variablepropertiesdialog.ui \
+    scenescriptdialog.ui
 
 RESOURCES += \
     editor.qrc

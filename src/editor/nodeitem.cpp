@@ -238,14 +238,12 @@ NodeInputItem::NodeInputItem(ScriptScene *scene, NodeInput *pin, QGraphicsItem *
     mConnectHighlight(false)
 {
     setAcceptHoverEvents(true);
+    updateLayout();
 }
 
 QRectF NodeInputItem::boundingRect() const
 {
-    QFontMetricsF fm(mScene->font());
-    qreal labelWidth = fm.boundingRect(mInput->mName).width();
-    QRectF r(-(size().width() + labelWidth), -size().height() / 2, size().width() + labelWidth, size().height());
-    return r.adjusted(-3, -3, 3, 3); // adjust for pen width
+    return mBounds;
 }
 
 void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -276,6 +274,18 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->drawText(r.adjusted(size().width() / 4, 0, 0, 0), Qt::AlignCenter, mInput->mName);
 }
 
+void NodeInputItem::updateLayout()
+{
+    QFontMetricsF fm(mScene->font());
+    qreal labelWidth = fm.boundingRect(mInput->mName).width();
+    QRectF r(-(size().width() + labelWidth), -size().height() / 2, size().width() + labelWidth, size().height());
+    QRectF bounds = r.adjusted(-3, -3, 3, 3); // adjust for pen width
+    if (bounds != mBounds) {
+        prepareGeometryChange();
+        mBounds = bounds;
+    }
+}
+
 /////
 
 NodeOutputItem::NodeOutputItem(ScriptScene *scene, NodeOutput *pin, QGraphicsItem *parent) :
@@ -284,14 +294,12 @@ NodeOutputItem::NodeOutputItem(ScriptScene *scene, NodeOutput *pin, QGraphicsIte
     mOutput(pin)
 {
     setAcceptHoverEvents(true);
+    updateLayout();
 }
 
 QRectF NodeOutputItem::boundingRect() const
 {
-    QFontMetricsF fm(mScene->font());
-    qreal labelWidth = fm.boundingRect(mOutput->mName).width();
-    QRectF r(0, -size().height() / 2, size().width() + labelWidth, size().height());
-    return r.adjusted(-3, -3, 3, 3); // adjust for pen width
+    return mBounds;
 }
 
 void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -320,6 +328,18 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->drawText(r, Qt::AlignCenter, mOutput->mName);
 }
 
+void NodeOutputItem::updateLayout()
+{
+    QFontMetricsF fm(mScene->font());
+    qreal labelWidth = fm.boundingRect(mOutput->mName).width();
+    QRectF r(0, -size().height() / 2, size().width() + labelWidth, size().height());
+    QRectF bounds = r.adjusted(-3, -3, 3, 3); // adjust for pen width
+    if (bounds != mBounds) {
+        prepareGeometryChange();
+        mBounds = bounds;
+    }
+}
+
 /////
 
 NodeInputGroupItem::NodeInputGroupItem(ScriptScene *scene, BaseNode *node, QGraphicsItem *parent) :
@@ -337,7 +357,7 @@ void NodeInputGroupItem::syncWithNode()
 {
     QList<NodeInputItem*> items, unknowns;
     foreach (NodeInput *input, mNode->inputs()) {
-        NodeInputItem *item = itemFor(input->name());
+        NodeInputItem *item = itemFor(input);
         if (item == 0)
             item = new NodeInputItem(mScene, input, this);
         items += item;
@@ -345,7 +365,12 @@ void NodeInputGroupItem::syncWithNode()
     foreach (NodeInputItem *item, mItems)
         if (!items.contains(item))
             unknowns += item;
+#if 1
+    qDeleteAll(unknowns);
+    mItems = items;
+#else
     mItems = items + unknowns;
+#endif
 }
 
 void NodeInputGroupItem::updateLayout()
@@ -357,6 +382,7 @@ void NodeInputGroupItem::updateLayout()
 
     int y = 0 - totalHeight / 2 + pinHeight / 2;
     foreach (NodeInputItem *item, mItems) {
+        item->updateLayout();
         item->setPos(0, y);
         y += pinHeight + gap;
     }
@@ -415,7 +441,12 @@ void NodeOutputGroupItem::syncWithNode()
     foreach (NodeOutputItem *item, mItems)
         if (!items.contains(item))
             unknowns += item;
+#if 1
+    qDeleteAll(unknowns);
+    mItems = items;
+#else
     mItems = items + unknowns;
+#endif
 }
 
 void NodeOutputGroupItem::updateLayout()
@@ -427,6 +458,7 @@ void NodeOutputGroupItem::updateLayout()
 
     int y = 0 - totalHeight / 2 + pinHeight / 2;
     foreach (NodeOutputItem *item, mItems) {
+        item->updateLayout();
         item->setPos(0, y);
         y += pinHeight + gap;
     }

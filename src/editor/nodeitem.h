@@ -31,8 +31,11 @@ public:
 
     static QSize size() { return QSize(22, 28); }
 
+    void updateLayout();
+
     ScriptScene *mScene;
     NodeInput *mInput;
+    QRectF mBounds;
     bool mConnectHighlight;
 };
 
@@ -46,8 +49,11 @@ public:
 
     static QSize size() { return QSize(22, 28); }
 
+    void updateLayout();
+
     ScriptScene *mScene;
     NodeOutput *mOutput;
+    QRectF mBounds;
 };
 
 class NodeInputGroupItem : public QGraphicsItem

@@ -39,7 +39,8 @@ namespace ProjectChanges
 #if 1
 enum ChangeId
 {
-    ID_RenameNode = 1
+    ID_RenameNode = 1,
+    ID_RenameInput
 };
 
 // FIXME: why didn't ImageEd delete objects in destructors?
@@ -160,6 +161,128 @@ public:
     }
 
     BaseNode *mNode;
+    QString mOldName;
+    QString mNewName;
+};
+
+class AddInput : public ProjectChange
+{
+public:
+    AddInput(ProjectChanger *changer, int index, NodeInput *input) :
+        ProjectChange(changer),
+        mIndex(index),
+        mInput(input)
+    {
+    }
+
+    void redo()
+    {
+        mChanger->project()->rootNode()->insertInput(mIndex, mInput);
+        mChanger->afterAddInput(mIndex, mInput);
+    }
+
+    void undo()
+    {
+//        mChanger->beforeRemoveInput(mIndex, mInput);
+        mChanger->project()->rootNode()->removeInput(mIndex);
+        mChanger->afterRemoveInput(mIndex, mInput);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Add Input");
+    }
+
+    int mIndex;
+    NodeInput *mInput;
+};
+
+class RemoveInput : public AddInput
+{
+public:
+    RemoveInput(ProjectChanger *changer, int index, NodeInput *input) :
+        AddInput(changer, index, input)
+    { }
+    void redo() { AddInput::undo(); }
+    void undo() { AddInput::redo(); }
+    QString text() const { return mChanger->tr("Remove Input"); }
+};
+
+class ReorderInput : public ProjectChange
+{
+public:
+    ReorderInput(ProjectChanger *changer, int oldIndex, int newIndex) :
+        ProjectChange(changer),
+        mOldIndex(oldIndex),
+        mNewIndex(newIndex)
+    {
+    }
+
+    void redo()
+    {
+        BaseNode *node = mChanger->project()->rootNode();
+        NodeInput *input = node->removeInput(mOldIndex);
+        node->insertInput(mNewIndex, input);
+        mChanger->afterReorderInput(mOldIndex, mNewIndex);
+    }
+
+    void undo()
+    {
+        BaseNode *node = mChanger->project()->rootNode();
+        NodeInput *input = node->removeInput(mNewIndex);
+        node->insertInput(mOldIndex, input);
+        mChanger->afterReorderInput(mNewIndex, mOldIndex);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Reorder Input");
+    }
+
+    int mOldIndex;
+    int mNewIndex;
+};
+
+class RenameInput : public ProjectChange
+{
+public:
+    RenameInput(ProjectChanger *changer, NodeInput *input, const QString &name) :
+        ProjectChange(changer),
+        mInput(input),
+        mOldName(input->name()),
+        mNewName(name)
+    {
+    }
+
+    void redo()
+    {
+        mInput->setName(mNewName);
+        mChanger->afterRenameInput(mInput, mOldName);
+    }
+
+    void undo()
+    {
+        mInput->setName(mOldName);
+        mChanger->afterRenameInput(mInput, mNewName);
+    }
+
+    bool merge(ProjectChange *other)
+    {
+        RenameInput *o = (RenameInput*) other;
+        if (!(o->mInput == mInput))
+            return false;
+        mNewName = o->mNewName;
+        return true;
+    }
+
+    int id() const { return ID_RenameInput; }
+
+    QString text() const
+    {
+        return mChanger->tr("Rename Input");
+    }
+
+    NodeInput *mInput;
     QString mOldName;
     QString mNewName;
 };
@@ -1679,6 +1802,27 @@ void ProjectChanger::doMoveNode(BaseNode *node, const QPointF &pos)
 void ProjectChanger::doRenameNode(BaseNode *node, const QString &name)
 {
     addChange(new RenameNode(this, node, name));
+}
+
+void ProjectChanger::doAddInput(int index, NodeInput *input)
+{
+    addChange(new AddInput(this, index, input));
+}
+
+void ProjectChanger::doRemoveInput(NodeInput *input)
+{
+    int index = mProject->rootNode()->indexOf(input);
+    addChange(new RemoveInput(this, index, input));
+}
+
+void ProjectChanger::doReorderInput(int oldIndex, int newIndex)
+{
+    addChange(new ReorderInput(this, oldIndex, newIndex));
+}
+
+void ProjectChanger::doRenameInput(NodeInput *input, const QString &name)
+{
+    addChange(new RenameInput(this, input, name));
 }
 
 void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)

@@ -57,3 +57,9 @@ ScriptVariable *Project::resolveVariable(const QString &name)
 {
     return mRootNode->variable(name);
 }
+
+bool Project::isValidInputName(const QString &name)
+{
+    if (name.isEmpty()) return false;
+    return true;
+}

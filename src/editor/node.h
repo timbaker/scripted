@@ -46,6 +46,7 @@ public:
     {
     }
 
+    void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
 
     bool isKnown() const;
@@ -68,6 +69,7 @@ public:
     {
     }
 
+    void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
 
     bool isKnown() const;
@@ -125,6 +127,10 @@ public:
                 return input;
         return 0;
     }
+    int indexOf(NodeInput *input)
+    {
+        return mInputs.indexOf(input);
+    }
 
     void insertOutput(int index, NodeOutput *output);
     NodeOutput *removeOutput(int index);
@@ -142,6 +148,10 @@ public:
             if (output->mName == name)
                 return output;
         return 0;
+    }
+    int indexOf(NodeOutput *output)
+    {
+        return mOutputs.indexOf(output);
     }
 
     NodeConnection *connection(int index) const
@@ -269,6 +279,7 @@ public:
     {
         return mNodes.indexOf(node);
     }
+    using BaseNode::indexOf;
 
     void setScriptInfo(ScriptInfo *info) { mInfo = info; }
     ScriptInfo *scriptInfo() const { return mInfo; }

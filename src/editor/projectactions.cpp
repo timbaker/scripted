@@ -27,6 +27,7 @@
 #include "projectchanger.h"
 #include "projectdocument.h"
 #include "projectreader.h"
+#include "scenescriptdialog.h"
 #include "variablepropertiesdialog.h"
 
 #include <QFileDialog>
@@ -50,6 +51,8 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
     connect(mActions->actionQuit, SIGNAL(triggered()), MainWindow::instance(), SLOT(close()));
 
     connect(mActions->actionPreferences, SIGNAL(triggered()), SLOT(preferencesDialog()));
+
+    connect(mActions->actionEditInputsOutputs, SIGNAL(triggered()), SLOT(sceneScriptDialog()));
 }
 
 ProjectDocument *ProjectActions::document()
@@ -183,6 +186,12 @@ void ProjectActions::preferencesDialog()
 
 }
 
+void ProjectActions::sceneScriptDialog()
+{
+    SceneScriptDialog d(document(), MainWindow::instance());
+    d.exec();
+}
+
 void ProjectActions::removeNode(BaseNode *node)
 {
     ProjectDocument *doc = document();
@@ -213,6 +222,44 @@ void ProjectActions::nodePropertiesDialog(BaseNode *node)
     NodePropertiesDialog d(document(), MainWindow::instance());
     d.setNode(node);
     d.exec();
+}
+
+void ProjectActions::addInput()
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    int n = 1;
+    QString name;
+    do {
+        name = QString::fromLatin1("Input%1").arg(n);
+    } while (doc->project()->rootNode()->input(name) != 0);
+    NodeInput *input = new NodeInput(name);
+    doc->changer()->doAddInput(doc->project()->rootNode()->inputCount(), input);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::removeInput(int index)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    doc->changer()->doRemoveInput(doc->project()->rootNode()->input(index));
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::reorderInput(int oldIndex, int newIndex)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    doc->changer()->doReorderInput(oldIndex, newIndex);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::renameInput(int index, const QString &name)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack(), true);
+    doc->changer()->doRenameInput(doc->project()->rootNode()->input(index), name);
+    doc->changer()->endUndoCommand();
 }
 
 void ProjectActions::addVariable()

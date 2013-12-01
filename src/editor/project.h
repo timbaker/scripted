@@ -35,6 +35,9 @@ public:
 
     ScriptVariable *resolveVariable(const QString &name);
 
+    bool isValidInputName(const QString &name);
+    bool isValidOutputName(const QString &name);
+
     int mNextID; // must come before mRootNode
     ScriptNode* mRootNode;
 };
