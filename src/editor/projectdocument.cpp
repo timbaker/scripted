@@ -39,12 +39,16 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
 //    QString relativeTo = QFileInfo(mFileName).absolutePath();
     foreach (BaseNode *node, mProject->rootNode()->nodes()) {
         if (LuaNode *lnode = node->asLuaNode()) {
-            if (LuaInfo *info = luamgr()->luaInfo(lnode->source()))
+            if (LuaInfo *info = luamgr()->luaInfo(lnode->source())) {
                 lnode->mDefinition = info;
+                lnode->syncWithLuaInfo();
+            }
         }
         if (ScriptNode *snode = node->asScriptNode()) {
-            if (ScriptInfo *info = scriptmgr()->scriptInfo(snode->source()))
+            if (ScriptInfo *info = scriptmgr()->scriptInfo(snode->source())) {
                 snode->setScriptInfo(info);
+                snode->syncWithScriptInfo();
+            }
         }
     }
 }

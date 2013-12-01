@@ -108,6 +108,10 @@ public:
 
     QStringList getDropData(QGraphicsSceneDragDropEvent *event);
 
+    void updateLayout(int groupLabelWidth, int groupValueWidth);
+    QSize nameSizeHint();
+    QSize valueSizeHint();
+
     QRectF valueRect(const QRectF &itemRect);
     QRectF clearRefRect(const QRectF &itemRect);
 
@@ -115,6 +119,9 @@ public:
     ScriptVariable *mVariable;
     bool mDropHighlight;
     QImage mRemoveVarRefImage;
+
+    int mGroupLabelWidth;
+    int mGroupValueWidth;
 };
 
 class ActorVariableItem : public BaseVariableItem

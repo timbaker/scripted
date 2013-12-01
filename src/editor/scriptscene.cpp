@@ -150,6 +150,7 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
             SLOT(afterAddConnection(int,NodeConnection*)));
     connect(mDocument->changer(), SIGNAL(afterRemoveConnection(int,NodeConnection*)),
             SLOT(afterRemoveConnection(int,NodeConnection*)));
+
     connect(mDocument->changer(), SIGNAL(afterChangeVariable(ScriptVariable*,const ScriptVariable*)),
             SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
 
@@ -430,8 +431,9 @@ void ScriptScene::afterChangeVariable(ScriptVariable *var, const ScriptVariable 
 {
     Q_UNUSED(oldValue)
     foreach (NodeItem *nodeItem, mNodeItems)
-        if (BaseVariableItem *varItem = nodeItem->variableItem(var))
-            varItem->update();
+        if (BaseVariableItem *varItem = nodeItem->variableItem(var)) {
+            nodeItem->updateLayout();
+        }
 }
 
 void ScriptScene::scriptChanged(ScriptInfo *info)

@@ -180,13 +180,18 @@ void NodeItem::updateLayout()
 {
     prepareGeometryChange();
 
+    mVariablesItem->updateLayout();
+    mInputsItem->updateLayout();
+    mOutputsItem->updateLayout();
+
     int inputsHeight = mInputsItem->childrenBoundingRect().height();
     int outputsHeight = mOutputsItem->childrenBoundingRect().height();
     QSize variablesSize = mVariablesItem->childrenBoundingRect().size().toSize();
     QSize nameSize = QFontMetrics(mScene->font()).boundingRect(mNode->name()).size() + QSize(6, 6);
+    int buttonsWidth = 2 + qMax(nameSize.height(), 16) * 2 + 1;
     int variablesPadding = 8;
 
-    mBounds = QRectF(0, 0, qMax(nameSize.width(), variablesSize.width() + variablesPadding * 2),
+    mBounds = QRectF(0, 0, qMax(nameSize.width() + buttonsWidth, variablesSize.width() + variablesPadding * 2),
                      nameSize.height() + qMax(variablesSize.height() + variablesPadding * 2, qMax(inputsHeight, outputsHeight)));
 
     mVariablesItem->setPos(variablesPadding, nameSize.height() + variablesPadding);
@@ -199,13 +204,8 @@ void NodeItem::updateLayout()
 void NodeItem::syncWithNode()
 {
     mVariablesItem->syncWithNode();
-    mVariablesItem->updateLayout();
-
     mInputsItem->syncWithNode();
-    mInputsItem->updateLayout();
-
     mOutputsItem->syncWithNode();
-    mOutputsItem->updateLayout();
 
     updateLayout();
 }
@@ -470,11 +470,13 @@ BaseVariableItem::BaseVariableItem(ScriptScene *scene, ScriptVariable *var, QGra
     mRemoveVarRefImage(QLatin1String(":/images/16x16/window-close.png"))
 {
     setAcceptDrops(true);
+
+    mGroupLabelWidth = mGroupValueWidth = 32;
 }
 
 QRectF BaseVariableItem::boundingRect() const
 {
-    return QRectF(0, 0, 200, 24);
+    return QRectF(0, 0, mGroupLabelWidth + mGroupValueWidth, 24);
 }
 
 void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
@@ -583,14 +585,39 @@ QStringList BaseVariableItem::getDropData(QGraphicsSceneDragDropEvent *event)
     return ret;
 }
 
+void BaseVariableItem::updateLayout(int groupLabelWidth, int groupValueWidth)
+{
+    if (groupLabelWidth != mGroupLabelWidth || mGroupValueWidth != groupValueWidth) {
+        prepareGeometryChange();
+        mGroupLabelWidth = groupLabelWidth;
+        mGroupValueWidth = groupValueWidth;
+    }
+}
+
+QSize BaseVariableItem::nameSizeHint()
+{
+    QFontMetrics fm(mScene->font());
+    return fm.boundingRect(mVariable->name()).size() + QSize(4, 3 + 3);
+}
+
+QSize BaseVariableItem::valueSizeHint()
+{
+    QFontMetrics fm(mScene->font());
+    QString value = mVariable->value();
+    if (mVariable->variableRef().length())
+        value = mVariable->variableRef();
+    return fm.boundingRect(value).size() + QSize(3 + 3 + 16 + 2, 3 + 16 + 3);
+}
+
 QRectF BaseVariableItem::valueRect(const QRectF &itemRect)
 {
-    return itemRect.adjusted(100,0,0,0);
+    return itemRect.adjusted(mGroupLabelWidth,0,0,0);
 }
 
 QRectF BaseVariableItem::clearRefRect(const QRectF &itemRect)
 {
-    return QRectF(itemRect.right() - 16 - 2, itemRect.top() + (itemRect.height() - mRemoveVarRefImage.height()) / 2,
+    return QRectF(itemRect.right() - 16 - 2,
+                  itemRect.top() + (itemRect.height() - mRemoveVarRefImage.height()) / 2,
                   mRemoveVarRefImage.width(), mRemoveVarRefImage.height());
 }
 
@@ -624,9 +651,16 @@ BaseVariableItem *VariableGroupItem::itemFor(ScriptVariable *var)
 
 void VariableGroupItem::updateLayout()
 {
+    int maxLabelWidth = 0, maxValueWidth = 96;
+    foreach (BaseVariableItem *item, mItems) {
+        maxLabelWidth = qMax(maxLabelWidth, item->nameSizeHint().width());
+        maxValueWidth = qMax(maxValueWidth, item->valueSizeHint().width());
+    }
+
     int gap = 4;
     int y = 0;
     foreach (BaseVariableItem *item, mItems) {
+        item->updateLayout(maxLabelWidth, maxValueWidth);
         item->setPos(0, y);
         y += item->boundingRect().height() + gap;
     }
