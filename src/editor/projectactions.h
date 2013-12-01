@@ -68,6 +68,8 @@ public slots:
     void removeConnection(BaseNode *node, NodeConnection *cxn);
     void reorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
+    void editNodeVariableValue(ScriptVariable *var);
+
     void updateActions();
 
 private:

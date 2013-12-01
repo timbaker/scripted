@@ -543,9 +543,24 @@ void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
             doc->changer()->endUndoCommand();
             return;
         }
+        if (valueRect(boundingRect()).contains(event->pos()) &&
+                mVariable->variableRef().isEmpty())
+            return;
     }
 
     QGraphicsItem::mousePressEvent(event);
+}
+
+void BaseVariableItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        if (valueRect(boundingRect()).contains(event->pos()) &&
+                mVariable->variableRef().isEmpty()) {
+            ProjectActions::instance()->editNodeVariableValue(mVariable);
+        }
+    }
+
+    QGraphicsItem::mouseReleaseEvent(event);
 }
 
 static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");

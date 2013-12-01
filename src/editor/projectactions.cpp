@@ -18,6 +18,7 @@
 #include "projectactions.h"
 
 #include "documentmanager.h"
+#include "editnodevariabledialog.h"
 #include "node.h"
 #include "mainwindow.h"
 #include "nodepropertiesdialog.h"
@@ -377,7 +378,17 @@ void ProjectActions::reorderConnection(BaseNode *node, int oldIndex, int newInde
     doc->changer()->endUndoMacro();
 }
 
-void ProjectActions::updateActions()
+void ProjectActions::editNodeVariableValue(ScriptVariable *var)
 {
+    EditNodeVariableDialog d(var, MainWindow::instance());
+    if (d.exec() == QDialog::Accepted) {
+        ProjectDocument *doc = document();
+        doc->changer()->beginUndoCommand(doc->undoStack());
+        ScriptVariable newVar(var);
+        newVar.setValue(d.value());
+        doc->changer()->doChangeVariable(var, &newVar);
+        doc->changer()->endUndoCommand();
+    }
+}
 
 }
