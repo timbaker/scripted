@@ -156,6 +156,14 @@ void ProjectTreeModel::beforeRemoveNode(int index, BaseNode *node)
     endRemoveRows();
 }
 
+void ProjectTreeModel::afterRenameNode(BaseNode *node, const QString &oldName)
+{
+    Q_UNUSED(oldName);
+    QModelIndex index = index(node);
+    Q_ASSERT(index.isValid());
+    emit dataChanged(index, index);
+}
+
 void ProjectTreeModel::addNode(Item *parent, BaseNode *node)
 {
     Item *item = new Item(parent, parent->children.size(), node);
@@ -185,6 +193,8 @@ void ProjectTreeModel::setDocument(Document *doc)
                 SLOT(afterAddNode(int,BaseNode*)));
         connect(mDocument->changer(), SIGNAL(beforeRemoveNode(int,BaseNode*)),
                 SLOT(beforeRemoveNode(int,BaseNode*)));
+        connect(mDocument->changer(), SIGNAL(afterRenameNode(BaseNode*,QString)),
+                SLOT(afterRenameNode(BaseNode*,QString)));
     }
 
     endResetModel();

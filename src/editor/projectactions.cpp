@@ -231,7 +231,7 @@ void ProjectActions::addInput()
     int n = 1;
     QString name;
     do {
-        name = QString::fromLatin1("Input%1").arg(n);
+        name = QString::fromLatin1("Input%1").arg(n++);
     } while (doc->project()->rootNode()->input(name) != 0);
     NodeInput *input = new NodeInput(name);
     doc->changer()->doAddInput(doc->project()->rootNode()->inputCount(), input);
@@ -259,6 +259,44 @@ void ProjectActions::renameInput(int index, const QString &name)
     ProjectDocument *doc = document();
     doc->changer()->beginUndoCommand(doc->undoStack(), true);
     doc->changer()->doRenameInput(doc->project()->rootNode()->input(index), name);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::addOutput()
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    int n = 1;
+    QString name;
+    do {
+        name = QString::fromLatin1("Output%1").arg(n++);
+    } while (doc->project()->rootNode()->output(name) != 0);
+    NodeOutput *output = new NodeOutput(name);
+    doc->changer()->doAddOutput(doc->project()->rootNode()->outputCount(), output);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::removeOutput(int index)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    doc->changer()->doRemoveOutput(doc->project()->rootNode()->output(index));
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::reorderOutput(int oldIndex, int newIndex)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    doc->changer()->doReorderOutput(oldIndex, newIndex);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::renameOutput(int index, const QString &name)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack(), true);
+    doc->changer()->doRenameOutput(doc->project()->rootNode()->output(index), name);
     doc->changer()->endUndoCommand();
 }
 

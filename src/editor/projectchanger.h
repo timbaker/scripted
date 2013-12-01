@@ -109,6 +109,7 @@ public:
     void doAddOutput(int index, NodeOutput *output);
     void doRemoveOutput(NodeOutput *output);
     void doReorderOutput(int oldIndex, int newIndex);
+    void doRenameOutput(NodeOutput *input, const QString &name);
 
     void doAddConnection(int index, NodeConnection *cxn);
     void doRemoveConnection(BaseNode *node, NodeConnection *cxn);

@@ -41,10 +41,15 @@ SceneScriptDialog::SceneScriptDialog(ProjectDocument *doc, QWidget *parent) :
     connect(ui->removeInput, SIGNAL(clicked()), SLOT(removeInput()));
     connect(ui->moveInputUp, SIGNAL(clicked()), SLOT(moveInputUp()));
     connect(ui->moveInputDown, SIGNAL(clicked()), SLOT(moveInputDown()));
-
     connect(ui->inputsList, SIGNAL(itemSelectionChanged()), SLOT(inputSelectionChanged()));
-
     connect(ui->inputName, SIGNAL(textChanged(QString)), SLOT(inputNameChanged()));
+
+    connect(ui->addOutput, SIGNAL(clicked()), SLOT(addOutput()));
+    connect(ui->removeOutput, SIGNAL(clicked()), SLOT(removeOutput()));
+    connect(ui->moveOutputUp, SIGNAL(clicked()), SLOT(moveOutputUp()));
+    connect(ui->moveOutputDown, SIGNAL(clicked()), SLOT(moveOutputDown()));
+    connect(ui->outputsList, SIGNAL(itemSelectionChanged()), SLOT(outputSelectionChanged()));
+    connect(ui->outputName, SIGNAL(textChanged(QString)), SLOT(outputNameChanged()));
 
     connect(mDocument->changer(), SIGNAL(afterAddInput(int,NodeInput*)),
             SLOT(afterAddInput(int,NodeInput*)));
@@ -55,8 +60,20 @@ SceneScriptDialog::SceneScriptDialog(ProjectDocument *doc, QWidget *parent) :
     connect(mDocument->changer(), SIGNAL(afterRenameInput(NodeInput*,QString)),
             SLOT(afterRenameInput(NodeInput*,QString)));
 
+    connect(mDocument->changer(), SIGNAL(afterAddOutput(int,NodeOutput*)),
+            SLOT(afterAddOutput(int,NodeOutput*)));
+    connect(mDocument->changer(), SIGNAL(afterRemoveOutput(int,NodeOutput*)),
+            SLOT(afterRemoveOutput(int,NodeOutput*)));
+    connect(mDocument->changer(), SIGNAL(afterReorderOutput(int,int)),
+            SLOT(afterReorderOutput(int,int)));
+    connect(mDocument->changer(), SIGNAL(afterRenameOutput(NodeOutput*,QString)),
+            SLOT(afterRenameOutput(NodeOutput*,QString)));
+
     foreach (NodeInput *input, mDocument->project()->rootNode()->inputs())
         ui->inputsList->insertItem(ui->inputsList->count(), input->name());
+
+    foreach (NodeOutput *output, mDocument->project()->rootNode()->outputs())
+        ui->outputsList->insertItem(ui->outputsList->count(), output->name());
 
     syncUI();
 }
@@ -94,6 +111,37 @@ void SceneScriptDialog::afterRenameInput(NodeInput *input, const QString &oldNam
     if (mSyncDepth) return;
     mSyncDepth++;
     ui->inputName->setText(input->name());
+    mSyncDepth--;
+}
+
+void SceneScriptDialog::afterAddOutput(int index, NodeOutput *output)
+{
+    ui->outputsList->insertItem(index, output->name());
+    ui->outputsList->setCurrentRow(index);
+}
+
+void SceneScriptDialog::afterRemoveOutput(int index, NodeOutput *output)
+{
+    delete ui->outputsList->takeItem(index);
+}
+
+void SceneScriptDialog::afterReorderOutput(int oldIndex, int newIndex)
+{
+    QListWidgetItem *item = ui->outputsList->takeItem(oldIndex);
+    ui->outputsList->insertItem(newIndex, item);
+    ui->outputsList->setCurrentRow(newIndex);
+}
+
+void SceneScriptDialog::afterRenameOutput(NodeOutput *output, const QString &oldName)
+{
+    Q_UNUSED(oldName)
+    int row = mDocument->project()->rootNode()->indexOf(output);
+    ui->outputsList->item(row)->setText(output->name());
+
+    if (mSelectedOutput != row) return;
+    if (mSyncDepth) return;
+    mSyncDepth++;
+    ui->outputName->setText(output->name());
     mSyncDepth--;
 }
 
@@ -136,14 +184,59 @@ void SceneScriptDialog::inputNameChanged()
     if (mSyncDepth) return;
     mSyncDepth++;
     QString name = ui->inputName->text();
-    if (mDocument->project()->isValidInputName(name))
+    if (mDocument->project()->isValidInputName(name, mSelectedInput))
         ProjectActions::instance()->renameInput(mSelectedInput, name);
+    mSyncDepth--;
+}
+
+void SceneScriptDialog::addOutput()
+{
+    ProjectActions::instance()->addOutput();
+}
+
+void SceneScriptDialog::removeOutput()
+{
+    ProjectActions::instance()->removeOutput(mSelectedOutput);
+}
+
+void SceneScriptDialog::moveOutputUp()
+{
+    ProjectActions::instance()->reorderOutput(mSelectedOutput, mSelectedOutput - 1);
+}
+
+void SceneScriptDialog::moveOutputDown()
+{
+    ProjectActions::instance()->reorderOutput(mSelectedOutput, mSelectedOutput + 1);
+}
+
+void SceneScriptDialog::outputSelectionChanged()
+{
+    mSyncDepth++;
+    mSelectedOutput = -1;
+    QList<QListWidgetItem*> selected = ui->outputsList->selectedItems();
+    if (selected.size()) {
+        mSelectedOutput = ui->outputsList->row(selected.first());
+        if (NodeOutput *output = mDocument->project()->rootNode()->output(mSelectedOutput))
+            ui->outputName->setText(output->name());
+    }
+    mSyncDepth--;
+    syncUI();
+}
+
+void SceneScriptDialog::outputNameChanged()
+{
+    if (mSyncDepth) return;
+    mSyncDepth++;
+    QString name = ui->outputName->text();
+    if (mDocument->project()->isValidOutputName(name, mSelectedOutput))
+        ProjectActions::instance()->renameOutput(mSelectedOutput, name);
     mSyncDepth--;
 }
 
 void SceneScriptDialog::syncUI()
 {
     mSyncDepth++;
+
     ui->removeInput->setEnabled(mSelectedInput != -1);
     ui->moveInputUp->setEnabled(mSelectedInput > 0);
     ui->moveInputDown->setEnabled((mSelectedInput != -1) &&
@@ -151,5 +244,14 @@ void SceneScriptDialog::syncUI()
     if (mSelectedInput == -1)
         ui->inputName->clear();
     ui->inputName->setEnabled(mSelectedInput != -1);
+
+    ui->removeOutput->setEnabled(mSelectedOutput != -1);
+    ui->moveOutputUp->setEnabled(mSelectedOutput > 0);
+    ui->moveOutputDown->setEnabled((mSelectedOutput != -1) &&
+                                  (mSelectedOutput < mDocument->project()->rootNode()->outputCount() - 1));
+    if (mSelectedOutput == -1)
+        ui->outputName->clear();
+    ui->outputName->setEnabled(mSelectedOutput != -1);
+
     mSyncDepth--;
 }

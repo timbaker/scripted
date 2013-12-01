@@ -155,6 +155,15 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
     connect(mDocument->changer(), SIGNAL(afterRenameInput(NodeInput*,QString)),
             SLOT(inputsChanged()));
 
+    connect(mDocument->changer(), SIGNAL(afterAddOutput(int,NodeOutput*)),
+            SLOT(outputsChanged()));
+    connect(mDocument->changer(), SIGNAL(afterRemoveOutput(int,NodeOutput*)),
+            SLOT(outputsChanged()));
+    connect(mDocument->changer(), SIGNAL(afterReorderOutput(int,int)),
+            SLOT(outputsChanged()));
+    connect(mDocument->changer(), SIGNAL(afterRenameOutput(NodeOutput*,QString)),
+            SLOT(outputsChanged()));
+
     connect(mDocument->changer(), SIGNAL(afterAddConnection(int,NodeConnection*)),
             SLOT(afterAddConnection(int,NodeConnection*)));
     connect(mDocument->changer(), SIGNAL(afterRemoveConnection(int,NodeConnection*)),
@@ -430,6 +439,12 @@ void ScriptScene::inputsChanged()
 {
     mAreaItem->mInputsItem->syncWithNode();
     mAreaItem->mInputsItem->updateLayout();
+}
+
+void ScriptScene::outputsChanged()
+{
+    mAreaItem->mOutputsItem->syncWithNode();
+    mAreaItem->mOutputsItem->updateLayout();
 }
 
 void ScriptScene::afterAddConnection(int index, NodeConnection *cxn)

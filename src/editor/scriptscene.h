@@ -128,6 +128,7 @@ public slots:
     void afterRenameNode(BaseNode *node, const QString &oldName);
 
     void inputsChanged();
+    void outputsChanged();
 
     void afterAddConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);

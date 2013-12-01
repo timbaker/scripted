@@ -39,13 +39,24 @@ private slots:
     void afterReorderInput(int oldIndex, int newIndex);
     void afterRenameInput(NodeInput *input, const QString &oldName);
 
+    void afterAddOutput(int index, NodeOutput *output);
+    void afterRemoveOutput(int index, NodeOutput *output);
+    void afterReorderOutput(int oldIndex, int newIndex);
+    void afterRenameOutput(NodeOutput *output, const QString &oldName);
+
     void addInput();
     void removeInput();
     void moveInputUp();
     void moveInputDown();
-
     void inputSelectionChanged();
     void inputNameChanged();
+
+    void addOutput();
+    void removeOutput();
+    void moveOutputUp();
+    void moveOutputDown();
+    void outputSelectionChanged();
+    void outputNameChanged();
 
     void syncUI();
 
@@ -53,6 +64,7 @@ private:
     Ui::SceneScriptDialog *ui;
     ProjectDocument *mDocument;
     int mSelectedInput;
+    int mSelectedOutput;
     int mSyncDepth;
 };
 

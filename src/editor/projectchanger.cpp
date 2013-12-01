@@ -40,7 +40,8 @@ namespace ProjectChanges
 enum ChangeId
 {
     ID_RenameNode = 1,
-    ID_RenameInput
+    ID_RenameInput,
+    ID_RenameOutput
 };
 
 // FIXME: why didn't ImageEd delete objects in destructors?
@@ -283,6 +284,128 @@ public:
     }
 
     NodeInput *mInput;
+    QString mOldName;
+    QString mNewName;
+};
+
+class AddOutput : public ProjectChange
+{
+public:
+    AddOutput(ProjectChanger *changer, int index, NodeOutput *output) :
+        ProjectChange(changer),
+        mIndex(index),
+        mOutput(output)
+    {
+    }
+
+    void redo()
+    {
+        mChanger->project()->rootNode()->insertOutput(mIndex, mOutput);
+        mChanger->afterAddOutput(mIndex, mOutput);
+    }
+
+    void undo()
+    {
+//        mChanger->beforeRemoveOutput(mIndex, mOutput);
+        mChanger->project()->rootNode()->removeOutput(mIndex);
+        mChanger->afterRemoveOutput(mIndex, mOutput);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Add Output");
+    }
+
+    int mIndex;
+    NodeOutput *mOutput;
+};
+
+class RemoveOutput : public AddOutput
+{
+public:
+    RemoveOutput(ProjectChanger *changer, int index, NodeOutput *output) :
+        AddOutput(changer, index, output)
+    { }
+    void redo() { AddOutput::undo(); }
+    void undo() { AddOutput::redo(); }
+    QString text() const { return mChanger->tr("Remove Output"); }
+};
+
+class ReorderOutput : public ProjectChange
+{
+public:
+    ReorderOutput(ProjectChanger *changer, int oldIndex, int newIndex) :
+        ProjectChange(changer),
+        mOldIndex(oldIndex),
+        mNewIndex(newIndex)
+    {
+    }
+
+    void redo()
+    {
+        BaseNode *node = mChanger->project()->rootNode();
+        NodeOutput *output = node->removeOutput(mOldIndex);
+        node->insertOutput(mNewIndex, output);
+        mChanger->afterReorderOutput(mOldIndex, mNewIndex);
+    }
+
+    void undo()
+    {
+        BaseNode *node = mChanger->project()->rootNode();
+        NodeOutput *output = node->removeOutput(mNewIndex);
+        node->insertOutput(mOldIndex, output);
+        mChanger->afterReorderOutput(mNewIndex, mOldIndex);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Reorder Output");
+    }
+
+    int mOldIndex;
+    int mNewIndex;
+};
+
+class RenameOutput : public ProjectChange
+{
+public:
+    RenameOutput(ProjectChanger *changer, NodeOutput *output, const QString &name) :
+        ProjectChange(changer),
+        mOutput(output),
+        mOldName(output->name()),
+        mNewName(name)
+    {
+    }
+
+    void redo()
+    {
+        mOutput->setName(mNewName);
+        mChanger->afterRenameOutput(mOutput, mOldName);
+    }
+
+    void undo()
+    {
+        mOutput->setName(mOldName);
+        mChanger->afterRenameOutput(mOutput, mNewName);
+    }
+
+    bool merge(ProjectChange *other)
+    {
+        RenameOutput *o = (RenameOutput*) other;
+        if (!(o->mOutput == mOutput))
+            return false;
+        mNewName = o->mNewName;
+        return true;
+    }
+
+    int id() const { return ID_RenameOutput; }
+
+    QString text() const
+    {
+        return mChanger->tr("Rename Output");
+    }
+
+    NodeOutput *mOutput;
     QString mOldName;
     QString mNewName;
 };
@@ -1823,6 +1946,27 @@ void ProjectChanger::doReorderInput(int oldIndex, int newIndex)
 void ProjectChanger::doRenameInput(NodeInput *input, const QString &name)
 {
     addChange(new RenameInput(this, input, name));
+}
+
+void ProjectChanger::doAddOutput(int index, NodeOutput *output)
+{
+    addChange(new AddOutput(this, index, output));
+}
+
+void ProjectChanger::doRemoveOutput(NodeOutput *output)
+{
+    int index = mProject->rootNode()->indexOf(output);
+    addChange(new RemoveOutput(this, index, output));
+}
+
+void ProjectChanger::doReorderOutput(int oldIndex, int newIndex)
+{
+    addChange(new ReorderOutput(this, oldIndex, newIndex));
+}
+
+void ProjectChanger::doRenameOutput(NodeOutput *output, const QString &name)
+{
+    addChange(new RenameOutput(this, output, name));
 }
 
 void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)

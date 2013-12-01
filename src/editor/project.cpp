@@ -58,8 +58,20 @@ ScriptVariable *Project::resolveVariable(const QString &name)
     return mRootNode->variable(name);
 }
 
-bool Project::isValidInputName(const QString &name)
+bool Project::isValidInputName(const QString &name, int index)
 {
     if (name.isEmpty()) return false;
+    if (NodeInput *input = rootNode()->input(name))
+        if (rootNode()->indexOf(input) != index)
+            return false;
+    return true;
+}
+
+bool Project::isValidOutputName(const QString &name, int index)
+{
+    if (name.isEmpty()) return false;
+    if (NodeOutput *output = rootNode()->output(name))
+        if (rootNode()->indexOf(output) != index)
+            return false;
     return true;
 }
