@@ -46,6 +46,9 @@ EditModeToolBar::EditModeToolBar(QWidget *parent) :
     addAction(actions->actionOpenProject);
     addAction(actions->actionSaveProject);
     addAction(actions->actionSaveProjectAs);
+    addSeparator();
+    addAction(actions->menuEdit->actions().first());
+    addAction(actions->menuEdit->actions().at(1));
 #if 0
     addAction(actions->actionSelectMoveNode);
     addAction(actions->actionAreaSelectNodes);
