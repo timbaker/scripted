@@ -32,6 +32,7 @@
     <addaction name="actionNewProject"/>
     <addaction name="actionOpenProject"/>
     <addaction name="actionSaveProject"/>
+    <addaction name="actionSaveProjectAs"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>

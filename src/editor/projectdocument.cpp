@@ -34,6 +34,7 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
     mFileName(fileName)
 {
     mUndoStack = new QUndoStack(this);
+    connect(mUndoStack, SIGNAL(cleanChanged(bool)), SIGNAL(cleanChanged()));
 
     // set ScriptInfo and LuaInfo for each node
 //    QString relativeTo = QFileInfo(mFileName).absolutePath();

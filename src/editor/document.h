@@ -59,6 +59,7 @@ public:
 
 signals:
     void fileNameChanged();
+    void cleanChanged();
 
 protected:
     QUndoStack *mUndoStack;

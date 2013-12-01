@@ -173,6 +173,7 @@ void MainWindow::currentDocumentChanged(Document *doc)
     if (mCurrentDocumentStuff) {
         ModeManager::instance()->setCurrentMode(mEditMode); // handles new documents
         mUndoGroup->setActiveStack(mCurrentDocumentStuff->document()->undoStack());
+        connect(doc, SIGNAL(cleanChanged()), ProjectActions::instance(), SLOT(updateActions()));
     } else {
         ToolManager::instance()->clearDocument();
         mEditMode->setEnabled(false);

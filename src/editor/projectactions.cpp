@@ -391,4 +391,11 @@ void ProjectActions::editNodeVariableValue(ScriptVariable *var)
     }
 }
 
+void ProjectActions::updateActions()
+{
+    Document *doc = docman()->currentDocument();
+    ProjectDocument *pdoc = document();
+    mActions->actionSaveProject->setEnabled(doc != 0 && doc->isModified());
+    mActions->actionSaveProjectAs->setEnabled(doc != 0);
+    mActions->actionEditInputsOutputs->setEnabled(pdoc != 0);
 }
