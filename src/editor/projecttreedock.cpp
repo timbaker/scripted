@@ -19,8 +19,7 @@
 #include "ui_projecttreedock.h"
 
 #include "documentmanager.h"
-#include "mainwindow.h"
-#include "nodepropertiesdialog.h"
+#include "projectactions.h"
 
 ProjectTreeDock::ProjectTreeDock(QWidget *parent) :
     QDockWidget(parent),
@@ -43,9 +42,7 @@ ProjectTreeDock::~ProjectTreeDock()
 void ProjectTreeDock::activated(const QModelIndex &index)
 {
     if (BaseNode *node = ui->treeView->model()->toNode(index)) {
-        NodePropertiesDialog d(MainWindow::instance());
-        d.setNode(node);
-        d.exec();
+        ProjectActions::instance()->nodePropertiesDialog(node);
     }
 }
 

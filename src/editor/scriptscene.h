@@ -125,6 +125,7 @@ public slots:
     void afterAddNode(int index, BaseNode *node);
     void afterRemoveNode(int index, BaseNode *node);
     void afterMoveNode(BaseNode *node, const QPointF &oldPos);
+    void afterRenameNode(BaseNode *node, const QString &oldName);
 
     void afterAddConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);

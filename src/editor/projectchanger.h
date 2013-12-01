@@ -99,8 +99,11 @@ public:
     void doAddNode(int index, BaseNode *node);
     void doRemoveNode(BaseNode *node);
     void doMoveNode(BaseNode *node, const QPointF &pos);
+    void doRenameNode(BaseNode *node, const QString &name);
+
     void doAddConnection(int index, NodeConnection *cxn);
     void doRemoveConnection(BaseNode *node, NodeConnection *cxn);
+    void doReorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
     void doAddVariable(int index, ScriptVariable *var);
     void doRemoveVariable(ScriptVariable *var);
@@ -113,12 +116,14 @@ signals:
     void afterAddNode(int index, BaseNode *node);
     void beforeRemoveNode(int index, BaseNode *node);
     void afterRemoveNode(int index, BaseNode *node);
+    void afterRenameNode(BaseNode *node, const QString &oldName);
 
     void afterMoveNode(BaseNode *object, const QPointF &oldPos);
 
     void afterAddConnection(int index, NodeConnection *cxn);
     void beforeRemoveConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);
+    void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
     void afterAddVariable(int index, ScriptVariable *var);
     void beforeRemoveVariable(int index, ScriptVariable *var);

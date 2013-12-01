@@ -52,7 +52,8 @@ SOURCES += main.cpp\
     nodeconnectionslist.cpp \
     scriptmanager.cpp \
     filesystemwatcher.cpp \
-    variablepropertiesdialog.cpp
+    variablepropertiesdialog.cpp \
+    undoredobuttons.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -99,7 +100,8 @@ HEADERS  += mainwindow.h \
     nodepropertieslist.h \
     scriptmanager.h \
     filesystemwatcher.h \
-    variablepropertiesdialog.h
+    variablepropertiesdialog.h \
+    undoredobuttons.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \

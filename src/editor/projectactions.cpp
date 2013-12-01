@@ -183,13 +183,6 @@ void ProjectActions::preferencesDialog()
 
 }
 
-void ProjectActions::nodePropertiesDialog(BaseNode *node)
-{
-    NodePropertiesDialog d(MainWindow::instance());
-    d.setNode(node);
-    d.exec();
-}
-
 void ProjectActions::removeNode(BaseNode *node)
 {
     ProjectDocument *doc = document();
@@ -205,6 +198,21 @@ void ProjectActions::removeNode(BaseNode *node)
     }
     doc->changer()->doRemoveNode(node);
     doc->changer()->endUndoMacro();
+}
+
+void ProjectActions::renameNode(BaseNode *node, const QString &name)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack(), true);
+    doc->changer()->doRenameNode(node, name);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::nodePropertiesDialog(BaseNode *node)
+{
+    NodePropertiesDialog d(document(), MainWindow::instance());
+    d.setNode(node);
+    d.exec();
 }
 
 void ProjectActions::addVariable()
@@ -266,6 +274,22 @@ void ProjectActions::variableProperties(ScriptVariable *var)
         doc->changer()->doChangeVariable(var, &newVar);
         doc->changer()->endUndoMacro();
     }
+}
+
+void ProjectActions::removeConnection(BaseNode *node, NodeConnection *cxn)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoCommand(doc->undoStack());
+    doc->changer()->doRemoveConnection(node, cxn);
+    doc->changer()->endUndoCommand();
+}
+
+void ProjectActions::reorderConnection(BaseNode *node, int oldIndex, int newIndex)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoMacro(doc->undoStack(), tr("Reorder Connection"));
+    doc->changer()->doReorderConnection(node, oldIndex, newIndex);
+    doc->changer()->endUndoMacro();
 }
 
 void ProjectActions::updateActions()

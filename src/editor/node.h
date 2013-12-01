@@ -96,6 +96,8 @@ public:
     {
     }
 
+    virtual ~BaseNode();
+
     void setID(int id) { mID = id; }
     int id()const { return mID; }
 
@@ -233,6 +235,8 @@ public:
         mInfo(0)
     {
     }
+
+    ~ScriptNode();
 
     int nodeCount() const
     {

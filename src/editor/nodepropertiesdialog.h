@@ -30,16 +30,29 @@ class NodePropertiesDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit NodePropertiesDialog(QWidget *parent = 0);
+    explicit NodePropertiesDialog(ProjectDocument *doc, QWidget *parent = 0);
     ~NodePropertiesDialog();
 
     void setNode(BaseNode *node);
     void setPropertiesTable();
     void setConnectionsTable();
 
+private slots:
+    void cxnSelChanged();
+    void moveCxnUp();
+    void moveCxnDown();
+    void removeCxn();
+
+    void nameEdited();
+    void afterRenameNode(BaseNode *node, const QString &oldName);
+
+    void syncUI();
+
 private:
     Ui::NodePropertiesDialog *ui;
     BaseNode *mNode;
+    NodeConnection *mCurrentCxn;
+    int mSyncDepth;
 };
 
 #endif // NODEPROPERTIESDIALOG_H

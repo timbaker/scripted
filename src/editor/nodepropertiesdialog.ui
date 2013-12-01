@@ -128,7 +128,11 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="sourceEdit"/>
+          <widget class="QLineEdit" name="sourceEdit">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
@@ -196,7 +200,7 @@
        <item row="3" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QToolButton" name="toolButton">
+          <widget class="QToolButton" name="addCxn">
            <property name="text">
             <string>Add</string>
            </property>
@@ -210,7 +214,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="toolButton_3">
+          <widget class="QToolButton" name="moveCxnUp">
            <property name="text">
             <string>Delete</string>
            </property>
@@ -224,7 +228,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="toolButton_4">
+          <widget class="QToolButton" name="moveCxnDown">
            <property name="text">
             <string>Delete</string>
            </property>
@@ -238,7 +242,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QToolButton" name="toolButton_2">
+          <widget class="QToolButton" name="removeCxn">
            <property name="text">
             <string>Delete</string>
            </property>
@@ -271,14 +275,18 @@
     </widget>
    </item>
    <item row="1" column="0">
-    <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons">
-      <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="buttonsLayout">
+     <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Close</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
@@ -305,8 +313,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>248</x>
-     <y>254</y>
+     <x>258</x>
+     <y>428</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -321,8 +329,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>316</x>
-     <y>260</y>
+     <x>326</x>
+     <y>428</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>

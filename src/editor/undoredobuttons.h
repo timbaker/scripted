@@ -15,34 +15,38 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef NODECONNECTIONSLIST_H
-#define NODECONNECTIONSLIST_H
+#ifndef UNDOREDOBUTTONS_H
+#define UNDOREDOBUTTONS_H
 
-#include "editor_global.h"
+#include <QObject>
 
-#include <QStandardItemModel>
-#include <QTreeView>
+class QToolButton;
+class QUndoStack;
 
-class NodeConnectionsList : public QTreeView
+class UndoRedoButtons : public QObject
 {
     Q_OBJECT
 public:
-    explicit NodeConnectionsList(QWidget *parent = 0);
+    UndoRedoButtons(QUndoStack *undoStack, QObject *parent = 0);
 
-    void setNode(BaseNode *node);
-    void selectConnection(NodeConnection *cxn);
+    void resetIndex();
 
-private slots:
-    void setDocument(Document *doc);
+    QToolButton *undoButton() const
+    { return mUndo; }
 
-    void afterAddConnection(int index, NodeConnection *cxn);
-    void beforeRemoveConnection(int index, NodeConnection *cxn);
-    void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
+    QToolButton *redoButton() const
+    { return mRedo; }
+
+public slots:
+    void updateActions();
+    void textChanged();
+    void retranslateUi();
 
 private:
-    QStandardItemModel *mModel;
-    ProjectDocument *mDocument;
-    BaseNode *mNode;
+    QUndoStack *mUndoStack;
+    QToolButton *mUndo;
+    QToolButton *mRedo;
+    int mUndoIndex;
 };
 
-#endif // NODECONNECTIONSLIST_H
+#endif // UNDOREDOBUTTONS_H

@@ -39,7 +39,7 @@ namespace ProjectChanges
 #if 1
 enum ChangeId
 {
-    ID_AddObject
+    ID_RenameNode = 1
 };
 
 // FIXME: why didn't ImageEd delete objects in destructors?
@@ -112,12 +112,56 @@ public:
 
     QString text() const
     {
-        return mChanger->tr("Move Object");
+        return mChanger->tr("Move Node");
     }
 
     BaseNode *mNode;
     QPointF mOldPos;
     QPointF mNewPos;
+};
+
+class RenameNode : public ProjectChange
+{
+public:
+    RenameNode(ProjectChanger *changer, BaseNode *node, const QString &name) :
+        ProjectChange(changer),
+        mNode(node),
+        mOldName(node->name()),
+        mNewName(name)
+    {
+    }
+
+    void redo()
+    {
+        mNode->setName(mNewName);
+        mChanger->afterRenameNode(mNode, mOldName);
+    }
+
+    void undo()
+    {
+        mNode->setName(mOldName);
+        mChanger->afterRenameNode(mNode, mNewName);
+    }
+
+    bool merge(ProjectChange *other)
+    {
+        RenameNode *o = (RenameNode*) other;
+        if (!(o->mNode == mNode))
+            return false;
+        mNewName = o->mNewName;
+        return true;
+    }
+
+    int id() const { return ID_RenameNode; }
+
+    QString text() const
+    {
+        return mChanger->tr("Rename Node");
+    }
+
+    BaseNode *mNode;
+    QString mOldName;
+    QString mNewName;
 };
 
 class AddConnection : public ProjectChange
@@ -161,6 +205,43 @@ public:
     void redo() { AddConnection::undo(); }
     void undo() { AddConnection::redo(); }
     QString text() const { return mChanger->tr("Remove Connection"); }
+};
+
+class ReorderConnection : public ProjectChange
+{
+public:
+    ReorderConnection(ProjectChanger *changer, BaseNode *node, int oldIndex, int newIndex) :
+        ProjectChange(changer),
+        mNode(node),
+        mOldIndex(oldIndex),
+        mNewIndex(newIndex)
+    {
+    }
+
+    void redo()
+    {
+        NodeConnection *cxn = mNode->connection(mOldIndex);
+        mNode->removeConnection(cxn);
+        mNode->insertConnection(mNewIndex, cxn);
+        mChanger->afterReorderConnection(mNode, mOldIndex, mNewIndex);
+    }
+
+    void undo()
+    {
+        NodeConnection *cxn = mNode->connection(mNewIndex);
+        mNode->removeConnection(cxn);
+        mNode->insertConnection(mOldIndex, cxn);
+        mChanger->afterReorderConnection(mNode, mNewIndex, mOldIndex);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Reorder Connection");
+    }
+
+    BaseNode *mNode;
+    int mOldIndex;
+    int mNewIndex;
 };
 
 class AddVariable : public ProjectChange
@@ -1595,6 +1676,11 @@ void ProjectChanger::doMoveNode(BaseNode *node, const QPointF &pos)
     addChange(new MoveNode(this, node, pos));
 }
 
+void ProjectChanger::doRenameNode(BaseNode *node, const QString &name)
+{
+    addChange(new RenameNode(this, node, name));
+}
+
 void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)
 {
     addChange(new AddConnection(this, index, cxn));
@@ -1605,6 +1691,11 @@ void ProjectChanger::doRemoveConnection(BaseNode *node, NodeConnection *cxn)
     int index = node->indexOf(cxn);
     Q_ASSERT(index != -1);
     addChange(new RemoveConnection(this, index, cxn));
+}
+
+void ProjectChanger::doReorderConnection(BaseNode *node, int oldIndex, int newIndex)
+{
+    addChange(new ReorderConnection(this, node, oldIndex, newIndex));
 }
 
 void ProjectChanger::doAddVariable(int index, ScriptVariable *var)

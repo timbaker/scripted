@@ -44,12 +44,17 @@ public slots:
     bool saveProjectAs();
 
     void preferencesDialog();
-    void nodePropertiesDialog(BaseNode *node);
+
     void removeNode(BaseNode *node);
+    void renameNode(BaseNode *node, const QString &name);
+    void nodePropertiesDialog(BaseNode *node);
 
     void addVariable();
     void removeVariable(ScriptVariable *var);
     void variableProperties(ScriptVariable *var);
+
+    void removeConnection(BaseNode *node, NodeConnection *cxn);
+    void reorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
     void updateActions();
 

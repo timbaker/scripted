@@ -34,6 +34,13 @@ bool NodeOutput::isKnown() const
 
 /////
 
+BaseNode::~BaseNode()
+{
+    qDeleteAll(mInputs);
+    qDeleteAll(mOutputs);
+    qDeleteAll(mVariables);
+}
+
 void BaseNode::insertInput(int index, NodeInput *input)
 {
     Q_ASSERT(input->mNode == NULL);
@@ -222,6 +229,11 @@ void LuaNode::initFrom(LuaNode *other)
 }
 
 /////
+
+ScriptNode::~ScriptNode()
+{
+    qDeleteAll(mNodes);
+}
 
 bool ScriptNode::syncWithScriptInfo()
 {
