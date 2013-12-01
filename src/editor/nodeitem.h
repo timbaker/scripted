@@ -185,6 +185,10 @@ public:
     void updateLayout();
     void syncWithNode();
 
+    QRectF nameRect();
+    QRectF deleteRect();
+    QRectF openRect();
+
     ProjectScene *mScene;
     QRectF mBounds;
     BaseNode *mNode;
@@ -192,6 +196,8 @@ public:
     NodeInputGroupItem *mInputsItem;
     NodeOutputGroupItem *mOutputsItem;
     QPointF mPreDragPosition;
+    QImage mOpenImage;
+    QImage mDeleteImage;
 };
 
 #endif // DRAFTOBJECTITEM_H

@@ -1583,6 +1583,13 @@ void ProjectChanger::doAddNode(int index, BaseNode *node)
     addChange(new AddNode(this, index, node));
 }
 
+void ProjectChanger::doRemoveNode(BaseNode *node)
+{
+    int index = mProject->rootNode()->indexOf(node);
+    Q_ASSERT(index != -1);
+    addChange(new RemoveNode(this, index, node));
+}
+
 void ProjectChanger::doMoveNode(BaseNode *node, const QPointF &pos)
 {
     addChange(new MoveNode(this, node, pos));
@@ -1591,6 +1598,13 @@ void ProjectChanger::doMoveNode(BaseNode *node, const QPointF &pos)
 void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)
 {
     addChange(new AddConnection(this, index, cxn));
+}
+
+void ProjectChanger::doRemoveConnection(BaseNode *node, NodeConnection *cxn)
+{
+    int index = node->indexOf(cxn);
+    Q_ASSERT(index != -1);
+    addChange(new RemoveConnection(this, index, cxn));
 }
 
 void ProjectChanger::doAddVariable(int index, ScriptVariable *var)

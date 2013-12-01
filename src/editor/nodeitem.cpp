@@ -43,10 +43,13 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
     mNode(node),
     mVariablesItem(new VariableGroupItem(scene, node, this)),
     mInputsItem(new NodeInputGroupItem(scene, node, this)),
-    mOutputsItem(new NodeOutputGroupItem(scene, node, this))
+    mOutputsItem(new NodeOutputGroupItem(scene, node, this)),
+    mOpenImage(QLatin1String(":/images/16x16/document-open.png")),
+    mDeleteImage(QLatin1String(":/images/16x16/edit-delete.png"))
 {
     setFlag(ItemIsMovable, true);
     setFlag(ItemSendsScenePositionChanges, true);
+    setAcceptHoverEvents(true);
 #if 0
     QGraphicsDropShadowEffect *effect = new QGraphicsDropShadowEffect;
     effect->setBlurRadius(4);
@@ -100,6 +103,21 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     QRectF bodyRect = mBounds.adjusted(0, nameRect.height(), 0, 0);
     painter->fillRect(bodyRect, bg);
     painter->drawRect(bodyRect);
+
+    if (option->state & QStyle::State_MouseOver) {
+        QRectF r = deleteRect();
+        painter->fillRect(r, bg);
+//        painter->drawRect(r);
+        painter->drawImage(r.x() + (r.width() - mDeleteImage.width()) / 2,
+                           r.y() + (r.height() - mDeleteImage.height()) / 2,
+                           mDeleteImage);
+
+        r = openRect();
+        painter->fillRect(r, bg);
+        painter->drawImage(r.x() + (r.width() - mOpenImage.width()) / 2,
+                           r.y() + (r.height() - mOpenImage.height()) / 2,
+                           mOpenImage);
+    }
 }
 
 QVariant NodeItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QVariant &value)
@@ -126,7 +144,14 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         mScene->document()->changer()->beginUndoCommand(mScene->document()->undoStack());
         mScene->document()->changer()->doMoveNode(mNode, pos());
         mScene->document()->changer()->endUndoCommand();
+    }
 
+    if (openRect().contains(event->pos())) {
+        if (ScriptNode *snode = mNode->asScriptNode())
+            ProjectActions::instance()->openProject(snode->source());
+    }
+    if (deleteRect().contains(event->pos())) {
+        ProjectActions::instance()->removeNode(mNode);
     }
 }
 
@@ -183,6 +208,25 @@ void NodeItem::syncWithNode()
     mOutputsItem->updateLayout();
 
     updateLayout();
+}
+
+QRectF NodeItem::nameRect()
+{
+    QRect textRect = QFontMetrics(mScene->font()).boundingRect(mNode->name());
+    return QRectF(mBounds.x(), mBounds.y(), textRect.width() + 6, textRect.height() + 6);
+}
+
+QRectF NodeItem::deleteRect()
+{
+    QRectF r = nameRect();
+    int d = qMax(qreal(16), r.height());
+    return QRectF(mBounds.right() - d, mBounds.top(), d, r.height());
+}
+
+QRectF NodeItem::openRect()
+{
+    QRectF r = deleteRect();
+    return r.adjusted(-r.width() - 1, 0, -r.width() - 1, 0);
 }
 
 /////
@@ -457,13 +501,17 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        if (clearRefRect(boundingRect()).contains(event->pos())) {
+        if (clearRefRect(boundingRect()).contains(event->pos()) &&
+                mVariable->variableRef().length()) {
             ProjectDocument *doc = mScene->document();
             doc->changer()->beginUndoCommand(doc->undoStack());
             doc->changer()->doSetVariableRef(mVariable, QString());
             doc->changer()->endUndoCommand();
+            return;
         }
     }
+
+    QGraphicsItem::mousePressEvent(event);
 }
 
 static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");

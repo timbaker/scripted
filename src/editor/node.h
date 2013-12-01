@@ -142,6 +142,12 @@ public:
         return 0;
     }
 
+    NodeConnection *connection(int index) const
+    {
+        if (index >= 0 && index < mConnections.size())
+            return mConnections[index];
+        return 0;
+    }
     const QList<NodeConnection*> &connections() const
     {
         return mConnections;
@@ -149,6 +155,10 @@ public:
     int connectionCount() const
     {
         return mConnections.size();
+    }
+    int indexOf(NodeConnection *cxn)
+    {
+        return mConnections.indexOf(cxn);
     }
     void insertConnection(int index, NodeConnection *cxn);
     NodeConnection *removeConnection(NodeConnection *cxn);
@@ -161,6 +171,10 @@ public:
     int variableCount() const
     {
         return mVariables.size();
+    }
+    int indexOf(ScriptVariable *var)
+    {
+        return mVariables.indexOf(var);
     }
     void insertVariable(int index, ScriptVariable *var);
     ScriptVariable *removeVariable(ScriptVariable *var);
@@ -246,6 +260,10 @@ public:
             if (node->id() == id)
                 return node;
         return NULL;
+    }
+    int indexOf(BaseNode *node)
+    {
+        return mNodes.indexOf(node);
     }
 
     void setScriptInfo(ScriptInfo *info) { mInfo = info; }

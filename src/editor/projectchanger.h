@@ -97,8 +97,10 @@ public:
 
     /////
     void doAddNode(int index, BaseNode *node);
+    void doRemoveNode(BaseNode *node);
     void doMoveNode(BaseNode *node, const QPointF &pos);
     void doAddConnection(int index, NodeConnection *cxn);
+    void doRemoveConnection(BaseNode *node, NodeConnection *cxn);
 
     void doAddVariable(int index, ScriptVariable *var);
     void doRemoveVariable(ScriptVariable *var);

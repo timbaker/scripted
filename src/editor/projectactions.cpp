@@ -190,6 +190,23 @@ void ProjectActions::nodePropertiesDialog(BaseNode *node)
     d.exec();
 }
 
+void ProjectActions::removeNode(BaseNode *node)
+{
+    ProjectDocument *doc = document();
+    doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Node"));
+    foreach (BaseNode *node2, doc->project()->rootNode()->nodes()) {
+        for (int i = 0; i < node2->connectionCount(); i++) {
+            NodeConnection *cxn = node2->connection(i);
+            if (cxn->mSender == node || cxn->mReceiver == node) {
+                doc->changer()->doRemoveConnection(node2, cxn);
+                --i;
+            }
+        }
+    }
+    doc->changer()->doRemoveNode(node);
+    doc->changer()->endUndoMacro();
+}
+
 void ProjectActions::addVariable()
 {
     VariablePropertiesDialog d(NULL, MainWindow::instance());
@@ -234,14 +251,15 @@ void ProjectActions::variableProperties(ScriptVariable *var)
         newVar.setType(d.type());
         ProjectDocument *doc = document();
         doc->changer()->beginUndoMacro(doc->undoStack(), tr("Change Variable"));
-        if (d.name() != var->name()) {
-            foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
-                foreach (ScriptVariable *var2, node->variables()) {
-                    if (var2->variableRef() == var->name()) {
-                        ScriptVariable newVar2(var2);
+        foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
+            foreach (ScriptVariable *var2, node->variables()) {
+                if (var2->variableRef() == var->name()) {
+                    ScriptVariable newVar2(var2);
+                    if (d.name() != var->name())
                         newVar2.setVariableRef(d.name());
-                        doc->changer()->doChangeVariable(var2, &newVar2);
-                    }
+                    if (d.type() != var->type())
+                        newVar2.setVariableRef(QString());
+                    doc->changer()->doChangeVariable(var2, &newVar2);
                 }
             }
         }
