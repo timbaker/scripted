@@ -193,12 +193,14 @@ private:
                     cxn->mSender = node;
                     node->insertConnection(node->connectionCount(), cxn);
                 }
+#if 0
             } else if (xml.name() == QLatin1String("input")) {
                 if (NodeInput *input = readInput())
                     node->insertInput(node->inputCount(), input);
             } else if (xml.name() == QLatin1String("output")) {
                 if (NodeOutput *output = readOutput())
                     node->insertOutput(node->outputCount(), output);
+#endif
             } else if (xml.name() == QLatin1String("variable")) {
                 if (ScriptVariable *v = readVariable()) {
                     node->insertVariable(node->variableCount(), v);

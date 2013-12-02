@@ -45,6 +45,8 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
             }
         }
         if (MetaEventNode *enode = node->asEventNode()) {
+            Q_ASSERT(enode->outputCount() == 0);
+            enode->insertOutput(0, new NodeOutput(QLatin1String("Output")));
             if (MetaEventInfo *info = eventmgr()->info(enode->name())) {
                 enode->setInfo(info);
                 enode->syncWithInfo();

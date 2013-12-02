@@ -135,7 +135,7 @@ void BaseNode::initFrom(BaseNode *other)
 
 bool BaseNode::syncWithInfo(BaseNode *infoNode)
 {
-    if (infoNode) return false;
+    if (!infoNode) return false;
 
     bool changed = false;
 
@@ -221,7 +221,7 @@ bool MetaEventNode::isKnown(const NodeInput *input)
 
 bool MetaEventNode::isKnown(const NodeOutput *output)
 {
-    return false;
+    return mOutputs.contains(const_cast<NodeOutput*>(output)); // our single output
 }
 
 bool MetaEventNode::syncWithInfo()

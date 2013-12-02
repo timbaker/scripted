@@ -103,10 +103,12 @@ public:
 
         foreach (ScriptVariable *var, node->variables())
             writeVariable(var);
+#if 0
         foreach (NodeInput *input, node->inputs())
             writeInput(input);
         foreach (NodeOutput *output, node->outputs())
             writeOutput(output);
+#endif
         foreach (NodeConnection *cxn, node->connections())
             writeConnection(cxn);
         xml.writeEndElement();

@@ -352,13 +352,19 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(pen);
     painter->drawPath(path);
 
+    if (mOutput->mNode->isEventNode())
+        return;
+
     painter->drawText(r, Qt::AlignCenter, mOutput->mName);
 }
 
 void NodeOutputItem::updateLayout()
 {
     QFontMetricsF fm(mScene->font());
-    qreal labelWidth = fm.boundingRect(mOutput->mName).width();
+    QString name = mOutput->name();
+    if (mOutput->mNode->isEventNode())
+        name.clear();
+    qreal labelWidth = fm.boundingRect(name).width();
     QRectF r(0, -size().height() / 2, size().width() + labelWidth, size().height());
     QRectF bounds = r.adjusted(-3, -3, 3, 3); // adjust for pen width
     if (bounds != mBounds) {
