@@ -172,6 +172,8 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
         LuaNode *ret = new LuaNode(0, QFileInfo(fileName).baseName());
 
         luaL_openlibs(L);
+        lua_pushboolean(L, true);
+        lua_setglobal(L, "_SCRIPTED_");
         int status = luaL_loadfile(L, fileName.toLatin1().data());
         if (status == LUA_OK) {
             status = lua_pcall(L, 0, 0, -1); // call the closure?
@@ -222,7 +224,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                                 ret->insertVariable(ret->variableCount(),
                                                     new ScriptVariable(kv[QLatin1String("type")],
                                                     kv[QLatin1String("name")],
-                                        kv[QLatin1String("value")], QString()));
+                                        kv[QLatin1String("value")]));
                                 lua_pop(L, 1); // pop value
                             }
                         }
