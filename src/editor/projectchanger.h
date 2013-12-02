@@ -119,7 +119,7 @@ public:
     void doRemoveVariable(ScriptVariable *var);
     void doChangeVariable(ScriptVariable *var, const ScriptVariable *newVar);
     void doSetVariableValue(ScriptVariable *var, const QString &value);
-    void doSetVariableRef(ScriptVariable *var, const QString &varName);
+    void doSetVariableRef(ScriptVariable *var, int nodeID, const QString &varName);
     /////
 
 signals:

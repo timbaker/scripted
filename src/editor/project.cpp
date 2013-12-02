@@ -55,7 +55,12 @@ Project::~Project()
 
 ScriptVariable *Project::resolveVariable(const QString &name)
 {
-    return mRootNode->variable(name);
+    QStringList sl = name.split(QLatin1Char(':'));
+    Q_ASSERT(sl.length() == 2);
+    int nodeID = sl[0].toInt();
+    if (BaseNode *node = mRootNode->nodeByID(nodeID))
+        return node->variable(sl[1]);
+    return 0;
 }
 
 bool Project::isValidInputName(const QString &name, int index)

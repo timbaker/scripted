@@ -27,6 +27,7 @@
 #include "scriptscene.h"
 #include "scriptvariable.h"
 
+#include <QDrag>
 #include <QGraphicsDropShadowEffect>
 #include <QGraphicsProxyWidget>
 #include <QGraphicsScene>
@@ -157,6 +158,9 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void NodeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 {
+    // FIXME: the mouseReleaseEvent doesn't get delivered due to this dialog.
+    // BaseGraphicsView detects that and prints a message to the console.
+    // Perhaps call this in mouseReleaseEvent().
     ProjectActions::instance()->nodePropertiesDialog(mNode);
 }
 
@@ -171,8 +175,11 @@ void NodeItem::scriptChanged(ScriptInfo *info)
 void NodeItem::luaChanged(LuaInfo *info)
 {
     if (LuaNode *node = mNode->asLuaNode()) {
-        if (node->syncWithLuaInfo())
-            syncWithNode();
+        if (node->mDefinition == info) {
+            if (node->syncWithLuaInfo())
+                syncWithNode();
+            update();
+        }
     }
 }
 
@@ -519,11 +526,14 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     if (mDropHighlight)
         color = Qt::green;
     painter->setPen(color);
-    painter->drawRect(valueRect(option->rect));
+    painter->drawRect(valueRect(option->rect).adjusted(0,0,-1,-1));
     painter->drawText(option->rect, Qt::AlignVCenter, mVariable->name());
 
     QRectF r = valueRect(option->rect).adjusted(3,0,-3,0);
     if (mVariable->variableRef().length()) {
+        QFont font = painter->font();
+        font.setItalic(true);
+        painter->setFont(font);
         painter->drawImage(clearRefRect(option->rect), mRemoveVarRefImage);
         painter->drawText(r, Qt::AlignVCenter,
                           mVariable->variableRef());
@@ -534,18 +544,66 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
 
 void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+    mMouseDownPos = event->pos();
+    mWaitForDrag = false;
     if (event->button() == Qt::LeftButton) {
-        if (clearRefRect(boundingRect()).contains(event->pos()) &&
-                mVariable->variableRef().length()) {
-            ProjectDocument *doc = mScene->document();
-            doc->changer()->beginUndoCommand(doc->undoStack());
-            doc->changer()->doSetVariableRef(mVariable, QString());
-            doc->changer()->endUndoCommand();
+        if (clearRefRect(boundingRect()).contains(event->pos())) {
             return;
         }
-        if (valueRect(boundingRect()).contains(event->pos()) &&
-                mVariable->variableRef().isEmpty())
+        if (valueRect(boundingRect()).contains(event->pos())) {
+            mWaitForDrag = true;
+            return; // avoid calling QGraphicsItem::mousePressEvent() so
+                    // the NodeItem isn't dragged
+        }
+    }
+
+    QGraphicsItem::mousePressEvent(event);
+}
+
+static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
+
+void BaseVariableItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (mWaitForDrag) {
+        if ((event->pos() - mMouseDownPos).manhattanLength()
+                < QApplication::startDragDistance())
             return;
+
+        QByteArray ba;
+        QDataStream ds(&ba, QIODevice::WriteOnly);
+        if (mVariable->variableRef().length())
+            ds << QString::fromLatin1("%1:%2").arg(mVariable->variableRefID()).arg(mVariable->variableRef());
+        else
+            ds << QString::fromLatin1("%1:%2").arg(mVariable->node()->id()).arg(mVariable->name());
+
+        QMimeData *mimeData = new QMimeData;
+        mimeData->setData(VARIABLE_MIME_TYPE, ba);
+
+        QDrag drag(event->widget());
+        drag.setMimeData(mimeData);
+
+        // Create pixmap for the drag feedback
+        QRect r = valueRect(boundingRect()).toAlignedRect();
+        QRect pixmapR = r.translated(-r.topLeft());
+        QPixmap pixmap(r.width(), r.height());
+        pixmap.fill(Qt::white);
+        QPainter painter(&pixmap);
+        QFont font = mScene->font();
+        painter.drawRect(pixmapR.adjusted(0,0,-1,-1));
+        if (mVariable->variableRef().length()) {
+            font.setItalic(true);
+            painter.setFont(font);
+            painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->variableRef());
+        } else {
+            painter.setFont(font);
+            painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->value());
+        }
+        painter.end();
+        drag.setPixmap(pixmap);
+        drag.setHotSpot((event->pos() - r.topLeft()).toPoint());
+
+        drag.exec(Qt::LinkAction);
+        return;
     }
 
     QGraphicsItem::mousePressEvent(event);
@@ -554,16 +612,23 @@ void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 void BaseVariableItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
+        if (clearRefRect(boundingRect()).contains(event->pos()) &&
+                mVariable->variableRef().length()) {
+            ProjectDocument *doc = mScene->document();
+            doc->changer()->beginUndoCommand(doc->undoStack());
+            doc->changer()->doSetVariableRef(mVariable, -1, QString());
+            doc->changer()->endUndoCommand();
+            return;
+        }
         if (valueRect(boundingRect()).contains(event->pos()) &&
                 mVariable->variableRef().isEmpty()) {
             ProjectActions::instance()->editNodeVariableValue(mVariable);
+            return;
         }
     }
 
     QGraphicsItem::mouseReleaseEvent(event);
 }
-
-static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
 
 void BaseVariableItem::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 {
@@ -590,6 +655,7 @@ void BaseVariableItem::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 
 void BaseVariableItem::dragLeaveEvent(QGraphicsSceneDragDropEvent *event)
 {
+    Q_UNUSED(event)
     if (mDropHighlight) {
         mDropHighlight = false;
         update();
@@ -608,7 +674,10 @@ void BaseVariableItem::dropEvent(QGraphicsSceneDragDropEvent *event)
             if (ScriptVariable *var = doc->project()->resolveVariable(varName)) {
                 if (var->type() == mVariable->type()) {
                     doc->changer()->beginUndoCommand(doc->undoStack());
-                    doc->changer()->doSetVariableRef(mVariable, var->name());
+                    if (var->node() == doc->project()->rootNode())
+                        doc->changer()->doSetVariableRef(mVariable, var->node()->id(), var->name());
+                    else
+                        doc->changer()->doSetVariableValue(mVariable, var->value());
                     doc->changer()->endUndoCommand();
                     return;
                 }

@@ -219,7 +219,9 @@ QMimeData *ScriptVariablesModel::mimeData(const QModelIndexList &indexes) const
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     foreach (const QModelIndex &index, indexes) {
         if (Item *item = itemAt(index)) {
-            stream << item->mVariable->name();
+            stream << QString::fromLatin1("%1:%2")
+                      .arg(item->mVariable->node()->id())
+                      .arg(item->mVariable->name());
         }
     }
 

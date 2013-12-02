@@ -270,6 +270,7 @@ public:
     }
     BaseNode *nodeByID(int id)
     {
+        if (id == mID) return this;
         foreach (BaseNode *node, mNodes)
             if (node->id() == id)
                 return node;

@@ -2022,10 +2022,10 @@ void ProjectChanger::doSetVariableValue(ScriptVariable *var, const QString &valu
     addChange(new ChangeVariable(this, var, newVar));
 }
 
-void ProjectChanger::doSetVariableRef(ScriptVariable *var, const QString &varName)
+void ProjectChanger::doSetVariableRef(ScriptVariable *var, int nodeID, const QString &varName)
 {
     ScriptVariable newVar(var);
-    newVar.setVariableRef(varName);
+    newVar.setVariableRef(nodeID, varName);
     addChange(new ChangeVariable(this, var, newVar));
 }
 

@@ -26,8 +26,8 @@
 class ScriptVariable
 {
 public:
-    explicit ScriptVariable(const QString &type, const QString &name,
-                            const QString &value, const QString &variableRef);
+    ScriptVariable(const QString &type, const QString &name, const QString &value);
+    ScriptVariable(const QString &type, const QString &name, int refNodeID, const QString &refVarName);
     ScriptVariable(const ScriptVariable *other);
     ScriptVariable(const ScriptVariable *other, BaseNode *node);
 
@@ -43,8 +43,18 @@ public:
     void setValue(const QString &value) { mValue = value; }
     const QString &value() const { return mValue; }
 
-    void setVariableRef(const QString &varName) { mVariableRef = varName; }
-    const QString &variableRef() const { return mVariableRef; }
+    int variableRefID() const { return mVariableRefNodeID; }
+    void setVariableRef(int nodeID, const QString &varName)
+    {
+        mVariableRefNodeID = nodeID;
+        mVariableRef = varName;
+    }
+    const QString &variableRef(int *nodeID = 0) const
+    {
+        if (nodeID)
+            *nodeID = mVariableRefNodeID;
+        return mVariableRef;
+    }
 
     bool isKnown() const;
 
@@ -53,6 +63,7 @@ private:
     QString mName; // --> User-assigned name in a script
     QString mType; // --> Number, String, Actor, etc
     QString mValue; // User-defined value, ignored if mVariableRef is valid
+    int mVariableRefNodeID; // ID of node with mVariableRef variable
     QString mVariableRef; // Name of a variable containing the value to use
 };
 

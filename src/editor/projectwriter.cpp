@@ -165,8 +165,10 @@ public:
         xml.writeAttribute(QLatin1String("name"), var->name());
         if (var->variableRef().isEmpty())
             xml.writeAttribute(QLatin1String("value"), var->value());
-        else
-            xml.writeAttribute(QLatin1String("reference"), var->variableRef());
+        else {
+            xml.writeAttribute(QLatin1String("referenceid"), QString::number(var->variableRefID()));
+            xml.writeAttribute(QLatin1String("referencevar"), var->variableRef());
+        }
         xml.writeEndElement();
     }
 

@@ -20,12 +20,22 @@
 #include "node.h"
 
 ScriptVariable::ScriptVariable(const QString &type, const QString &name,
-                               const QString &value, const QString &variableRef) :
+                               const QString &value) :
     mNode(0),
     mType(type),
     mName(name),
     mValue(value),
-    mVariableRef(variableRef)
+    mVariableRefNodeID(-1)
+{
+}
+
+ScriptVariable::ScriptVariable(const QString &type, const QString &name,
+                               int refNodeID, const QString &refVarName) :
+    mNode(0),
+    mType(type),
+    mName(name),
+    mVariableRefNodeID(refNodeID),
+    mVariableRef(refVarName)
 {
 }
 
@@ -34,6 +44,7 @@ ScriptVariable::ScriptVariable(const ScriptVariable *other) :
     mType(other->mType),
     mName(other->mName),
     mValue(other->mValue),
+    mVariableRefNodeID(other->mVariableRefNodeID),
     mVariableRef(other->mVariableRef)
 {
 }
@@ -43,6 +54,7 @@ ScriptVariable::ScriptVariable(const ScriptVariable *other, BaseNode *node) :
     mType(other->mType),
     mName(other->mName),
     mValue(other->mValue),
+    mVariableRefNodeID(other->mVariableRefNodeID),
     mVariableRef(other->mVariableRef)
 {
 

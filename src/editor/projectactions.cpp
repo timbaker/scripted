@@ -305,7 +305,7 @@ void ProjectActions::addVariable()
 {
     VariablePropertiesDialog d(NULL, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
-        ScriptVariable *var = new ScriptVariable(d.type(), d.name(), QString(), QString());
+        ScriptVariable *var = new ScriptVariable(d.type(), d.name(), QString());
         ProjectDocument *doc = document();
         doc->changer()->beginUndoCommand(doc->undoStack());
         doc->changer()->doAddVariable(doc->project()->rootNode()->variableCount(), var);
@@ -327,7 +327,7 @@ void ProjectActions::removeVariable(ScriptVariable *var)
         foreach (ScriptVariable *var2, node->variables()) {
             if (var2->variableRef() == var->name()) {
                 ScriptVariable newVar2(var2);
-                newVar2.setVariableRef(QString());
+                newVar2.setVariableRef(-1, QString());
                 doc->changer()->doChangeVariable(var2, &newVar2);
             }
         }
@@ -350,9 +350,9 @@ void ProjectActions::variableProperties(ScriptVariable *var)
                 if (var2->variableRef() == var->name()) {
                     ScriptVariable newVar2(var2);
                     if (d.name() != var->name())
-                        newVar2.setVariableRef(d.name());
+                        newVar2.setVariableRef(0, d.name());
                     if (d.type() != var->type())
-                        newVar2.setVariableRef(QString());
+                        newVar2.setVariableRef(-1, QString());
                     doc->changer()->doChangeVariable(var2, &newVar2);
                 }
             }

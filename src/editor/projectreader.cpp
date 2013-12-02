@@ -125,6 +125,17 @@ private:
         }
 
         foreach (BaseNode *node, mProject->rootNode()->nodes()) {
+            foreach (ScriptVariable *var, node->variables()) {
+                if (var->variableRef().length()) {
+                    BaseNode *node = mProject->rootNode()->nodeByID(var->variableRefID());
+                    if (!node) {
+                        mError = tr("Invalid referenceid \"%1\" (unknown node)").arg(var->variableRefID());
+                        break;
+                    }
+                }
+            }
+            if (!mError.isEmpty())
+                break;
             foreach (NodeConnection *cxn, node->connections()) {
                 int id = (int)cxn->mReceiver;
                 if (BaseNode *rcvr = mProject->rootNode()->nodeByID(id)) {
@@ -303,10 +314,22 @@ private:
         const QXmlStreamAttributes atts = xml.attributes();
         QString type = atts.value(QLatin1String("type")).toString();
         QString name = atts.value(QLatin1String("name")).toString();
-        QString value = atts.value(QLatin1String("value")).toString();
-        QString varRef = atts.value(QLatin1String("reference")).toString();
-        xml.skipCurrentElement();
-        return new ScriptVariable(type, name, value, varRef);
+        if (atts.hasAttribute(QLatin1String("value"))) {
+            QString value = atts.value(QLatin1String("value")).toString();
+            xml.skipCurrentElement();
+            return new ScriptVariable(type, name, value);
+        } else {
+            QString idStr = atts.value(QLatin1String("referenceid")).toString();
+            bool ok;
+            int varRefID = idStr.toInt(&ok);
+            if (!ok) {
+                xml.raiseError(tr("Expected integer node-id but got \"%1\"").arg(idStr));
+                return 0;
+            }
+            QString varRef = atts.value(QLatin1String("referencevar")).toString();
+            xml.skipCurrentElement();
+            return new ScriptVariable(type, name, varRefID, varRef);
+        }
     }
 
     void readUnknownElement()

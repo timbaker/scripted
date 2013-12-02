@@ -107,6 +107,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
 
     void dragEnterEvent(QGraphicsSceneDragDropEvent *event);
@@ -125,6 +126,8 @@ public:
     ScriptScene *mScene;
     ScriptVariable *mVariable;
     bool mDropHighlight;
+    QPointF mMouseDownPos;
+    bool mWaitForDrag;
     QImage mRemoveVarRefImage;
 
     int mGroupLabelWidth;
