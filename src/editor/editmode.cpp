@@ -21,6 +21,7 @@
 #include "documentmanager.h"
 #include "embeddedmainwindow.h"
 #include "luadockwidget.h"
+#include "metaeventdock.h"
 #include "mainwindow.h"
 #include "projectactions.h"
 #include "projectdocument.h"
@@ -124,6 +125,7 @@ EditMode::EditMode(QObject *parent) :
     IMode(parent),
     mProjectDock(new ProjectTreeDock),
     mLuaDock(new LuaDockWidget),
+    mEventsDock(new MetaEventDock),
     mScriptsDock(new ScriptsDock),
     mVariablesDock(new ScriptVariablesDock),
     mToolBar(new EditModeToolBar),
@@ -156,10 +158,12 @@ EditMode::EditMode(QObject *parent) :
 
     mMainWindow->registerDockWidget(mProjectDock);
     mMainWindow->registerDockWidget(mLuaDock);
+    mMainWindow->registerDockWidget(mEventsDock);
     mMainWindow->registerDockWidget(mScriptsDock);
     mMainWindow->registerDockWidget(mVariablesDock);
     mMainWindow->addDockWidget(Qt::TopDockWidgetArea, mVariablesDock);
     mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mProjectDock);
+    mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mEventsDock);
     mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mLuaDock);
     mMainWindow->addDockWidget(Qt::RightDockWidgetArea, mScriptsDock);
 //    mMainWindow->tabifyDockWidget(mLayersDock, mFileSystemDock);

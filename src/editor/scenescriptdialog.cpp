@@ -33,6 +33,8 @@ SceneScriptDialog::SceneScriptDialog(ProjectDocument *doc, QWidget *parent) :
 {
     ui->setupUi(this);
 
+    ui->tabWidget->setCurrentIndex(0);
+
     UndoRedoButtons *urb = new UndoRedoButtons(doc->undoStack(), this);
     ui->buttonsLayout->insertWidget(0, urb->redoButton());
     ui->buttonsLayout->insertWidget(0, urb->undoButton());

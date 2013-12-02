@@ -26,9 +26,11 @@ class BaseGraphicsScene;
 class BaseGraphicsView;
 class BaseNode;
 class Document;
-class NodeConnection;
+class MetaEventInfo;
+class MetaEventNode;
 class LuaNode;
 class LuaInfo;
+class NodeConnection;
 class NodeInput;
 class NodeInputItem;
 class NodeInputGroupItem;
@@ -51,6 +53,9 @@ class ScriptVariable;
 
 typedef ScriptScene ProjectScene;
 typedef ScriptView ProjectView;
+
+
+extern const QString METAEVENT_MIME_TYPE;
 
 #ifdef QT_NO_DEBUG
 inline QNoDebug noise() { return QNoDebug(); }

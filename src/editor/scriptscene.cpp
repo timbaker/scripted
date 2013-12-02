@@ -18,6 +18,7 @@
 #include "scriptscene.h"
 
 #include "luamanager.h"
+#include "metaeventmanager.h"
 #include "node.h"
 #include "nodeitem.h"
 #include "project.h"
@@ -327,6 +328,7 @@ void ScriptScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 
     if (!event->mimeData()->hasFormat(COMMAND_MIME_TYPE) &&
             !event->mimeData()->hasFormat(VARIABLE_MIME_TYPE) &&
+            !event->mimeData()->hasFormat(METAEVENT_MIME_TYPE) &&
             !mDragHasPZS) {
         event->ignore();
         return;
@@ -339,8 +341,11 @@ void ScriptScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
 {
     QGraphicsScene::dragMoveEvent(event);
 
+    // NodeItem accepts VARIABLE_MIME_TYPE
     if (!event->isAccepted() &&
-            (event->mimeData()->hasFormat(COMMAND_MIME_TYPE) || mDragHasPZS)) {
+            (event->mimeData()->hasFormat(COMMAND_MIME_TYPE) ||
+             event->mimeData()->hasFormat(METAEVENT_MIME_TYPE) ||
+             mDragHasPZS)) {
         event->accept();
         event->setDropAction(Qt::CopyAction);
     }
@@ -355,6 +360,26 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
 {
     if (event->mimeData()->hasFormat(VARIABLE_MIME_TYPE)) {
         QGraphicsScene::dropEvent(event);
+        return;
+    }
+
+    if (event->mimeData()->hasFormat(METAEVENT_MIME_TYPE)) {
+        QByteArray encodedData = event->mimeData()->data(METAEVENT_MIME_TYPE);
+        QDataStream stream(&encodedData, QIODevice::ReadOnly);
+        while (!stream.atEnd()) {
+            QString eventName;
+            stream >> eventName;
+            if (MetaEventInfo *info = eventmgr()->info(eventName)) {
+                if (MetaEventNode *node = info->node()) { // may go to NULL if a MetaEvents.lua couldn't be reloaded
+                    MetaEventNode *newNode = new MetaEventNode(mDocument->project()->mNextID++, node->name());
+                    newNode->initFrom(node);
+                    newNode->setPos(event->scenePos());
+                    mDocument->changer()->beginUndoCommand(mDocument->undoStack());
+                    mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), newNode);
+                    mDocument->changer()->endUndoCommand();
+                }
+            }
+        }
         return;
     }
 
@@ -464,6 +489,14 @@ void ScriptScene::afterChangeVariable(ScriptVariable *var, const ScriptVariable 
         if (BaseVariableItem *varItem = nodeItem->variableItem(var)) {
             nodeItem->updateLayout();
         }
+}
+
+void ScriptScene::infoChanged(MetaEventInfo *info)
+{
+    foreach (NodeItem *item, mNodeItems)
+        item->infoChanged(info);
+
+    mAreaItem->updateBounds();
 }
 
 void ScriptScene::scriptChanged(ScriptInfo *info)

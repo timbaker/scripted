@@ -88,8 +88,28 @@ public:
     {
         if (LuaNode *lnode = node->asLuaNode())
             writeLuaNode(lnode);
+        if (MetaEventNode *enode = node->asEventNode())
+            writeEventNode(enode);
         else if (ScriptNode *snode = node->asScriptNode())
             writeScriptNode(snode);
+    }
+
+    void writeEventNode(MetaEventNode *node)
+    {
+        xml.writeStartElement(QLatin1String("event-node"));
+        xml.writeAttribute(QLatin1String("id"), QString::number(node->id()));
+        xml.writeAttribute(QLatin1String("name"), node->name());
+        writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
+
+        foreach (ScriptVariable *var, node->variables())
+            writeVariable(var);
+        foreach (NodeInput *input, node->inputs())
+            writeInput(input);
+        foreach (NodeOutput *output, node->outputs())
+            writeOutput(output);
+        foreach (NodeConnection *cxn, node->connections())
+            writeConnection(cxn);
+        xml.writeEndElement();
     }
 
     void writeLuaNode(LuaNode *node)

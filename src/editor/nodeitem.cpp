@@ -18,6 +18,7 @@
 #include "nodeitem.h"
 
 #include "luamanager.h"
+#include "metaeventmanager.h"
 #include "node.h"
 #include "project.h"
 #include "projectactions.h"
@@ -86,6 +87,9 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     if (LuaNode *lnode = mNode->asLuaNode())
         if (!lnode->mDefinition || !lnode->mDefinition->node())
             color = Qt::red;
+    if (MetaEventNode *enode = mNode->asEventNode())
+        if (!enode->info() || !enode->info()->node())
+            color = Qt::red;
     if (ScriptNode *snode = mNode->asScriptNode())
         if (!snode->scriptInfo() || !snode->scriptInfo()->node())
             color = Qt::red;
@@ -95,6 +99,8 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->setPen(pen);
 
     QColor bg(238, 238, 255);
+    if (mNode->isEventNode())
+        bg = QColor(255, 255, 155);
     QRect textRect = painter->fontMetrics().boundingRect(mNode->name());
     QRectF nameRect = QRectF(mBounds.x(), mBounds.y(), textRect.width() + 6, textRect.height() + 6);
     painter->fillRect(nameRect, bg);
@@ -164,11 +170,25 @@ void NodeItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
     ProjectActions::instance()->nodePropertiesDialog(mNode);
 }
 
+void NodeItem::infoChanged(MetaEventInfo *info)
+{
+    if (MetaEventNode *node = mNode->asEventNode()) {
+        if (node->info() == info) {
+            if (node->syncWithInfo())
+                syncWithNode();
+            update();
+        }
+    }
+}
+
 void NodeItem::scriptChanged(ScriptInfo *info)
 {
     if (ScriptNode *node = mNode->asScriptNode()) {
-        if (node->syncWithScriptInfo())
-            syncWithNode();
+        if (node->scriptInfo() == info) {
+            if (node->syncWithScriptInfo())
+                syncWithNode();
+            update();
+        }
     }
 }
 
@@ -527,19 +547,27 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         color = Qt::green;
     painter->setPen(color);
     painter->drawRect(valueRect(option->rect).adjusted(0,0,-1,-1));
+
+    if (mVariable->node()->isEventNode()) {
+        painter->drawText(valueRect(option->rect).adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->name());
+        return;
+    }
+
     painter->drawText(option->rect, Qt::AlignVCenter, mVariable->name());
 
     QRectF r = valueRect(option->rect).adjusted(3,0,-3,0);
     if (mVariable->variableRef().length()) {
+        if (BaseNode *node = mScene->document()->project()->rootNode()->nodeByID(mVariable->variableRefID()))
+            if (node->isEventNode())
+                painter->fillRect(valueRect(option->rect).adjusted(1,1,-2,-2), QColor(255, 255, 155));
+
         QFont font = painter->font();
         font.setItalic(true);
         painter->setFont(font);
         painter->drawImage(clearRefRect(option->rect), mRemoveVarRefImage);
-        painter->drawText(r, Qt::AlignVCenter,
-                          mVariable->variableRef());
+        painter->drawText(r, Qt::AlignVCenter, mVariable->variableRef());
     } else
-        painter->drawText(r, Qt::AlignVCenter,
-                          mVariable->value());
+        painter->drawText(r, Qt::AlignVCenter, mVariable->value());
 }
 
 void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
@@ -586,17 +614,25 @@ void BaseVariableItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         QRect r = valueRect(boundingRect()).toAlignedRect();
         QRect pixmapR = r.translated(-r.topLeft());
         QPixmap pixmap(r.width(), r.height());
-        pixmap.fill(Qt::white);
+        QColor bg(238, 238, 255);
+        if (mVariable->node()->isEventNode())
+            bg = QColor(255, 255, 155);
+        pixmap.fill(bg);
         QPainter painter(&pixmap);
         QFont font = mScene->font();
         painter.drawRect(pixmapR.adjusted(0,0,-1,-1));
-        if (mVariable->variableRef().length()) {
-            font.setItalic(true);
+        if (mVariable->node()->isEventNode()) {
             painter.setFont(font);
-            painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->variableRef());
+            painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->name());
         } else {
-            painter.setFont(font);
-            painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->value());
+            if (mVariable->variableRef().length()) {
+                font.setItalic(true);
+                painter.setFont(font);
+                painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->variableRef());
+            } else {
+                painter.setFont(font);
+                painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->value());
+            }
         }
         painter.end();
         drag.setPixmap(pixmap);
@@ -632,6 +668,11 @@ void BaseVariableItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 void BaseVariableItem::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 {
+    if (mVariable->node()->isEventNode()) {
+        event->ignore();
+        return;
+    }
+
     if (event->mimeData()->hasFormat(VARIABLE_MIME_TYPE)) {
         QStringList varNames = getDropData(event);
         bool accept = false;
@@ -674,7 +715,8 @@ void BaseVariableItem::dropEvent(QGraphicsSceneDragDropEvent *event)
             if (ScriptVariable *var = doc->project()->resolveVariable(varName)) {
                 if (var->type() == mVariable->type()) {
                     doc->changer()->beginUndoCommand(doc->undoStack());
-                    if (var->node() == doc->project()->rootNode())
+                    if (var->node() == doc->project()->rootNode() ||
+                            var->node()->isEventNode())
                         doc->changer()->doSetVariableRef(mVariable, var->node()->id(), var->name());
                     else
                         doc->changer()->doSetVariableValue(mVariable, var->value());
@@ -718,6 +760,9 @@ QSize BaseVariableItem::nameSizeHint()
 
 QSize BaseVariableItem::valueSizeHint()
 {
+    if (mVariable->node()->isEventNode())
+        return QSize(0, 0);
+
     QFontMetrics fm(mScene->font());
     QString value = mVariable->value();
     if (mVariable->variableRef().length())

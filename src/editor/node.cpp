@@ -17,6 +17,7 @@
 
 #include "node.h"
 #include "luamanager.h"
+#include "metaeventmanager.h"
 #include "scriptmanager.h"
 #include "scriptvariable.h"
 
@@ -132,6 +133,109 @@ void BaseNode::initFrom(BaseNode *other)
 #endif
 }
 
+bool BaseNode::syncWithInfo(BaseNode *infoNode)
+{
+    if (infoNode) return false;
+
+    bool changed = false;
+
+    // Sync variables
+    QList<ScriptVariable*> variables, myUnknownVariables;
+    foreach (ScriptVariable *var, infoNode->variables()) {
+        if (ScriptVariable *myVar = variable(var->name()))
+            variables += myVar;
+        else {
+            variables += new ScriptVariable(var);
+            variables.last()->setNode(this);
+        }
+    }
+    foreach (ScriptVariable *myVar, mVariables) {
+        if (!variables.contains(myVar))
+            myUnknownVariables += myVar;
+    }
+    if (variables != mVariables) {
+        mVariables = variables + myUnknownVariables;
+        changed = true;
+    }
+
+    // Sync inputs
+    QList<NodeInput*> inputs, myUnknownInputs;
+    foreach (NodeInput *input, infoNode->inputs()) {
+        if (NodeInput *myInput = this->input(input->name()))
+            inputs += myInput;
+        else {
+            inputs += new NodeInput(input);
+            inputs.last()->mNode = this;
+        }
+    }
+    foreach (NodeInput *myInput, mInputs) {
+        if (!inputs.contains(myInput))
+            myUnknownInputs += myInput;
+    }
+    if (inputs != mInputs) {
+        mInputs = inputs + myUnknownInputs;
+        changed = true;
+    }
+
+    // Sync outputs
+    QList<NodeOutput*> outputs, myUnknownOutputs;
+    foreach (NodeOutput *output, infoNode->outputs()) {
+        if (NodeOutput *myOutput = this->output(output->name()))
+            outputs += myOutput;
+        else {
+            outputs += new NodeOutput(output);
+            outputs.last()->mNode = this;
+        }
+    }
+    foreach (NodeOutput *myOutput, mOutputs) {
+        if (!outputs.contains(myOutput))
+            myUnknownOutputs += myOutput;
+    }
+    if (outputs != mOutputs) {
+        mOutputs = outputs + myUnknownOutputs;
+        changed = true;
+    }
+
+    return changed;
+}
+
+/////
+
+
+MetaEventNode::MetaEventNode(int id, const QString &name) :
+    BaseNode(id, name),
+    mInfo(0)
+{
+
+}
+
+bool MetaEventNode::isKnown(const ScriptVariable *var)
+{
+    return mInfo && mInfo->node() && mInfo->node()->variable(var->name());
+}
+
+bool MetaEventNode::isKnown(const NodeInput *input)
+{
+    return false;
+}
+
+bool MetaEventNode::isKnown(const NodeOutput *output)
+{
+    return false;
+}
+
+bool MetaEventNode::syncWithInfo()
+{
+    if (!mInfo || !mInfo->node()) return false;
+    return BaseNode::syncWithInfo(mInfo->node());
+}
+
+void MetaEventNode::initFrom(MetaEventNode *other)
+{
+    BaseNode::initFrom(other);
+    mInfo = other->mInfo;
+}
+
 /////
 
 LuaNode::LuaNode(int id, const QString &name) :
@@ -159,7 +263,9 @@ bool LuaNode::isKnown(const NodeOutput *output)
 bool LuaNode::syncWithLuaInfo()
 {
     if (!mDefinition || !mDefinition->node()) return false;
-
+#if 1
+    return syncWithInfo(mDefinition->node());
+#else
     bool changed = false;
 
     // Sync variables
@@ -220,6 +326,7 @@ bool LuaNode::syncWithLuaInfo()
     }
 
     return changed;
+#endif
 }
 
 void LuaNode::initFrom(LuaNode *other)
@@ -238,7 +345,9 @@ ScriptNode::~ScriptNode()
 bool ScriptNode::syncWithScriptInfo()
 {
     if (!mInfo || !mInfo->node()) return false;
-
+#if 1
+    return syncWithInfo(mInfo->node());
+#else
     bool changed = false;
 
     // Sync variables
@@ -299,6 +408,7 @@ bool ScriptNode::syncWithScriptInfo()
     }
 
     return changed;
+#endif
 }
 
 bool ScriptNode::isKnown(const ScriptVariable *var)
@@ -321,4 +431,3 @@ void ScriptNode::initFrom(ScriptNode *other)
     BaseNode::initFrom(other);
     // don't want the child nodes...
 }
-

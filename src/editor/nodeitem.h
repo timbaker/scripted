@@ -197,6 +197,7 @@ public:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 
+    void infoChanged(MetaEventInfo *info);
     void scriptChanged(ScriptInfo *info);
     void luaChanged(LuaInfo *info);
     void updateLayout();

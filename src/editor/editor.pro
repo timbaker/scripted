@@ -55,7 +55,9 @@ SOURCES += main.cpp\
     variablepropertiesdialog.cpp \
     undoredobuttons.cpp \
     scenescriptdialog.cpp \
-    editnodevariabledialog.cpp
+    editnodevariabledialog.cpp \
+    metaeventmanager.cpp \
+    metaeventdock.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -105,7 +107,9 @@ HEADERS  += mainwindow.h \
     variablepropertiesdialog.h \
     undoredobuttons.h \
     scenescriptdialog.h \
-    editnodevariabledialog.h
+    editnodevariabledialog.h \
+    metaeventmanager.h \
+    metaeventdock.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \
@@ -116,7 +120,8 @@ FORMS    += mainwindow.ui \
     nodepropertiesdialog.ui \
     variablepropertiesdialog.ui \
     scenescriptdialog.ui \
-    editnodevariabledialog.ui
+    editnodevariabledialog.ui \
+    metaeventdock.ui
 
 RESOURCES += \
     editor.qrc

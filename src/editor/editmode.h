@@ -26,6 +26,7 @@
 #include <QToolBar>
 
 class LuaDockWidget;
+class MetaEventDock;
 class ProjectTreeDock;
 class ScriptsDock;
 class ScriptVariablesDock;
@@ -90,6 +91,7 @@ protected:
     QTabWidget *mTabWidget;
     ProjectTreeDock *mProjectDock;
     LuaDockWidget *mLuaDock;
+    MetaEventDock *mEventsDock;
     ScriptsDock *mScriptsDock;
     ScriptVariablesDock *mVariablesDock;
     EditModeToolBar *mToolBar;

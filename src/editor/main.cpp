@@ -18,8 +18,10 @@
 #include "mainwindow.h"
 #include <QApplication>
 
-#include "luamanager.h"
 #include "documentmanager.h"
+#include "luamanager.h"
+#include "metaeventmanager.h"
+#include "node.h"
 #include "preferences.h"
 #include "progress.h"
 #include "scriptmanager.h"
@@ -40,12 +42,17 @@ int main(int argc, char *argv[])
     a.setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
 
+    qRegisterMetaType<BaseNode*>("BaseNode*");
+
     new Preferences;
     new DocumentManager;
     new ScriptManager;
 
     new LuaManager;
     luamgr()->readLuaFiles();
+
+    new MetaEventManager;
+    eventmgr()->readLuaFiles();
 
     MainWindow w;
     w.show();

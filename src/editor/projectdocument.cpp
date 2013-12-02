@@ -18,6 +18,7 @@
 #include "projectdocument.h"
 
 #include "luamanager.h"
+#include "metaeventmanager.h"
 #include "node.h"
 #include "project.h"
 #include "projectchanger.h"
@@ -36,13 +37,17 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
     mUndoStack = new QUndoStack(this);
     connect(mUndoStack, SIGNAL(cleanChanged(bool)), SIGNAL(cleanChanged()));
 
-    // set ScriptInfo and LuaInfo for each node
-//    QString relativeTo = QFileInfo(mFileName).absolutePath();
     foreach (BaseNode *node, mProject->rootNode()->nodes()) {
         if (LuaNode *lnode = node->asLuaNode()) {
             if (LuaInfo *info = luamgr()->luaInfo(lnode->source())) {
                 lnode->mDefinition = info;
                 lnode->syncWithLuaInfo();
+            }
+        }
+        if (MetaEventNode *enode = node->asEventNode()) {
+            if (MetaEventInfo *info = eventmgr()->info(enode->name())) {
+                enode->setInfo(info);
+                enode->syncWithInfo();
             }
         }
         if (ScriptNode *snode = node->asScriptNode()) {

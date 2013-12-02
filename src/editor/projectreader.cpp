@@ -102,6 +102,12 @@ private:
             } else if (xml.name() == QLatin1String("output")) {
                 if (NodeOutput *output = readOutput())
                     mProject->rootNode()->insertOutput(mProject->rootNode()->outputCount(), output);
+            } else if (xml.name() == QLatin1String("event-node")) {
+                if (MetaEventNode *node = readEventNode()) {
+                    mProject->rootNode()->insertNode(mProject->rootNode()->nodeCount(), node);
+                    if (node->id() >= nextID)
+                        nextID = node->id() + 1;
+                }
             } else if (xml.name() == QLatin1String("lua-node")) {
                 if (LuaNode *node = readLuaNode()) {
                     mProject->rootNode()->insertNode(mProject->rootNode()->nodeCount(), node);
@@ -160,6 +166,48 @@ private:
         }
 
         return mProject;
+    }
+
+    MetaEventNode *readEventNode()
+    {
+        Q_ASSERT(xml.isStartElement() && xml.name() == QLatin1String("event-node"));
+
+        const QXmlStreamAttributes atts = xml.attributes();
+        bool ok;
+        int id = atts.value(QLatin1String("id")).toInt(&ok);
+        if (!ok || id < 0) {
+            xml.raiseError(tr("missing or invalid node ID"));
+            return 0;
+        }
+        const QString name = atts.value(QLatin1String("name")).toString();
+        double x, y;
+        if (!getDoublePair(atts, QLatin1String("pos"), x, y))
+            return 0;
+
+        MetaEventNode *node = new MetaEventNode(id, name);
+        node->setPos(x, y);
+
+        while (xml.readNextStartElement()) {
+            if (xml.name() == QLatin1String("connection")) {
+                if (NodeConnection *cxn = readConnection()) {
+                    cxn->mSender = node;
+                    node->insertConnection(node->connectionCount(), cxn);
+                }
+            } else if (xml.name() == QLatin1String("input")) {
+                if (NodeInput *input = readInput())
+                    node->insertInput(node->inputCount(), input);
+            } else if (xml.name() == QLatin1String("output")) {
+                if (NodeOutput *output = readOutput())
+                    node->insertOutput(node->outputCount(), output);
+            } else if (xml.name() == QLatin1String("variable")) {
+                if (ScriptVariable *v = readVariable()) {
+                    node->insertVariable(node->variableCount(), v);
+                }
+            } else
+                readUnknownElement();
+        }
+
+        return node;
     }
 
     LuaNode *readLuaNode()

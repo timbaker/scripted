@@ -197,11 +197,16 @@ public:
 
     void initFrom(BaseNode *other);
 
+    virtual bool isEventNode() { return false; }
+    virtual MetaEventNode *asEventNode() { return NULL; }
+
     virtual bool isLuaNode() { return false; }
     virtual LuaNode *asLuaNode() { return NULL; }
 
     virtual bool isScriptNode() { return false; }
     virtual ScriptNode *asScriptNode() { return NULL; }
+
+    bool syncWithInfo(BaseNode *infoNode);
 
 protected:
     int mID;
@@ -212,6 +217,29 @@ protected:
     QList<NodeConnection*> mConnections;
     QPointF mPosition;
 //    QString mComment;
+};
+
+class MetaEventNode : public BaseNode
+{
+public:
+    MetaEventNode(int id, const QString &name);
+
+    bool isKnown(const ScriptVariable *var);
+    bool isKnown(const NodeInput *input);
+    bool isKnown(const NodeOutput *output);
+
+    void setInfo(MetaEventInfo *info) { mInfo = info; }
+    MetaEventInfo *info() const { return mInfo; }
+
+    bool syncWithInfo();
+
+    void initFrom(MetaEventNode *other);
+
+    virtual bool isEventNode() { return true; }
+    virtual MetaEventNode *asEventNode() { return this; }
+
+private:
+    MetaEventInfo *mInfo;
 };
 
 class LuaNode : public BaseNode
@@ -260,9 +288,10 @@ public:
     {
         return (index >= 0 && index < mNodes.size()) ? mNodes.at(index) : 0;
     }
-    void insertNode(int index, BaseNode *object)
+    void insertNode(int index, BaseNode *node)
     {
-        mNodes.insert(index, object);
+        Q_ASSERT(nodeByID(node->id()) == 0);
+        mNodes.insert(index, node);
     }
     BaseNode *removeNode(int index)
     {
