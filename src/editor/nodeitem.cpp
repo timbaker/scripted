@@ -284,7 +284,7 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
-    if (!mInput->isKnown())
+    if (mInput->mNode != mScene->document()->project()->rootNode() && !mInput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         color = color.lighter();
@@ -340,7 +340,7 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
-    if (!mOutput->isKnown())
+    if (mOutput->mNode != mScene->document()->project()->rootNode() && !mOutput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         color = color.lighter();
