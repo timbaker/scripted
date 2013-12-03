@@ -101,7 +101,7 @@ void ScriptManager::fileChangedTimeout()
                 if (!scriptInfo->mNode) {
                     // ???
                 }
-                emit scriptChanged(scriptInfo);
+                emit infoChanged(scriptInfo);
             }
         }
     }

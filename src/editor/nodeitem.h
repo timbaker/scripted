@@ -198,8 +198,8 @@ public:
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event);
 
     void infoChanged(MetaEventInfo *info);
-    void scriptChanged(ScriptInfo *info);
-    void luaChanged(LuaInfo *info);
+    void infoChanged(ScriptInfo *info);
+    void infoChanged(LuaInfo *info);
     void updateLayout();
     void syncWithNode();
 

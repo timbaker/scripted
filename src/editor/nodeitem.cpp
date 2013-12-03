@@ -85,13 +85,13 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 {
     QColor color = Qt::black;
     if (LuaNode *lnode = mNode->asLuaNode())
-        if (!lnode->mDefinition || !lnode->mDefinition->node())
+        if (!lnode->mInfo || !lnode->mInfo->node())
             color = Qt::red;
     if (MetaEventNode *enode = mNode->asEventNode())
         if (!enode->info() || !enode->info()->node())
             color = Qt::red;
     if (ScriptNode *snode = mNode->asScriptNode())
-        if (!snode->scriptInfo() || !snode->scriptInfo()->node())
+        if (!snode->info() || !snode->info()->node())
             color = Qt::red;
 
     QPen pen(color);
@@ -181,22 +181,22 @@ void NodeItem::infoChanged(MetaEventInfo *info)
     }
 }
 
-void NodeItem::scriptChanged(ScriptInfo *info)
+void NodeItem::infoChanged(ScriptInfo *info)
 {
     if (ScriptNode *node = mNode->asScriptNode()) {
-        if (node->scriptInfo() == info) {
-            if (node->syncWithScriptInfo())
+        if (node->info() == info) {
+            if (node->syncWithInfo())
                 syncWithNode();
             update();
         }
     }
 }
 
-void NodeItem::luaChanged(LuaInfo *info)
+void NodeItem::infoChanged(LuaInfo *info)
 {
     if (LuaNode *node = mNode->asLuaNode()) {
-        if (node->mDefinition == info) {
-            if (node->syncWithLuaInfo())
+        if (node->mInfo == info) {
+            if (node->syncWithInfo())
                 syncWithNode();
             update();
         }

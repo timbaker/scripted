@@ -136,8 +136,8 @@ public slots:
     void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
     void infoChanged(MetaEventInfo *info);
-    void scriptChanged(ScriptInfo *info);
-    void luaChanged(LuaInfo *info);
+    void infoChanged(ScriptInfo *info);
+    void infoChanged(LuaInfo *info);
 
 private:
     ProjectDocument *mDocument;

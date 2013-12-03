@@ -40,8 +40,8 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
     foreach (BaseNode *node, mProject->rootNode()->nodes()) {
         if (LuaNode *lnode = node->asLuaNode()) {
             if (LuaInfo *info = luamgr()->luaInfo(lnode->source())) {
-                lnode->mDefinition = info;
-                lnode->syncWithLuaInfo();
+                lnode->mInfo = info;
+                lnode->syncWithInfo();
             }
         }
         if (MetaEventNode *enode = node->asEventNode()) {
@@ -53,8 +53,8 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
         }
         if (ScriptNode *snode = node->asScriptNode()) {
             if (ScriptInfo *info = scriptmgr()->scriptInfo(snode->source())) {
-                snode->setScriptInfo(info);
-                snode->syncWithScriptInfo();
+                snode->setInfo(info);
+                snode->syncWithInfo();
             }
         }
     }

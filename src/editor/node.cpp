@@ -240,31 +240,31 @@ void MetaEventNode::initFrom(MetaEventNode *other)
 
 LuaNode::LuaNode(int id, const QString &name) :
     BaseNode(id, name),
-    mDefinition(0)
+    mInfo(0)
 {
 }
 
 bool LuaNode::isKnown(const ScriptVariable *var)
 {
-    return mDefinition && mDefinition->node() && mDefinition->node()->variable(var->name());
+    return mInfo && mInfo->node() && mInfo->node()->variable(var->name());
 }
 
 bool LuaNode::isKnown(const NodeInput *input)
 {
-    return mDefinition && mDefinition->node() && mDefinition->node()->input(input->name());
+    return mInfo && mInfo->node() && mInfo->node()->input(input->name());
 }
 
 bool LuaNode::isKnown(const NodeOutput *output)
 {
-    return mDefinition && mDefinition->node() && mDefinition->node()->output(output->name());
+    return mInfo && mInfo->node() && mInfo->node()->output(output->name());
 }
 
-// FIXME: this is 99% identical to ScriptNode::syncWithScriptInfo()
-bool LuaNode::syncWithLuaInfo()
+// FIXME: this is 99% identical to ScriptNode::syncWithInfo()
+bool LuaNode::syncWithInfo()
 {
-    if (!mDefinition || !mDefinition->node()) return false;
+    if (!mInfo || !mInfo->node()) return false;
 #if 1
-    return syncWithInfo(mDefinition->node());
+    return syncWithInfo(mInfo->node());
 #else
     bool changed = false;
 
@@ -332,7 +332,7 @@ bool LuaNode::syncWithLuaInfo()
 void LuaNode::initFrom(LuaNode *other)
 {
     BaseNode::initFrom(other);
-    mDefinition = other->mDefinition;
+    mInfo = other->mInfo;
 }
 
 /////
@@ -342,7 +342,7 @@ ScriptNode::~ScriptNode()
     qDeleteAll(mNodes);
 }
 
-bool ScriptNode::syncWithScriptInfo()
+bool ScriptNode::syncWithInfo()
 {
     if (!mInfo || !mInfo->node()) return false;
 #if 1

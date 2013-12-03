@@ -122,8 +122,8 @@ public:
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
 
         xml.writeStartElement(QLatin1String("source"));
-        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->mDefinition
-                           ? node->mDefinition->path()
+        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->mInfo
+                           ? node->mInfo->path()
                            : node->source()));
         xml.writeEndElement();
 
@@ -146,8 +146,8 @@ public:
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
 
         xml.writeStartElement(QLatin1String("source"));
-        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->scriptInfo()
-                           ? node->scriptInfo()->path()
+        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->info()
+                           ? node->info()->path()
                            : node->source()));
         xml.writeEndElement();
 

@@ -53,7 +53,7 @@ public:
     bool readLuaFiles();
 
 signals:
-    void luaChanged(LuaInfo *info);
+    void infoChanged(LuaInfo *info);
 
 public slots:
     void gameDirectoriesChanged();

@@ -48,7 +48,7 @@ public:
     QString canonicalPath(const QString &fileName, const QString &relativeTo = QString());
 
 signals:
-    void scriptChanged(ScriptInfo *info);
+    void infoChanged(ScriptInfo *info);
 
 public slots:
     void fileChanged(const QString &path);

@@ -174,10 +174,10 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
             SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
 
     connect(eventmgr(), SIGNAL(infoChanged(MetaEventInfo*)), SLOT(infoChanged(MetaEventInfo*)));
-    connect(luamgr(), SIGNAL(luaChanged(LuaInfo*)),
-            SLOT(luaChanged(LuaInfo*)));
-    connect(scriptmgr(), SIGNAL(scriptChanged(ScriptInfo*)),
-            SLOT(scriptChanged(ScriptInfo*)));
+    connect(luamgr(), SIGNAL(infoChanged(LuaInfo*)),
+            SLOT(infoChanged(LuaInfo*)));
+    connect(scriptmgr(), SIGNAL(infoChanged(ScriptInfo*)),
+            SLOT(infoChanged(ScriptInfo*)));
 
     mConnectionsItem->updateConnections();
 }
@@ -394,7 +394,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
                 ScriptNode *node = new ScriptNode(mDocument->project()->mNextID++, scriptInfo->node()->name());
                 node->initFrom(scriptInfo->node());
                 node->setPos(event->scenePos());
-                node->setScriptInfo(scriptInfo);
+                node->setInfo(scriptInfo);
                 node->setSource(scriptInfo->path());
                 mDocument->changer()->beginUndoCommand(mDocument->undoStack());
                 mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
@@ -416,7 +416,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
             if (LuaNode *lnode = def->node()) { // may go to NULL if a .lua file couldn't be reloaded
                 LuaNode *node = new LuaNode(mDocument->project()->mNextID++, def->node()->name());
                 node->initFrom(lnode);
-                node->mDefinition = def;
+                node->mInfo = def;
                 node->setPos(event->scenePos());
                 //            node->mComment = tr("Added by drag-and-drop.");
                 mDocument->changer()->beginUndoCommand(mDocument->undoStack());
@@ -500,18 +500,18 @@ void ScriptScene::infoChanged(MetaEventInfo *info)
     mAreaItem->updateBounds();
 }
 
-void ScriptScene::scriptChanged(ScriptInfo *info)
+void ScriptScene::infoChanged(ScriptInfo *info)
 {
     foreach (NodeItem *item, mNodeItems)
-        item->scriptChanged(info);
+        item->infoChanged(info);
 
     mAreaItem->updateBounds();
 }
 
-void ScriptScene::luaChanged(LuaInfo *info)
+void ScriptScene::infoChanged(LuaInfo *info)
 {
     foreach (NodeItem *item, mNodeItems)
-        item->luaChanged(info);
+        item->infoChanged(info);
 
     mAreaItem->updateBounds();
 }

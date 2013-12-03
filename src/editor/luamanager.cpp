@@ -153,7 +153,7 @@ void LuaManager::fileChangedTimeout()
                 if (!info->mNode) {
                     // ???
                 }
-                emit luaChanged(info);
+                emit infoChanged(info);
             }
         }
     }

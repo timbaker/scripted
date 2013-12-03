@@ -254,7 +254,8 @@ public:
     void setSource(const QString &path) { mSource = path; }
     QString source() { return mSource; }
 
-    bool syncWithLuaInfo();
+    using BaseNode::syncWithInfo;
+    bool syncWithInfo();
 
     void initFrom(LuaNode *other);
 
@@ -262,7 +263,7 @@ public:
     virtual LuaNode *asLuaNode() { return this; }
 
     QString mSource; // (relative) path to .lua
-    LuaInfo *mDefinition;
+    LuaInfo *mInfo;
 };
 
 class ScriptNode : public BaseNode
@@ -311,13 +312,14 @@ public:
     }
     using BaseNode::indexOf;
 
-    void setScriptInfo(ScriptInfo *info) { mInfo = info; }
-    ScriptInfo *scriptInfo() const { return mInfo; }
+    void setInfo(ScriptInfo *info) { mInfo = info; }
+    ScriptInfo *info() const { return mInfo; }
 
     void setSource(const QString &path) { mSource = path; }
     QString source() { return mSource; }
 
-    bool syncWithScriptInfo();
+    using BaseNode::syncWithInfo;
+    bool syncWithInfo();
 
     bool isKnown(const ScriptVariable *var);
     bool isKnown(const NodeInput *input);
