@@ -779,6 +779,8 @@ void BaseVariableItem::updateLayout(int groupLabelWidth, int groupValueWidth)
 
 QSize BaseVariableItem::nameSizeHint()
 {
+    if (mVariable->node()->isEventNode())
+        return QSize(0, 0);
     QFontMetrics fm(mScene->font());
     return fm.boundingRect(mVariable->name()).size() + QSize(4, 3 + 3);
 }
@@ -792,6 +794,8 @@ QSize BaseVariableItem::valueSizeHint()
     QString value = mVariable->value();
     if (mVariable->variableRef().length())
         value = mVariable->variableRef();
+    if (mVariable->node()->isEventNode())
+        value = mVariable->name();
     return fm.boundingRect(value).size() + QSize(3 + 3 + 16 + 2, 3 + 16 + 3);
 }
 
