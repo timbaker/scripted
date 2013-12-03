@@ -53,21 +53,21 @@ SceneScriptDialog::SceneScriptDialog(ProjectDocument *doc, QWidget *parent) :
     connect(ui->outputsList, SIGNAL(itemSelectionChanged()), SLOT(outputSelectionChanged()));
     connect(ui->outputName, SIGNAL(textChanged(QString)), SLOT(outputNameChanged()));
 
-    connect(mDocument->changer(), SIGNAL(afterAddInput(int,NodeInput*)),
-            SLOT(afterAddInput(int,NodeInput*)));
-    connect(mDocument->changer(), SIGNAL(afterRemoveInput(int,NodeInput*)),
-            SLOT(afterRemoveInput(int,NodeInput*)));
-    connect(mDocument->changer(), SIGNAL(afterReorderInput(int,int)),
-            SLOT(afterReorderInput(int,int)));
+    connect(mDocument->changer(), SIGNAL(afterAddInput(BaseNode*,int,NodeInput*)),
+            SLOT(afterAddInput(BaseNode*,int,NodeInput*)));
+    connect(mDocument->changer(), SIGNAL(afterRemoveInput(BaseNode*,int,NodeInput*)),
+            SLOT(afterRemoveInput(BaseNode*,int,NodeInput*)));
+    connect(mDocument->changer(), SIGNAL(afterReorderInput(BaseNode*,int,int)),
+            SLOT(afterReorderInput(BaseNode*,int,int)));
     connect(mDocument->changer(), SIGNAL(afterRenameInput(NodeInput*,QString)),
             SLOT(afterRenameInput(NodeInput*,QString)));
 
-    connect(mDocument->changer(), SIGNAL(afterAddOutput(int,NodeOutput*)),
-            SLOT(afterAddOutput(int,NodeOutput*)));
-    connect(mDocument->changer(), SIGNAL(afterRemoveOutput(int,NodeOutput*)),
-            SLOT(afterRemoveOutput(int,NodeOutput*)));
-    connect(mDocument->changer(), SIGNAL(afterReorderOutput(int,int)),
-            SLOT(afterReorderOutput(int,int)));
+    connect(mDocument->changer(), SIGNAL(afterAddOutput(BaseNode*,int,NodeOutput*)),
+            SLOT(afterAddOutput(BaseNode*,int,NodeOutput*)));
+    connect(mDocument->changer(), SIGNAL(afterRemoveOutput(BaseNode*,int,NodeOutput*)),
+            SLOT(afterRemoveOutput(BaseNode*,int,NodeOutput*)));
+    connect(mDocument->changer(), SIGNAL(afterReorderOutput(BaseNode*,int,int)),
+            SLOT(afterReorderOutput(BaseNode*,int,int)));
     connect(mDocument->changer(), SIGNAL(afterRenameOutput(NodeOutput*,QString)),
             SLOT(afterRenameOutput(NodeOutput*,QString)));
 
@@ -85,19 +85,23 @@ SceneScriptDialog::~SceneScriptDialog()
     delete ui;
 }
 
-void SceneScriptDialog::afterAddInput(int index, NodeInput *input)
+void SceneScriptDialog::afterAddInput(BaseNode *node, int index, NodeInput *input)
 {
+    if (node != mDocument->project()->rootNode()) return;
     ui->inputsList->insertItem(index, input->name());
     ui->inputsList->setCurrentRow(index);
 }
 
-void SceneScriptDialog::afterRemoveInput(int index, NodeInput *input)
+void SceneScriptDialog::afterRemoveInput(BaseNode *node, int index, NodeInput *input)
 {
+    Q_UNUSED(input)
+    if (node != mDocument->project()->rootNode()) return;
     delete ui->inputsList->takeItem(index);
 }
 
-void SceneScriptDialog::afterReorderInput(int oldIndex, int newIndex)
+void SceneScriptDialog::afterReorderInput(BaseNode *node, int oldIndex, int newIndex)
 {
+    if (node != mDocument->project()->rootNode()) return;
     QListWidgetItem *item = ui->inputsList->takeItem(oldIndex);
     ui->inputsList->insertItem(newIndex, item);
     ui->inputsList->setCurrentRow(newIndex);
@@ -106,6 +110,7 @@ void SceneScriptDialog::afterReorderInput(int oldIndex, int newIndex)
 void SceneScriptDialog::afterRenameInput(NodeInput *input, const QString &oldName)
 {
     Q_UNUSED(oldName)
+    if (input->node() != mDocument->project()->rootNode()) return;
     int row = mDocument->project()->rootNode()->indexOf(input);
     ui->inputsList->item(row)->setText(input->name());
 
@@ -116,19 +121,23 @@ void SceneScriptDialog::afterRenameInput(NodeInput *input, const QString &oldNam
     mSyncDepth--;
 }
 
-void SceneScriptDialog::afterAddOutput(int index, NodeOutput *output)
+void SceneScriptDialog::afterAddOutput(BaseNode *node, int index, NodeOutput *output)
 {
+    if (node != mDocument->project()->rootNode()) return;
     ui->outputsList->insertItem(index, output->name());
     ui->outputsList->setCurrentRow(index);
 }
 
-void SceneScriptDialog::afterRemoveOutput(int index, NodeOutput *output)
+void SceneScriptDialog::afterRemoveOutput(BaseNode *node, int index, NodeOutput *output)
 {
+    Q_UNUSED(output)
+    if (node != mDocument->project()->rootNode()) return;
     delete ui->outputsList->takeItem(index);
 }
 
-void SceneScriptDialog::afterReorderOutput(int oldIndex, int newIndex)
+void SceneScriptDialog::afterReorderOutput(BaseNode *node, int oldIndex, int newIndex)
 {
+    if (node != mDocument->project()->rootNode()) return;
     QListWidgetItem *item = ui->outputsList->takeItem(oldIndex);
     ui->outputsList->insertItem(newIndex, item);
     ui->outputsList->setCurrentRow(newIndex);

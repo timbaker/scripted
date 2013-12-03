@@ -51,6 +51,10 @@ public:
 
     bool isKnown() const;
 
+    void setNode(BaseNode *node) { mNode = node; }
+    BaseNode *node() const { return mNode; }
+
+private:
     BaseNode *mNode;
     QString mName;
 };
@@ -74,6 +78,11 @@ public:
 
     bool isKnown() const;
 
+
+    void setNode(BaseNode *node) { mNode = node; }
+    BaseNode *node() const { return mNode; }
+
+private:
     BaseNode *mNode;
     QString mName;
 };
@@ -124,7 +133,7 @@ public:
     NodeInput *input(const QString &name)
     {
         foreach (NodeInput *input, mInputs)
-            if (input->mName == name)
+            if (input->name() == name)
                 return input;
         return 0;
     }
@@ -146,7 +155,7 @@ public:
     NodeOutput *output(const QString &name)
     {
         foreach (NodeOutput *output, mOutputs)
-            if (output->mName == name)
+            if (output->name() == name)
                 return output;
         return 0;
     }
@@ -312,6 +321,13 @@ public:
         return mNodes.indexOf(node);
     }
     using BaseNode::indexOf;
+
+    QList<BaseNode*> nodesPlusSelf()
+    {
+        QList<BaseNode*> ret = mNodes;
+        ret.prepend(this);
+        return ret;
+    }
 
     void setInfo(ScriptInfo *info) { mInfo = info; }
     ScriptInfo *info() const { return mInfo; }

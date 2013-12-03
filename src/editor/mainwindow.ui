@@ -47,6 +47,7 @@
      <string>Project</string>
     </property>
     <addaction name="actionEditInputsOutputs"/>
+    <addaction name="actionRemoveUnknowns"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -114,6 +115,15 @@
   <action name="actionEditInputsOutputs">
    <property name="text">
     <string>Inputs/Outputs...</string>
+   </property>
+  </action>
+  <action name="actionRemoveUnknowns">
+   <property name="icon">
+    <iconset resource="editor.qrc">
+     <normaloff>:/images/16x16/edit-clear.png</normaloff>:/images/16x16/edit-clear.png</iconset>
+   </property>
+   <property name="text">
+    <string>Remove Unknowns</string>
    </property>
   </action>
  </widget>

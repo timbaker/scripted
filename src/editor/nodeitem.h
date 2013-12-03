@@ -200,6 +200,9 @@ public:
     void infoChanged(MetaEventInfo *info);
     void infoChanged(ScriptInfo *info);
     void infoChanged(LuaInfo *info);
+    void inputsChanged();
+    void outputsChanged();
+    void variablesChanged();
     void updateLayout();
     void syncWithNode();
 

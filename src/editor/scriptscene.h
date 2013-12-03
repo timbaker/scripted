@@ -161,6 +161,8 @@ public slots:
     void afterMoveNode(BaseNode *node, const QPointF &oldPos);
     void afterRenameNode(BaseNode *node, const QString &oldName);
 
+    void inputsChanged(BaseNode *node);
+    void outputsChanged(BaseNode *node);
     void inputsChanged();
     void outputsChanged();
 
@@ -169,6 +171,8 @@ public slots:
     void afterSetControlPoints(NodeConnection *cxn, const QPolygonF &oldPoints);
 
     void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
+    void afterAddVariable(BaseNode *node, int index, ScriptVariable *var);
+    void afterRemoveVariable(BaseNode *node, int index, ScriptVariable *var);
 
     void infoChanged(MetaEventInfo *info);
     void infoChanged(ScriptInfo *info);

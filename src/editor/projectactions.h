@@ -46,6 +46,9 @@ public slots:
     void preferencesDialog();
 
     void sceneScriptDialog();
+    void removeConnections(NodeInput *input);
+    void removeConnections(NodeOutput *output);
+    void removeUnknowns();
 
     void removeNode(BaseNode *node);
     void renameNode(BaseNode *node, const QString &name);

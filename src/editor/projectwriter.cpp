@@ -169,14 +169,14 @@ public:
     void writeInput(NodeInput *input)
     {
         xml.writeStartElement(QLatin1String("input"));
-        xml.writeAttribute(QLatin1String("name"), input->mName);
+        xml.writeAttribute(QLatin1String("name"), input->name());
         xml.writeEndElement();
     }
 
     void writeOutput(NodeOutput *output)
     {
         xml.writeStartElement(QLatin1String("output"));
-        xml.writeAttribute(QLatin1String("name"), output->mName);
+        xml.writeAttribute(QLatin1String("name"), output->name());
         xml.writeEndElement();
     }
 

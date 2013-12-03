@@ -44,27 +44,27 @@ BaseNode::~BaseNode()
 
 void BaseNode::insertInput(int index, NodeInput *input)
 {
-    Q_ASSERT(input->mNode == NULL);
-    input->mNode = this;
+    Q_ASSERT(input->node() == NULL);
+    input->setNode(this);
     mInputs.insert(index, input);
 }
 
 NodeInput *BaseNode::removeInput(int index)
 {
-    mInputs[index]->mNode = NULL;
+    mInputs[index]->setNode(NULL);
     return mInputs.takeAt(index);
 }
 
 void BaseNode::insertOutput(int index, NodeOutput *output)
 {
-    Q_ASSERT(output->mNode == NULL);
-    output->mNode = this;
+    Q_ASSERT(output->node() == NULL);
+    output->setNode(this);
     mOutputs.insert(index, output);
 }
 
 NodeOutput *BaseNode::removeOutput(int index)
 {
-    mOutputs[index]->mNode = NULL;
+    mOutputs[index]->setNode(NULL);
     return mOutputs.takeAt(index);
 }
 
@@ -165,7 +165,7 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
             inputs += myInput;
         else {
             inputs += new NodeInput(input);
-            inputs.last()->mNode = this;
+            inputs.last()->setNode(this);
         }
     }
     foreach (NodeInput *myInput, mInputs) {
@@ -184,7 +184,7 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
             outputs += myOutput;
         else {
             outputs += new NodeOutput(output);
-            outputs.last()->mNode = this;
+            outputs.last()->setNode(this);
         }
     }
     foreach (NodeOutput *myOutput, mOutputs) {

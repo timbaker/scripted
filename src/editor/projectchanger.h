@@ -101,22 +101,22 @@ public:
     void doMoveNode(BaseNode *node, const QPointF &pos);
     void doRenameNode(BaseNode *node, const QString &name);
 
-    void doAddInput(int index, NodeInput *input);
+    void doAddInput(BaseNode *node, int index, NodeInput *input);
     void doRemoveInput(NodeInput *input);
-    void doReorderInput(int oldIndex, int newIndex);
+    void doReorderInput(BaseNode *node, int oldIndex, int newIndex);
     void doRenameInput(NodeInput *input, const QString &name);
 
-    void doAddOutput(int index, NodeOutput *output);
+    void doAddOutput(BaseNode *node, int index, NodeOutput *output);
     void doRemoveOutput(NodeOutput *output);
-    void doReorderOutput(int oldIndex, int newIndex);
-    void doRenameOutput(NodeOutput *input, const QString &name);
+    void doReorderOutput(BaseNode *node, int oldIndex, int newIndex);
+    void doRenameOutput(NodeOutput *output, const QString &name);
 
     void doAddConnection(int index, NodeConnection *cxn);
     void doRemoveConnection(BaseNode *node, NodeConnection *cxn);
     void doReorderConnection(BaseNode *node, int oldIndex, int newIndex);
     void doSetControlPoints(NodeConnection *cxn, const QPolygonF &points);
 
-    void doAddVariable(int index, ScriptVariable *var);
+    void doAddVariable(BaseNode *node, int index, ScriptVariable *var);
     void doRemoveVariable(ScriptVariable *var);
     void doChangeVariable(ScriptVariable *var, const ScriptVariable *newVar);
     void doSetVariableValue(ScriptVariable *var, const QString &value);
@@ -128,16 +128,16 @@ signals:
     void beforeRemoveNode(int index, BaseNode *node);
     void afterRemoveNode(int index, BaseNode *node);
     void afterRenameNode(BaseNode *node, const QString &oldName);
-    void afterMoveNode(BaseNode *object, const QPointF &oldPos);
+    void afterMoveNode(BaseNode *node, const QPointF &oldPos);
 
-    void afterAddInput(int index, NodeInput *input);
-    void afterRemoveInput(int index, NodeInput *input);
-    void afterReorderInput(int oldIndex, int newIndex);
+    void afterAddInput(BaseNode *node, int index, NodeInput *input);
+    void afterRemoveInput(BaseNode *node, int index, NodeInput *input);
+    void afterReorderInput(BaseNode *node, int oldIndex, int newIndex);
     void afterRenameInput(NodeInput *input, const QString &oldName);
 
-    void afterAddOutput(int index, NodeOutput *output);
-    void afterRemoveOutput(int index, NodeOutput *output);
-    void afterReorderOutput(int oldIndex, int newIndex);
+    void afterAddOutput(BaseNode *node, int index, NodeOutput *output);
+    void afterRemoveOutput(BaseNode *node, int index, NodeOutput *output);
+    void afterReorderOutput(BaseNode *node, int oldIndex, int newIndex);
     void afterRenameOutput(NodeOutput *output, const QString &name);
 
     void afterAddConnection(int index, NodeConnection *cxn);
@@ -146,9 +146,9 @@ signals:
     void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
     void afterSetControlPoints(NodeConnection *cxn, const QPolygonF &oldPoints);
 
-    void afterAddVariable(int index, ScriptVariable *var);
-    void beforeRemoveVariable(int index, ScriptVariable *var);
-    void afterRemoveVariable(int index, ScriptVariable *var);
+    void afterAddVariable(BaseNode *node, int index, ScriptVariable *var);
+    void beforeRemoveVariable(BaseNode *node, int index, ScriptVariable *var);
+    void afterRemoveVariable(BaseNode *node, int index, ScriptVariable *var);
     void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
 private:

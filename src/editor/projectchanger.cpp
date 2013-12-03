@@ -181,8 +181,9 @@ public:
 class AddInput : public ProjectChange
 {
 public:
-    AddInput(ProjectChanger *changer, int index, NodeInput *input) :
+    AddInput(ProjectChanger *changer, BaseNode *node, int index, NodeInput *input) :
         ProjectChange(changer),
+        mNode(node),
         mIndex(index),
         mInput(input)
     {
@@ -190,15 +191,15 @@ public:
 
     void redo()
     {
-        mChanger->project()->rootNode()->insertInput(mIndex, mInput);
-        mChanger->afterAddInput(mIndex, mInput);
+        mNode->insertInput(mIndex, mInput);
+        mChanger->afterAddInput(mNode, mIndex, mInput);
     }
 
     void undo()
     {
 //        mChanger->beforeRemoveInput(mIndex, mInput);
-        mChanger->project()->rootNode()->removeInput(mIndex);
-        mChanger->afterRemoveInput(mIndex, mInput);
+        mNode->removeInput(mIndex);
+        mChanger->afterRemoveInput(mNode, mIndex, mInput);
     }
 
     QString text() const
@@ -206,6 +207,7 @@ public:
         return mChanger->tr("Add Input");
     }
 
+    BaseNode *mNode;
     int mIndex;
     NodeInput *mInput;
 };
@@ -213,8 +215,8 @@ public:
 class RemoveInput : public AddInput
 {
 public:
-    RemoveInput(ProjectChanger *changer, int index, NodeInput *input) :
-        AddInput(changer, index, input)
+    RemoveInput(ProjectChanger *changer, BaseNode *node, int index, NodeInput *input) :
+        AddInput(changer, node, index, input)
     { }
     void redo() { AddInput::undo(); }
     void undo() { AddInput::redo(); }
@@ -224,8 +226,9 @@ public:
 class ReorderInput : public ProjectChange
 {
 public:
-    ReorderInput(ProjectChanger *changer, int oldIndex, int newIndex) :
+    ReorderInput(ProjectChanger *changer, BaseNode *node, int oldIndex, int newIndex) :
         ProjectChange(changer),
+        mNode(node),
         mOldIndex(oldIndex),
         mNewIndex(newIndex)
     {
@@ -233,18 +236,16 @@ public:
 
     void redo()
     {
-        BaseNode *node = mChanger->project()->rootNode();
-        NodeInput *input = node->removeInput(mOldIndex);
-        node->insertInput(mNewIndex, input);
-        mChanger->afterReorderInput(mOldIndex, mNewIndex);
+        NodeInput *input = mNode->removeInput(mOldIndex);
+        mNode->insertInput(mNewIndex, input);
+        mChanger->afterReorderInput(mNode, mOldIndex, mNewIndex);
     }
 
     void undo()
     {
-        BaseNode *node = mChanger->project()->rootNode();
-        NodeInput *input = node->removeInput(mNewIndex);
-        node->insertInput(mOldIndex, input);
-        mChanger->afterReorderInput(mNewIndex, mOldIndex);
+        NodeInput *input = mNode->removeInput(mNewIndex);
+        mNode->insertInput(mOldIndex, input);
+        mChanger->afterReorderInput(mNode, mNewIndex, mOldIndex);
     }
 
     QString text() const
@@ -252,6 +253,7 @@ public:
         return mChanger->tr("Reorder Input");
     }
 
+    BaseNode *mNode;
     int mOldIndex;
     int mNewIndex;
 };
@@ -303,8 +305,9 @@ public:
 class AddOutput : public ProjectChange
 {
 public:
-    AddOutput(ProjectChanger *changer, int index, NodeOutput *output) :
+    AddOutput(ProjectChanger *changer, BaseNode *node, int index, NodeOutput *output) :
         ProjectChange(changer),
+        mNode(node),
         mIndex(index),
         mOutput(output)
     {
@@ -312,15 +315,15 @@ public:
 
     void redo()
     {
-        mChanger->project()->rootNode()->insertOutput(mIndex, mOutput);
-        mChanger->afterAddOutput(mIndex, mOutput);
+        mNode->insertOutput(mIndex, mOutput);
+        mChanger->afterAddOutput(mNode,mIndex, mOutput);
     }
 
     void undo()
     {
 //        mChanger->beforeRemoveOutput(mIndex, mOutput);
-        mChanger->project()->rootNode()->removeOutput(mIndex);
-        mChanger->afterRemoveOutput(mIndex, mOutput);
+        mNode->removeOutput(mIndex);
+        mChanger->afterRemoveOutput(mNode, mIndex, mOutput);
     }
 
     QString text() const
@@ -328,6 +331,7 @@ public:
         return mChanger->tr("Add Output");
     }
 
+    BaseNode *mNode;
     int mIndex;
     NodeOutput *mOutput;
 };
@@ -335,8 +339,8 @@ public:
 class RemoveOutput : public AddOutput
 {
 public:
-    RemoveOutput(ProjectChanger *changer, int index, NodeOutput *output) :
-        AddOutput(changer, index, output)
+    RemoveOutput(ProjectChanger *changer, BaseNode *node, int index, NodeOutput *output) :
+        AddOutput(changer, node, index, output)
     { }
     void redo() { AddOutput::undo(); }
     void undo() { AddOutput::redo(); }
@@ -346,8 +350,9 @@ public:
 class ReorderOutput : public ProjectChange
 {
 public:
-    ReorderOutput(ProjectChanger *changer, int oldIndex, int newIndex) :
+    ReorderOutput(ProjectChanger *changer, BaseNode *node, int oldIndex, int newIndex) :
         ProjectChange(changer),
+        mNode(node),
         mOldIndex(oldIndex),
         mNewIndex(newIndex)
     {
@@ -355,18 +360,16 @@ public:
 
     void redo()
     {
-        BaseNode *node = mChanger->project()->rootNode();
-        NodeOutput *output = node->removeOutput(mOldIndex);
-        node->insertOutput(mNewIndex, output);
-        mChanger->afterReorderOutput(mOldIndex, mNewIndex);
+        NodeOutput *output = mNode->removeOutput(mOldIndex);
+        mNode->insertOutput(mNewIndex, output);
+        mChanger->afterReorderOutput(mNode, mOldIndex, mNewIndex);
     }
 
     void undo()
     {
-        BaseNode *node = mChanger->project()->rootNode();
-        NodeOutput *output = node->removeOutput(mNewIndex);
-        node->insertOutput(mOldIndex, output);
-        mChanger->afterReorderOutput(mNewIndex, mOldIndex);
+        NodeOutput *output = mNode->removeOutput(mNewIndex);
+        mNode->insertOutput(mOldIndex, output);
+        mChanger->afterReorderOutput(mNode, mNewIndex, mOldIndex);
     }
 
     QString text() const
@@ -374,6 +377,7 @@ public:
         return mChanger->tr("Reorder Output");
     }
 
+    BaseNode *mNode;
     int mOldIndex;
     int mNewIndex;
 };
@@ -538,8 +542,9 @@ public:
 class AddVariable : public ProjectChange
 {
 public:
-    AddVariable(ProjectChanger *changer, int index, ScriptVariable *cxn) :
+    AddVariable(ProjectChanger *changer, BaseNode *node, int index, ScriptVariable *cxn) :
         ProjectChange(changer),
+        mNode(node),
         mIndex(index),
         mVariable(cxn)
     {
@@ -547,15 +552,15 @@ public:
 
     void redo()
     {
-        mChanger->project()->rootNode()->insertVariable(mIndex, mVariable);
-        mChanger->afterAddVariable(mIndex, mVariable);
+        mNode->insertVariable(mIndex, mVariable);
+        mChanger->afterAddVariable(mNode, mIndex, mVariable);
     }
 
     void undo()
     {
-        mChanger->beforeRemoveVariable(mIndex, mVariable);
-        mChanger->project()->rootNode()->removeVariable(mVariable);
-        mChanger->afterRemoveVariable(mIndex, mVariable);
+        mChanger->beforeRemoveVariable(mNode, mIndex, mVariable);
+        mNode->removeVariable(mVariable);
+        mChanger->afterRemoveVariable(mNode, mIndex, mVariable);
     }
 
     QString text() const
@@ -563,6 +568,7 @@ public:
         return mChanger->tr("Add Variable");
     }
 
+    BaseNode *mNode;
     int mIndex;
     ScriptVariable *mVariable;
 };
@@ -570,8 +576,8 @@ public:
 class RemoveVariable : public AddVariable
 {
 public:
-    RemoveVariable(ProjectChanger *changer, int index, ScriptVariable *cxn) :
-        AddVariable(changer, index, cxn)
+    RemoveVariable(ProjectChanger *changer, BaseNode *node, int index, ScriptVariable *cxn) :
+        AddVariable(changer, node, index, cxn)
     { }
     void redo() { AddVariable::undo(); }
     void undo() { AddVariable::redo(); }
@@ -1972,20 +1978,20 @@ void ProjectChanger::doRenameNode(BaseNode *node, const QString &name)
     addChange(new RenameNode(this, node, name));
 }
 
-void ProjectChanger::doAddInput(int index, NodeInput *input)
+void ProjectChanger::doAddInput(BaseNode *node, int index, NodeInput *input)
 {
-    addChange(new AddInput(this, index, input));
+    addChange(new AddInput(this, node, index, input));
 }
 
 void ProjectChanger::doRemoveInput(NodeInput *input)
 {
-    int index = mProject->rootNode()->indexOf(input);
-    addChange(new RemoveInput(this, index, input));
+    int index = input->node()->indexOf(input);
+    addChange(new RemoveInput(this, input->node(), index, input));
 }
 
-void ProjectChanger::doReorderInput(int oldIndex, int newIndex)
+void ProjectChanger::doReorderInput(BaseNode *node, int oldIndex, int newIndex)
 {
-    addChange(new ReorderInput(this, oldIndex, newIndex));
+    addChange(new ReorderInput(this, node, oldIndex, newIndex));
 }
 
 void ProjectChanger::doRenameInput(NodeInput *input, const QString &name)
@@ -1993,20 +1999,20 @@ void ProjectChanger::doRenameInput(NodeInput *input, const QString &name)
     addChange(new RenameInput(this, input, name));
 }
 
-void ProjectChanger::doAddOutput(int index, NodeOutput *output)
+void ProjectChanger::doAddOutput(BaseNode *node, int index, NodeOutput *output)
 {
-    addChange(new AddOutput(this, index, output));
+    addChange(new AddOutput(this, node, index, output));
 }
 
 void ProjectChanger::doRemoveOutput(NodeOutput *output)
 {
-    int index = mProject->rootNode()->indexOf(output);
-    addChange(new RemoveOutput(this, index, output));
+    int index = output->node()->indexOf(output);
+    addChange(new RemoveOutput(this, output->node(), index, output));
 }
 
-void ProjectChanger::doReorderOutput(int oldIndex, int newIndex)
+void ProjectChanger::doReorderOutput(BaseNode *node, int oldIndex, int newIndex)
 {
-    addChange(new ReorderOutput(this, oldIndex, newIndex));
+    addChange(new ReorderOutput(this, node, oldIndex, newIndex));
 }
 
 void ProjectChanger::doRenameOutput(NodeOutput *output, const QString &name)
@@ -2036,16 +2042,16 @@ void ProjectChanger::doSetControlPoints(NodeConnection *cxn, const QPolygonF &po
     addChange(new SetControlPoints(this, cxn, points));
 }
 
-void ProjectChanger::doAddVariable(int index, ScriptVariable *var)
+void ProjectChanger::doAddVariable(BaseNode *node, int index, ScriptVariable *var)
 {
-    addChange(new AddVariable(this, index, var));
+    addChange(new AddVariable(this, node, index, var));
 }
 
 void ProjectChanger::doRemoveVariable(ScriptVariable *var)
 {
-    int index = mProject->rootNode()->variables().indexOf(var);
+    int index = var->node()->indexOf(var);
     Q_ASSERT(index != -1);
-    addChange(new RemoveVariable(this, index, var));
+    addChange(new RemoveVariable(this, var->node(), index, var));
 }
 
 void ProjectChanger::doChangeVariable(ScriptVariable *var, const ScriptVariable *newVar)

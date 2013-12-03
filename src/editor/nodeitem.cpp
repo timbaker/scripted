@@ -203,6 +203,24 @@ void NodeItem::infoChanged(LuaInfo *info)
     }
 }
 
+void NodeItem::inputsChanged()
+{
+    mInputsItem->syncWithNode();
+    updateLayout();
+}
+
+void NodeItem::outputsChanged()
+{
+    mOutputsItem->syncWithNode();
+    updateLayout();
+}
+
+void NodeItem::variablesChanged()
+{
+    mVariablesItem->syncWithNode();
+    updateLayout();
+}
+
 void NodeItem::updateLayout()
 {
     prepareGeometryChange();
@@ -285,7 +303,7 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
-    if (mInput->mNode != mScene->document()->project()->rootNode() && !mInput->isKnown())
+    if (mInput->node() != mScene->document()->project()->rootNode() && !mInput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         color = color.lighter();
@@ -299,13 +317,13 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     QPen pen(color, 2);
     painter->setPen(pen);
     painter->drawPath(path);
-    painter->drawText(r.adjusted(size().width() / 4, 0, 0, 0), Qt::AlignCenter, mInput->mName);
+    painter->drawText(r.adjusted(size().width() / 4, 0, 0, 0), Qt::AlignCenter, mInput->name());
 }
 
 void NodeInputItem::updateLayout()
 {
     QFontMetricsF fm(mScene->font());
-    qreal labelWidth = fm.boundingRect(mInput->mName).width();
+    qreal labelWidth = fm.boundingRect(mInput->name()).width();
     QRectF r(-(size().width() + labelWidth), -size().height() / 2, size().width() + labelWidth, size().height());
     QRectF bounds = r.adjusted(-3, -3, 3, 3); // adjust for pen width
     if (bounds != mBounds) {
@@ -341,7 +359,7 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
-    if (mOutput->mNode != mScene->document()->project()->rootNode() && !mOutput->isKnown())
+    if (mOutput->node() != mScene->document()->project()->rootNode() && !mOutput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         color = color.lighter();
@@ -353,17 +371,17 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(pen);
     painter->drawPath(path);
 
-    if (mOutput->mNode->isEventNode())
+    if (mOutput->node()->isEventNode())
         return;
 
-    painter->drawText(r, Qt::AlignCenter, mOutput->mName);
+    painter->drawText(r, Qt::AlignCenter, mOutput->name());
 }
 
 void NodeOutputItem::updateLayout()
 {
     QFontMetricsF fm(mScene->font());
     QString name = mOutput->name();
-    if (mOutput->mNode->isEventNode())
+    if (mOutput->node()->isEventNode())
         name.clear();
     qreal labelWidth = fm.boundingRect(name).width();
     QRectF r(0, -size().height() / 2, size().width() + labelWidth, size().height());
@@ -847,5 +865,10 @@ void VariableGroupItem::syncWithNode()
     foreach (BaseVariableItem *item, mItems)
         if (!items.contains(item))
             unknowns += item;
+#if 1
+    qDeleteAll(unknowns);
+    mItems = items;
+#else
     mItems = items + unknowns;
+#endif
 }

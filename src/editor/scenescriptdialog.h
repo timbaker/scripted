@@ -34,14 +34,14 @@ public:
     ~SceneScriptDialog();
 
 private slots:
-    void afterAddInput(int index, NodeInput *input);
-    void afterRemoveInput(int index, NodeInput *input);
-    void afterReorderInput(int oldIndex, int newIndex);
+    void afterAddInput(BaseNode *node, int index, NodeInput *input);
+    void afterRemoveInput(BaseNode *node, int index, NodeInput *input);
+    void afterReorderInput(BaseNode *node, int oldIndex, int newIndex);
     void afterRenameInput(NodeInput *input, const QString &oldName);
 
-    void afterAddOutput(int index, NodeOutput *output);
-    void afterRemoveOutput(int index, NodeOutput *output);
-    void afterReorderOutput(int oldIndex, int newIndex);
+    void afterAddOutput(BaseNode *node, int index, NodeOutput *output);
+    void afterRemoveOutput(BaseNode *node, int index, NodeOutput *output);
+    void afterReorderOutput(BaseNode *node, int oldIndex, int newIndex);
     void afterRenameOutput(NodeOutput *output, const QString &oldName);
 
     void addInput();

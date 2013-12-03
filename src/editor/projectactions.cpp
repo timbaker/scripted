@@ -55,6 +55,7 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
     connect(mActions->actionPreferences, SIGNAL(triggered()), SLOT(preferencesDialog()));
 
     connect(mActions->actionEditInputsOutputs, SIGNAL(triggered()), SLOT(sceneScriptDialog()));
+    connect(mActions->actionRemoveUnknowns, SIGNAL(triggered()), SLOT(removeUnknowns()));
 }
 
 ProjectDocument *ProjectActions::document()
@@ -195,6 +196,52 @@ void ProjectActions::sceneScriptDialog()
     d.exec();
 }
 
+void ProjectActions::removeConnections(NodeInput *input)
+{
+    ProjectDocument *doc = document();
+    foreach (BaseNode *node, doc->project()->rootNode()->nodesPlusSelf()) {
+        foreach (NodeConnection *cxn, node->connections()) {
+            if (cxn->mReceiver == input->node() && cxn->mInput == input->name())
+                doc->changer()->doRemoveConnection(node, cxn);
+        }
+    }
+}
+
+void ProjectActions::removeConnections(NodeOutput *output)
+{
+    ProjectDocument *doc = document();
+    foreach (NodeConnection *cxn, output->node()->connections()) {
+        if (cxn->mOutput == output->name())
+            doc->changer()->doRemoveConnection(output->node(), cxn);
+    }
+}
+
+void ProjectActions::removeUnknowns()
+{
+    ProjectDocument *doc = document();
+
+    doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Unknowns"));
+    foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
+        foreach (NodeInput *input, node->inputs()) {
+            if (!input->isKnown()) {
+                removeConnections(input);
+                doc->changer()->doRemoveInput(input);
+            }
+        }
+        foreach (NodeOutput *output, node->outputs()) {
+            if (!output->isKnown()) {
+                removeConnections(output);
+                doc->changer()->doRemoveOutput(output);
+            }
+        }
+        foreach (ScriptVariable *var, node->variables()) {
+            if (!var->isKnown())
+                doc->changer()->doRemoveVariable(var);
+        }
+    }
+    doc->changer()->endUndoMacro();
+}
+
 void ProjectActions::removeNode(BaseNode *node)
 {
     ProjectDocument *doc = document();
@@ -237,7 +284,9 @@ void ProjectActions::addInput()
         name = QString::fromLatin1("Input%1").arg(n++);
     } while (doc->project()->rootNode()->input(name) != 0);
     NodeInput *input = new NodeInput(name);
-    doc->changer()->doAddInput(doc->project()->rootNode()->inputCount(), input);
+    doc->changer()->doAddInput(doc->project()->rootNode(),
+                               doc->project()->rootNode()->inputCount(),
+                               input);
     doc->changer()->endUndoCommand();
 }
 
@@ -253,7 +302,7 @@ void ProjectActions::reorderInput(int oldIndex, int newIndex)
 {
     ProjectDocument *doc = document();
     doc->changer()->beginUndoCommand(doc->undoStack());
-    doc->changer()->doReorderInput(oldIndex, newIndex);
+    doc->changer()->doReorderInput(doc->project()->rootNode(), oldIndex, newIndex);
     doc->changer()->endUndoCommand();
 }
 
@@ -275,7 +324,9 @@ void ProjectActions::addOutput()
         name = QString::fromLatin1("Output%1").arg(n++);
     } while (doc->project()->rootNode()->output(name) != 0);
     NodeOutput *output = new NodeOutput(name);
-    doc->changer()->doAddOutput(doc->project()->rootNode()->outputCount(), output);
+    doc->changer()->doAddOutput(doc->project()->rootNode(),
+                                doc->project()->rootNode()->outputCount(),
+                                output);
     doc->changer()->endUndoCommand();
 }
 
@@ -291,7 +342,7 @@ void ProjectActions::reorderOutput(int oldIndex, int newIndex)
 {
     ProjectDocument *doc = document();
     doc->changer()->beginUndoCommand(doc->undoStack());
-    doc->changer()->doReorderOutput(oldIndex, newIndex);
+    doc->changer()->doReorderOutput(doc->project()->rootNode(), oldIndex, newIndex);
     doc->changer()->endUndoCommand();
 }
 
@@ -310,7 +361,9 @@ void ProjectActions::addVariable()
         ScriptVariable *var = new ScriptVariable(d.type(), d.name(), QString());
         ProjectDocument *doc = document();
         doc->changer()->beginUndoCommand(doc->undoStack());
-        doc->changer()->doAddVariable(doc->project()->rootNode()->variableCount(), var);
+        doc->changer()->doAddVariable(doc->project()->rootNode(),
+                                      doc->project()->rootNode()->variableCount(),
+                                      var);
         doc->changer()->endUndoCommand();
     }
 }
@@ -400,4 +453,5 @@ void ProjectActions::updateActions()
     mActions->actionSaveProject->setEnabled(doc != 0 && doc->isModified());
     mActions->actionSaveProjectAs->setEnabled(doc != 0);
     mActions->actionEditInputsOutputs->setEnabled(pdoc != 0);
+    mActions->actionRemoveUnknowns->setEnabled(pdoc != 0);
 }

@@ -49,8 +49,8 @@ public:
 
 public slots:
     void setDocument(Document *doc);
-    void afterAddVariable(int index, ScriptVariable *var);
-    void beforeRemoveVariable(int index, ScriptVariable *var);
+    void afterAddVariable(BaseNode *node, int index, ScriptVariable *var);
+    void beforeRemoveVariable(BaseNode *node, int index, ScriptVariable *var);
     void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
 private:

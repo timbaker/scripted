@@ -145,21 +145,21 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
     connect(mDocument->changer(), SIGNAL(afterRenameNode(BaseNode*,QString)),
             SLOT(afterRenameNode(BaseNode*,QString)));
 
-    connect(mDocument->changer(), SIGNAL(afterAddInput(int,NodeInput*)),
-            SLOT(inputsChanged()));
-    connect(mDocument->changer(), SIGNAL(afterRemoveInput(int,NodeInput*)),
-            SLOT(inputsChanged()));
-    connect(mDocument->changer(), SIGNAL(afterReorderInput(int,int)),
-            SLOT(inputsChanged()));
+    connect(mDocument->changer(), SIGNAL(afterAddInput(BaseNode*,int,NodeInput*)),
+            SLOT(inputsChanged(BaseNode*)));
+    connect(mDocument->changer(), SIGNAL(afterRemoveInput(BaseNode*,int,NodeInput*)),
+            SLOT(inputsChanged(BaseNode*)));
+    connect(mDocument->changer(), SIGNAL(afterReorderInput(BaseNode*,int,int)),
+            SLOT(inputsChanged(BaseNode*)));
     connect(mDocument->changer(), SIGNAL(afterRenameInput(NodeInput*,QString)),
             SLOT(inputsChanged()));
 
-    connect(mDocument->changer(), SIGNAL(afterAddOutput(int,NodeOutput*)),
-            SLOT(outputsChanged()));
-    connect(mDocument->changer(), SIGNAL(afterRemoveOutput(int,NodeOutput*)),
-            SLOT(outputsChanged()));
-    connect(mDocument->changer(), SIGNAL(afterReorderOutput(int,int)),
-            SLOT(outputsChanged()));
+    connect(mDocument->changer(), SIGNAL(afterAddOutput(BaseNode*,int,NodeOutput*)),
+            SLOT(outputsChanged(BaseNode*)));
+    connect(mDocument->changer(), SIGNAL(afterRemoveOutput(BaseNode*,int,NodeOutput*)),
+            SLOT(outputsChanged(BaseNode*)));
+    connect(mDocument->changer(), SIGNAL(afterReorderOutput(BaseNode*,int,int)),
+            SLOT(outputsChanged(BaseNode*)));
     connect(mDocument->changer(), SIGNAL(afterRenameOutput(NodeOutput*,QString)),
             SLOT(outputsChanged()));
 
@@ -172,6 +172,10 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
 
     connect(mDocument->changer(), SIGNAL(afterChangeVariable(ScriptVariable*,const ScriptVariable*)),
             SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
+    connect(mDocument->changer(), SIGNAL(afterAddVariable(BaseNode*,int,ScriptVariable*)),
+            SLOT(afterAddVariable(BaseNode*,int,ScriptVariable*)));
+    connect(mDocument->changer(), SIGNAL(afterRemoveVariable(BaseNode*,int,ScriptVariable*)),
+            SLOT(afterRemoveVariable(BaseNode*,int,ScriptVariable*)));
 
     connect(eventmgr(), SIGNAL(infoChanged(MetaEventInfo*)), SLOT(infoChanged(MetaEventInfo*)));
     connect(luamgr(), SIGNAL(infoChanged(LuaInfo*)),
@@ -242,10 +246,10 @@ void ScriptScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
                 mConnectTo->update();
 
                 NodeConnection *cxn = new NodeConnection;
-                cxn->mSender = mConnectFrom->mOutput->mNode;
-                cxn->mOutput = mConnectFrom->mOutput->mName;
-                cxn->mReceiver = mConnectTo->mInput->mNode;
-                cxn->mInput = mConnectTo->mInput->mName;
+                cxn->mSender = mConnectFrom->mOutput->node();
+                cxn->mOutput = mConnectFrom->mOutput->name();
+                cxn->mReceiver = mConnectTo->mInput->node();
+                cxn->mInput = mConnectTo->mInput->name();
                 cxn->mControlPoints = mConnectionsItem->mNewConnectionPoints.mid(1, mConnectionsItem->mNewConnectionPoints.size() - 2);
                 int index = cxn->mSender->connectionCount();
 
@@ -478,16 +482,38 @@ void ScriptScene::afterRenameNode(BaseNode *node, const QString &oldName)
         item->updateLayout();
 }
 
+void ScriptScene::inputsChanged(BaseNode *node)
+{
+    if (node == document()->project()->rootNode()) {
+        mAreaItem->mInputsItem->syncWithNode();
+        mAreaItem->mInputsItem->updateLayout();
+    } else {
+        foreach (NodeItem *item, mNodeItems)
+            if (node == item->node())
+                item->inputsChanged();
+    }
+}
+
+void ScriptScene::outputsChanged(BaseNode *node)
+{
+    if (node == document()->project()->rootNode()) {
+        mAreaItem->mOutputsItem->syncWithNode();
+        mAreaItem->mOutputsItem->updateLayout();
+    } else {
+        foreach (NodeItem *item, mNodeItems)
+            if (node == item->node())
+                item->outputsChanged();
+    }
+}
+
 void ScriptScene::inputsChanged()
 {
-    mAreaItem->mInputsItem->syncWithNode();
-    mAreaItem->mInputsItem->updateLayout();
+    inputsChanged(document()->project()->rootNode());
 }
 
 void ScriptScene::outputsChanged()
 {
-    mAreaItem->mOutputsItem->syncWithNode();
-    mAreaItem->mOutputsItem->updateLayout();
+    outputsChanged(document()->project()->rootNode());
 }
 
 void ScriptScene::afterAddConnection(int index, NodeConnection *cxn)
@@ -506,6 +532,7 @@ void ScriptScene::afterRemoveConnection(int index, NodeConnection *cxn)
 
 void ScriptScene::afterSetControlPoints(NodeConnection *cxn, const QPolygonF &oldPoints)
 {
+    Q_UNUSED(oldPoints)
     mConnectionsItem->afterSetControlPoints(cxn);
 }
 
@@ -516,6 +543,24 @@ void ScriptScene::afterChangeVariable(ScriptVariable *var, const ScriptVariable 
         if (BaseVariableItem *varItem = nodeItem->variableItem(var)) {
             nodeItem->updateLayout();
         }
+}
+
+void ScriptScene::afterAddVariable(BaseNode *node, int index, ScriptVariable *var)
+{
+    Q_UNUSED(index)
+    Q_UNUSED(var)
+    foreach (NodeItem *nodeItem, mNodeItems)
+        if (nodeItem->node() == node)
+            nodeItem->variablesChanged();
+}
+
+void ScriptScene::afterRemoveVariable(BaseNode *node, int index, ScriptVariable *var)
+{
+    Q_UNUSED(index)
+    Q_UNUSED(var)
+    foreach (NodeItem *nodeItem, mNodeItems)
+        if (nodeItem->node() == node)
+            nodeItem->variablesChanged();
 }
 
 void ScriptScene::infoChanged(MetaEventInfo *info)
@@ -649,7 +694,6 @@ void ConnectionItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
     }
     if (highlight != mHighlightIndex) {
         mHighlightIndex = highlight;
-        qDebug() << mHighlightIndex;
         update();
     }
 #else

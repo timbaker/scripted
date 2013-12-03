@@ -267,10 +267,10 @@ void ScriptVariablesModel::setDocument(Document *doc)
     mDocument = doc ? doc->asProjectDocument() : 0;
 
     if (mDocument) {
-        connect(mDocument->changer(), SIGNAL(afterAddVariable(int,ScriptVariable*)),
-               SLOT(afterAddVariable(int,ScriptVariable*)));
-        connect(mDocument->changer(), SIGNAL(beforeRemoveVariable(int,ScriptVariable*)),
-                SLOT(beforeRemoveVariable(int,ScriptVariable*)));
+        connect(mDocument->changer(), SIGNAL(afterAddVariable(BaseNode*,int,ScriptVariable*)),
+               SLOT(afterAddVariable(BaseNode*,int,ScriptVariable*)));
+        connect(mDocument->changer(), SIGNAL(beforeRemoveVariable(BaseNode*,int,ScriptVariable*)),
+                SLOT(beforeRemoveVariable(BaseNode*,int,ScriptVariable*)));
         connect(mDocument->changer(), SIGNAL(afterChangeVariable(ScriptVariable*,const ScriptVariable*)),
                 SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
     }
@@ -278,15 +278,18 @@ void ScriptVariablesModel::setDocument(Document *doc)
     reset();
 }
 
-void ScriptVariablesModel::afterAddVariable(int index, ScriptVariable *var)
+void ScriptVariablesModel::afterAddVariable(BaseNode *node, int index, ScriptVariable *var)
 {
+    if (node != mDocument->project()->rootNode()) return;
     beginInsertRows(QModelIndex(), index, index);
     mItems.insert(index, new Item(var));
     endInsertRows();
 }
 
-void ScriptVariablesModel::beforeRemoveVariable(int index, ScriptVariable *var)
+void ScriptVariablesModel::beforeRemoveVariable(BaseNode *node, int index, ScriptVariable *var)
 {
+    Q_UNUSED(var)
+    if (node != mDocument->project()->rootNode()) return;
     beginRemoveRows(QModelIndex(), index, index);
     delete mItems.takeAt(index);
     endRemoveRows();
