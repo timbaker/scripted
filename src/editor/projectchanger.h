@@ -114,6 +114,7 @@ public:
     void doAddConnection(int index, NodeConnection *cxn);
     void doRemoveConnection(BaseNode *node, NodeConnection *cxn);
     void doReorderConnection(BaseNode *node, int oldIndex, int newIndex);
+    void doSetControlPoints(NodeConnection *cxn, const QPolygonF &points);
 
     void doAddVariable(int index, ScriptVariable *var);
     void doRemoveVariable(ScriptVariable *var);
@@ -143,6 +144,7 @@ signals:
     void beforeRemoveConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);
     void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
+    void afterSetControlPoints(NodeConnection *cxn, const QPolygonF &oldPoints);
 
     void afterAddVariable(int index, ScriptVariable *var);
     void beforeRemoveVariable(int index, ScriptVariable *var);

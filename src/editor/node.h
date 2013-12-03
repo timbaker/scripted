@@ -21,9 +21,9 @@
 #include "editor_global.h"
 #include "scriptvariable.h"
 
-#include <QPointF>
 #include <QList>
 #include <QMap>
+#include <QPolygonF>
 #include <QStringList>
 
 class BaseNode;
@@ -85,6 +85,7 @@ public:
     QString mOutput;
     BaseNode *mReceiver;
     QString mInput;
+    QPolygonF mControlPoints;
     // Could have a time delay here
 };
 

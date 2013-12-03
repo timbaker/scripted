@@ -502,6 +502,39 @@ public:
     int mNewIndex;
 };
 
+class SetControlPoints : public ProjectChange
+{
+public:
+    SetControlPoints(ProjectChanger *changer, NodeConnection *cxn, const QPolygonF &points) :
+        ProjectChange(changer),
+        mConnection(cxn),
+        mNewPoints(points),
+        mOldPoints(cxn->mControlPoints)
+    {
+    }
+
+    void redo()
+    {
+        mConnection->mControlPoints = mNewPoints;
+        mChanger->afterSetControlPoints(mConnection, mOldPoints);
+    }
+
+    void undo()
+    {
+        mConnection->mControlPoints = mOldPoints;
+        mChanger->afterSetControlPoints(mConnection, mNewPoints);
+    }
+
+    QString text() const
+    {
+        return mChanger->tr("Change Control Points");
+    }
+
+    NodeConnection *mConnection;
+    QPolygonF mNewPoints;
+    QPolygonF mOldPoints;
+};
+
 class AddVariable : public ProjectChange
 {
 public:
@@ -1996,6 +2029,11 @@ void ProjectChanger::doRemoveConnection(BaseNode *node, NodeConnection *cxn)
 void ProjectChanger::doReorderConnection(BaseNode *node, int oldIndex, int newIndex)
 {
     addChange(new ReorderConnection(this, node, oldIndex, newIndex));
+}
+
+void ProjectChanger::doSetControlPoints(NodeConnection *cxn, const QPolygonF &points)
+{
+    addChange(new SetControlPoints(this, cxn, points));
 }
 
 void ProjectChanger::doAddVariable(int index, ScriptVariable *var)

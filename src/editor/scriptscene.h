@@ -26,16 +26,37 @@
 class ConnectionItem : public QGraphicsItem
 {
 public:
-    ConnectionItem(NodeOutputItem *outItem, NodeInputItem *inItem, QGraphicsItem *parent = 0);
+    ConnectionItem(NodeConnection *cxn, NodeOutputItem *outItem, NodeInputItem *inItem, QGraphicsItem *parent = 0);
 
     void updateBounds();
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+    QPainterPath shape() const;
 
+    void hoverEnterEvent(QGraphicsSceneHoverEvent *event);
+    void hoverMoveEvent(QGraphicsSceneHoverEvent *event);
+    void hoverLeaveEvent(QGraphicsSceneHoverEvent *event);
+
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
+    QPolygonF allPoints() const;
+    QPolygonF controlPoints() const;
+
+    static const int NODE_RADIUS = 8;
     QRectF mBounds;
+    QPainterPath mShape;
+    NodeConnection *mConnection;
     NodeOutputItem *mOutputItem;
     NodeInputItem *mInputItem;
+    bool mShowNodes;
+    int mControlPointIndex;
+    int mHighlightIndex;
+    QPointF mControlPointDragPos;
+    bool mMouseMoved;
+    bool mAddingNewPoint;
 };
 
 class ConnectionsItem : public QGraphicsItem
@@ -47,12 +68,25 @@ public:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *) {}
 
     void updateConnections();
+    ConnectionItem *itemFor(NodeConnection *cxn);
 
     void moved(NodeInputItem *item);
     void moved(NodeOutputItem *item);
 
+    void newConnectionStart(NodeOutputItem *outputItem);
+    void newConnectionHotspot(const QPointF &scenePos);
+    void newConnectionClick(const QPointF &scenePos);
+    void newConnectionEnd(NodeInputItem *inputItem);
+    void newConnectionCancel();
+
+    void afterSetControlPoints(NodeConnection *cxn);
+
     ProjectScene *mScene;
     QList<ConnectionItem*> mConnectionItems;
+
+    NodeOutputItem *mNewConnectionStart;
+    QPolygonF mNewConnectionPoints;
+    QGraphicsPathItem *mNewConnectionItem;
 };
 
 class GridItem : public QGraphicsItem
@@ -132,6 +166,7 @@ public slots:
 
     void afterAddConnection(int index, NodeConnection *cxn);
     void afterRemoveConnection(int index, NodeConnection *cxn);
+    void afterSetControlPoints(NodeConnection *cxn, const QPolygonF &oldPoints);
 
     void afterChangeVariable(ScriptVariable *var, const ScriptVariable *oldValue);
 
@@ -144,7 +179,6 @@ private:
     QList<NodeItem*> mNodeItems;
     ConnectionsItem *mConnectionsItem;
     NodeOutputItem *mConnectFrom;
-    QGraphicsLineItem *mConnectFeedbackItem;
     NodeInputItem *mConnectTo;
     GridItem *mGridItem;
     ScriptAreaItem *mAreaItem;
