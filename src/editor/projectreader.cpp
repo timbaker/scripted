@@ -145,10 +145,12 @@ private:
             foreach (NodeConnection *cxn, node->connections()) {
                 int id = (int)cxn->mReceiver;
                 if (BaseNode *rcvr = mProject->rootNode()->nodeByID(id)) {
+#if 0 // yep it is allowed
                     if (rcvr == node) {
                         mError = tr("Node \"%1\" can't form a connection with itself").arg(id);
                         break;
                     }
+#endif
                     cxn->mReceiver = rcvr;
                 } else {
                     mError = tr("Invalid receiver \"%1\"").arg(id); // FIXME: line number

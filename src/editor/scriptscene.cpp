@@ -292,9 +292,13 @@ void ScriptScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         NodeInputItem *highlight = 0;
         foreach (QGraphicsItem *item, items(event->scenePos())) {
             if (NodeInputItem *inputItem = dynamic_cast<NodeInputItem*>(item)) {
+#if 1 // inputs can connect to themselves
+                highlight = inputItem;
+#else
                 if (inputItem->mInput->mNode != mConnectFrom->mOutput->mNode) {
                     highlight = inputItem;
                 }
+#endif
                 break;
             }
         }
