@@ -350,10 +350,15 @@ private:
             return 0;
         }
         QString inputName = atts.value(QLatin1String("input")).toString();
+        QPolygonF points;
+        if (!getPolygonF(atts, QLatin1String("controlpoints"), points))
+            return 0;
+
         NodeConnection *cxn = new NodeConnection;
         cxn->mOutput = outputName;
         cxn->mInput = inputName;
         cxn->mReceiver = (ScriptNode*)rcvr;
+        cxn->mControlPoints = points;
         xml.skipCurrentElement();
         return cxn;
     }
@@ -434,20 +439,48 @@ private:
         return false;
     }
 
-    bool getDoublePair(const QXmlStreamAttributes &atts, const QString &name,
-                        double &v1, double &v2)
+    bool getDoublePair(const QString &s, double &v1, double &v2)
     {
-        if (atts.hasAttribute(name)) {
-            QStringList vs = atts.value(name).toString().split(QLatin1Char(','), QString::SkipEmptyParts);
-            if (vs.size() == 2) {
-                bool ok;
-                v1 = vs[0].toDouble(&ok);
-                if (!ok) goto bogus;
-                v2 = vs[1].toDouble(&ok);
-                if (!ok) goto bogus;
-                return true;
-            }
+        QStringList vs = s.split(QLatin1Char(','), QString::SkipEmptyParts);
+        if (vs.size() == 2) {
+            bool ok;
+            v1 = vs[0].toDouble(&ok);
+            if (!ok) return false;
+            v2 = vs[1].toDouble(&ok);
+            if (!ok) return false;
+            return true;
         }
+        return false;
+    }
+
+    bool getDoublePair(const QXmlStreamAttributes &atts, const QString &name,
+                       double &v1, double &v2)
+    {
+        if (atts.hasAttribute(name))
+            if (getDoublePair(atts.value(name).toString(), v1, v2))
+                return true;
+bogus:
+        xml.raiseError(tr("Expected %1=double,double but got \"%2\"")
+                       .arg(name).arg(atts.value(name).toString()));
+        return false;
+    }
+
+    bool getPolygonF(const QXmlStreamAttributes &atts, const QString &name,
+                     QPolygonF &points)
+    {
+        if (!atts.hasAttribute(name))
+            return true;
+
+        points.clear();
+        QStringList vs = atts.value(name).toString().split(QLatin1Char(' '), QString::SkipEmptyParts);
+        foreach (QString v, vs) {
+            double x, y;
+            if (!getDoublePair(v, x, y))
+                goto bogus;
+            points += QPointF(x, y);
+        }
+
+        return true;
 bogus:
         xml.raiseError(tr("Expected %1=double,double but got \"%2\"")
                        .arg(name).arg(atts.value(name).toString()));

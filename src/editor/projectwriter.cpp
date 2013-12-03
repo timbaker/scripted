@@ -200,6 +200,8 @@ public:
         xml.writeAttribute(QLatin1String("output"), cxn->mOutput);
         xml.writeAttribute(QLatin1String("receiver"), QString::number(cxn->mReceiver->id()));
         xml.writeAttribute(QLatin1String("input"), cxn->mInput);
+        if (cxn->mControlPoints.size())
+            writePolygonF(QLatin1String("controlpoints"), cxn->mControlPoints);
         xml.writeEndElement();
     }
 
@@ -219,6 +221,20 @@ public:
                            QString::number(v1, 'f', 3) +
                            QLatin1String(",") +
                            QString::number(v2, 'f', 3));
+    }
+
+    void writePolygonF(const QString &name, const QPolygonF &poly)
+    {
+        QString s;
+        for (int i = 0; i < poly.size(); i++) {
+            QPointF p = poly[i];
+            s += QString::number(p.x(), 'f', 3) +
+                 QLatin1String(",") +
+                 QString::number(p.y(), 'f', 3);
+            if (i < poly.size() - 1)
+                s += QLatin1Char(' ');
+        }
+        xml.writeAttribute(name, s);
     }
 
     QString relativeFileName(const QString &path)
