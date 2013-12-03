@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
     luamgr()->readLuaFiles();
 
     new MetaEventManager;
-    eventmgr()->readLuaFiles();
+    eventmgr()->readEventFiles();
 
     MainWindow w;
     w.show();

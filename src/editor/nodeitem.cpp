@@ -220,8 +220,9 @@ void NodeItem::updateLayout()
 
     mBounds = QRectF(0, 0, qMax(nameSize.width() + buttonsWidth, variablesSize.width() + variablesPadding * 2),
                      nameSize.height() + qMax(variablesSize.height() + variablesPadding * 2, qMax(inputsHeight, outputsHeight)));
+    mBounds.translate(-mBounds.width() / 2, -mBounds.height() / 2);
 
-    mVariablesItem->setPos(variablesPadding, nameSize.height() + variablesPadding);
+    mVariablesItem->setPos(mBounds.x() + variablesPadding, mBounds.y() + nameSize.height() + variablesPadding);
 
     QRectF r = mBounds.adjusted(0, nameSize.height(), 0, 0);
     mInputsItem->setPos(r.left() - 1, r.center().y());

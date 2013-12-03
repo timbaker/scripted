@@ -56,6 +56,7 @@ signals:
     void luaChanged(LuaInfo *info);
 
 public slots:
+    void gameDirectoriesChanged();
     void fileChanged(const QString &path);
     void fileChangedTimeout();
 

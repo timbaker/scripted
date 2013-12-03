@@ -19,11 +19,14 @@
 #include "ui_nodepropertiesdialog.h"
 
 #include "luamanager.h"
+#include "metaeventmanager.h"
 #include "node.h"
 #include "projectactions.h"
 #include "projectchanger.h"
 #include "projectdocument.h"
 #include "undoredobuttons.h"
+
+#include <QDir>
 
 NodePropertiesDialog::NodePropertiesDialog(ProjectDocument *doc, QWidget *parent) :
     QDialog(parent),
@@ -59,10 +62,14 @@ void NodePropertiesDialog::setNode(BaseNode *node)
     mNode = node;
     mSyncDepth++;
     ui->nameEdit->setText(mNode->name());
+    QString source;
     if (LuaNode *lnode = mNode->asLuaNode())
-        ui->sourceEdit->setText(lnode->source());
+        source = lnode->source();
+    if (MetaEventNode *enode = mNode->asEventNode())
+        source = enode->info() ? enode->info()->path() : QString();
     if (ScriptNode *snode = mNode->asScriptNode())
-        ui->sourceEdit->setText(snode->source());
+        source = snode->source();
+    ui->sourceEdit->setText(QDir::toNativeSeparators(source));
     setPropertiesTable();
     setConnectionsTable();
     mSyncDepth--;

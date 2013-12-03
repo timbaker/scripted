@@ -26,6 +26,7 @@
 class MetaEventInfo
 {
 public:
+    QString path() const { return mPath; }
     MetaEventNode *node() const { return mNode; }
 
 private:
@@ -33,6 +34,22 @@ private:
     MetaEventNode *mNode;
 
     friend class MetaEventManager;
+};
+
+class MetaEventFile
+{
+public:
+    MetaEventFile();
+    ~MetaEventFile();
+
+    bool read(const QString &fileName);
+    QList<MetaEventNode*> takeNodes();
+
+    QString errorString() { return mError; }
+
+private:
+    QList<MetaEventNode*> mNodes;
+    QString mError;
 };
 
 class MetaEventManager : public QObject, public Singleton<MetaEventManager>
@@ -43,20 +60,22 @@ public:
 
     MetaEventInfo *info(const QString &eventName);
     QList<MetaEventInfo*> events() { return mEventInfo.values(); }
-    bool readLuaFiles();
+    bool readEventFiles();
 
 signals:
-    void eventChanged(MetaEventInfo *info);
+    void infoChanged(MetaEventInfo *info);
+
+private:
+    bool readEventFile(const QString &fileName);
 
 public slots:
+    void gameDirectoriesChanged();
     void fileChanged(const QString &path);
     void fileChangedTimeout();
 
 private:
-    bool loadEvents(const QString &fileName);
-
-private:
     QMap<QString,MetaEventInfo*> mEventInfo;
+    QMap<QString,QList<MetaEventInfo*> > mEventsByFile;
 
     FileSystemWatcher mFileSystemWatcher;
     QSet<QString> mChangedFiles;

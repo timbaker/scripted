@@ -23,6 +23,7 @@
 #include "mainwindow.h"
 #include "nodepropertiesdialog.h"
 #include "preferences.h"
+#include "preferencesdialog.h"
 #include "progress.h"
 #include "project.h"
 #include "projectchanger.h"
@@ -184,7 +185,8 @@ bool ProjectActions::saveProjectAs()
 
 void ProjectActions::preferencesDialog()
 {
-
+    PreferencesDialog d(mainwin());
+    d.exec();
 }
 
 void ProjectActions::sceneScriptDialog()

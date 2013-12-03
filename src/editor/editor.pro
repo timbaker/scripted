@@ -57,7 +57,8 @@ SOURCES += main.cpp\
     scenescriptdialog.cpp \
     editnodevariabledialog.cpp \
     metaeventmanager.cpp \
-    metaeventdock.cpp
+    metaeventdock.cpp \
+    preferencesdialog.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -109,7 +110,8 @@ HEADERS  += mainwindow.h \
     scenescriptdialog.h \
     editnodevariabledialog.h \
     metaeventmanager.h \
-    metaeventdock.h
+    metaeventdock.h \
+    preferencesdialog.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \
@@ -121,7 +123,8 @@ FORMS    += mainwindow.ui \
     variablepropertiesdialog.ui \
     scenescriptdialog.ui \
     editnodevariabledialog.ui \
-    metaeventdock.ui
+    metaeventdock.ui \
+    preferencesdialog.ui
 
 RESOURCES += \
     editor.qrc

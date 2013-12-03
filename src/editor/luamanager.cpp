@@ -18,6 +18,7 @@
 #include "luamanager.h"
 
 #include "node.h"
+#include "preferences.h"
 #include "scriptvariable.h"
 
 #include <QDir>
@@ -35,6 +36,8 @@ LuaManager::LuaManager(QObject *parent) :
     mChangedFilesTimer.setSingleShot(true);
     connect(&mChangedFilesTimer, SIGNAL(timeout()),
             SLOT(fileChangedTimeout()));
+
+    connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(gameDirectoriesChanged()));
 }
 
 LuaInfo *LuaManager::luaInfo(const QString &fileName, const QString &relativeTo)
@@ -43,14 +46,14 @@ LuaInfo *LuaManager::luaInfo(const QString &fileName, const QString &relativeTo)
     if (path.isEmpty())
         return 0;
 
-    if (mLuaInfo.contains(path))
+    if (mLuaInfo.contains(path) && mLuaInfo[path]->node())
         return mLuaInfo[path];
 
     LuaNode *node = loadLua(path);
     if (!node)
         return 0;
 
-    LuaInfo *info = new LuaInfo;
+    LuaInfo *info = mLuaInfo[path] ? mLuaInfo[path] : new LuaInfo;
     info->mPath = path;
     info->mNode = node;
     mLuaInfo[path] = info;
@@ -79,14 +82,22 @@ QString LuaManager::canonicalPath(const QString &fileName, const QString &relati
     return QString();
 }
 
-#include <QApplication>
-
 bool LuaManager::readLuaFiles()
 {
-    QDir dir(qApp->applicationDirPath() + "/../../../../scripts");
-    foreach (QFileInfo fileInfo, dir.entryInfoList(QStringList() << QLatin1String("*.lua"))) {
-        if (LuaInfo *info = luaInfo(fileInfo.absoluteFilePath()))
-            mCommands += info;
+    QStringList filters;
+    filters << QLatin1String("*.lua");
+
+    foreach (QString path, prefs()->gameDirectories()) {
+        QDir dir = QDir(path).filePath(QLatin1String("media/lua/MetaGame"));
+        if (!dir.exists()) {
+            qDebug() << "ignoring missing game/mod directory" << dir.absolutePath();
+            continue;
+        }
+        foreach (QFileInfo fileInfo, dir.entryInfoList(filters)) {
+            if (LuaInfo *info = luaInfo(fileInfo.absoluteFilePath()))
+                if (!mCommands.contains(info))
+                    mCommands += info;
+        }
     }
 
 #if 0
@@ -114,6 +125,11 @@ bool LuaManager::readLuaFiles()
 #endif
 
     return true;
+}
+
+void LuaManager::gameDirectoriesChanged()
+{
+    readLuaFiles();
 }
 
 void LuaManager::fileChanged(const QString &path)
@@ -169,7 +185,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
 
     if (lua_State *L = luaL_newstate()) {
 
-        LuaNode *ret = new LuaNode(0, QFileInfo(fileName).baseName());
+        LuaNode *ret = 0;
 
         luaL_openlibs(L);
         lua_pushboolean(L, true);
@@ -181,6 +197,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                 lua_getglobal(L, "editor");
                 int tblidx = lua_gettop(L);
                 if (lua_istable(L, tblidx)) {
+                    ret = new LuaNode(0, QFileInfo(fileName).baseName());
                     lua_pushnil(L); // push space on stack for the key
                     while (lua_next(L, tblidx) != 0) { // pop a key, push key then value
                         const char *key = lua_isstring(L, -2) ? lua_tostring(L, -2) : "";

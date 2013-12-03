@@ -173,6 +173,7 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
     connect(mDocument->changer(), SIGNAL(afterChangeVariable(ScriptVariable*,const ScriptVariable*)),
             SLOT(afterChangeVariable(ScriptVariable*,const ScriptVariable*)));
 
+    connect(eventmgr(), SIGNAL(infoChanged(MetaEventInfo*)), SLOT(infoChanged(MetaEventInfo*)));
     connect(luamgr(), SIGNAL(luaChanged(LuaInfo*)),
             SLOT(luaChanged(LuaInfo*)));
     connect(scriptmgr(), SIGNAL(scriptChanged(ScriptInfo*)),

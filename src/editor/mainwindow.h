@@ -94,4 +94,6 @@ private:
     QUndoGroup *mUndoGroup;
 };
 
+inline MainWindow *mainwin() { return MainWindow::instance(); }
+
 #endif // MAINWINDOW_H

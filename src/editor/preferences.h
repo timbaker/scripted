@@ -43,6 +43,10 @@ public:
     QString scriptsDirectory() const
     { return mScriptsDirectory; }
 
+    void setGameDirectories(const QStringList &dirList);
+    QStringList gameDirectories() const
+    { return mGameDirectories; }
+
     bool useOpenGL() const
     { return mUseOpenGL; }
     
@@ -74,6 +78,7 @@ public:
 
 signals:
     void scriptsDirectoryChanged();
+    void gameDirectoriesChanged();
     void useOpenGLChanged(bool opengl);
     void showMiniMapChanged(bool show);
     void miniMapWidthChanged(int width);
@@ -103,6 +108,7 @@ private:
     QColor mTileGridColor;
     QString mConfigDirectory;
     QString mTilesDirectory;
+    QStringList mGameDirectories;
 };
 
 inline Preferences *prefs() { return Preferences::instance(); }

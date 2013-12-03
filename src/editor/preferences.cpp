@@ -24,6 +24,7 @@
 SINGLETON_IMPL(Preferences)
 
 static const QLatin1String KEY_SCRIPTS_DIRECTORY("ScriptsDirectory");
+static const QLatin1String KEY_GAME_DIRECTORIES("GameDirectories");
 static const QLatin1String KEY_USE_OPENGL("UseOpenGL");
 static const QLatin1String KEY_SHOW_MINIMAP("ShowMiniMap");
 static const QLatin1String KEY_MINIMAP_WIDTH("MiniMapWidth");
@@ -37,6 +38,7 @@ Preferences::Preferences() :
     mSettings(new QSettings)
 {
     mScriptsDirectory = mSettings->value(KEY_SCRIPTS_DIRECTORY, QString()).toString();
+    mGameDirectories = mSettings->value(KEY_GAME_DIRECTORIES, QStringList()).toStringList();
     mUseOpenGL = mSettings->value(KEY_USE_OPENGL, false).toBool();
     mShowMiniMap = mSettings->value(KEY_SHOW_MINIMAP, true).toBool();
     mMiniMapWidth = mSettings->value(KEY_MINIMAP_WIDTH, 256).toInt();
@@ -109,6 +111,15 @@ void Preferences::setScriptsDirectory(const QString &path)
     mScriptsDirectory = path;
     mSettings->setValue(KEY_SCRIPTS_DIRECTORY, mScriptsDirectory);
     emit scriptsDirectoryChanged();
+}
+
+void Preferences::setGameDirectories(const QStringList &dirList)
+{
+    if (dirList == mGameDirectories)
+        return;
+    mGameDirectories = dirList;
+    mSettings->setValue(KEY_GAME_DIRECTORIES, mGameDirectories);
+    emit gameDirectoriesChanged();
 }
 
 void Preferences::setUseOpenGL(bool useOpenGL)

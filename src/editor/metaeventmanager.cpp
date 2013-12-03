@@ -18,10 +18,18 @@
 #include "metaeventmanager.h"
 
 #include "node.h"
+#include "preferences.h"
 
 #include <QApplication>
 #include <QDir>
 #include <QFileInfo>
+
+extern "C" {
+
+#include "lualib.h"
+#include "lauxlib.h"
+
+} // extern "C"
 
 SINGLETON_IMPL(MetaEventManager)
 
@@ -35,6 +43,8 @@ MetaEventManager::MetaEventManager(QObject *parent) :
     mChangedFilesTimer.setSingleShot(true);
     connect(&mChangedFilesTimer, SIGNAL(timeout()),
             SLOT(fileChangedTimeout()));
+
+    connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(gameDirectoriesChanged()));
 }
 
 MetaEventInfo *MetaEventManager::info(const QString &eventName)
@@ -45,14 +55,67 @@ MetaEventInfo *MetaEventManager::info(const QString &eventName)
     return 0;
 }
 
-bool MetaEventManager::readLuaFiles()
+bool MetaEventManager::readEventFiles()
 {
-    QDir dir(qApp->applicationDirPath() + "/../../../../scripts");
-    foreach (QFileInfo fileInfo, dir.entryInfoList(QStringList() << QLatin1String("MetaEvents.lua"))) {
-        loadEvents(fileInfo.absoluteFilePath());
-        mFileSystemWatcher.addPath(fileInfo.canonicalFilePath());
+    QStringList filters;
+    filters << QLatin1String("MetaEvents.lua");
+    foreach (QString path, prefs()->gameDirectories()) {
+        QDir dir = QDir(path).filePath(QLatin1String("media/lua/MetaGame"));
+        if (!dir.exists()) {
+            qDebug() << "ignoring missing game/mod directory" << dir.absolutePath();
+            continue;
+        }
+        foreach (QFileInfo fileInfo, dir.entryInfoList(filters)) {
+            QString fileName = fileInfo.canonicalFilePath();
+            readEventFile(fileName);
+        }
     }
     return true;
+}
+
+bool MetaEventManager::readEventFile(const QString &fileName)
+{
+    MetaEventFile file;
+    if (file.read(fileName)) {
+        QList<MetaEventInfo*> oldEvents = mEventsByFile[fileName];
+        QList<MetaEventInfo*> &newEvents = mEventsByFile[fileName];
+        newEvents.clear();
+        foreach (MetaEventNode *node, file.takeNodes()) {
+            MetaEventInfo *info = mEventInfo[node->name()];
+            if (info) {
+                delete info->node();
+                node->setInfo(info);
+                info->mNode = node;
+                info->mPath = fileName;
+                emit infoChanged(info);
+            } else {
+                info = new MetaEventInfo;
+                info->mNode = node;
+                info->mPath = fileName;
+                node->setInfo(info);
+                mEventInfo[node->name()] = info;
+                emit infoChanged(info);
+            }
+            newEvents += info;
+        }
+        // FIXME: an event with the same name could have come from another file
+        foreach (MetaEventInfo *info, oldEvents) {
+            if (!newEvents.contains(info)) {
+                delete info->node();
+                info->mNode = 0;
+                emit infoChanged(info);
+            }
+        }
+
+        mFileSystemWatcher.addPath(fileName);
+        return true;
+    }
+    return false;
+}
+
+void MetaEventManager::gameDirectoriesChanged()
+{
+    readEventFiles();
 }
 
 void MetaEventManager::fileChanged(const QString &path)
@@ -64,12 +127,12 @@ void MetaEventManager::fileChanged(const QString &path)
 void MetaEventManager::fileChangedTimeout()
 {
     foreach (const QString &path, mChangedFiles) {
-        if (mEventInfo.contains(path)) {
+        if (true) {
             noise() << "MetaEventManager::fileChanged" << path;
             mFileSystemWatcher.removePath(path);
             QFileInfo info(path);
             if (info.exists()) {
-                /* TODO */
+                readEventFile(QFileInfo(path).canonicalFilePath());
             }
         }
     }
@@ -77,15 +140,23 @@ void MetaEventManager::fileChangedTimeout()
     mChangedFiles.clear();
 }
 
-extern "C" {
+/////
 
-#include "lualib.h"
-#include "lauxlib.h"
-
-} // extern "C"
-
-bool MetaEventManager::loadEvents(const QString &fileName)
+MetaEventFile::MetaEventFile()
 {
+
+}
+
+MetaEventFile::~MetaEventFile()
+{
+    qDeleteAll(mNodes);
+}
+
+bool MetaEventFile::read(const QString &fileName)
+{
+    qDeleteAll(mNodes);
+    mNodes.clear();
+
     if (!QFileInfo(fileName).exists())
         return false;
 
@@ -133,12 +204,9 @@ bool MetaEventManager::loadEvents(const QString &fileName)
                             lua_pop(L, 1); // pop value
                         }
                         lua_pop(L, 1); // pop value
-                        if (node->name().isEmpty() || mEventInfo.contains(node->name()))
+                        if (node->name().isEmpty())
                             return false;
-                        MetaEventInfo *info = new MetaEventInfo;
-                        info->mNode = node;
-                        node->setInfo(info);
-                        mEventInfo[node->name()] = info;
+                        mNodes += node;
                     }
                 }
             }
@@ -148,4 +216,11 @@ bool MetaEventManager::loadEvents(const QString &fileName)
     }
 
     return false;
+}
+
+QList<MetaEventNode *> MetaEventFile::takeNodes()
+{
+    QList<MetaEventNode *> nodes = mNodes;
+    mNodes.clear();
+    return nodes;
 }

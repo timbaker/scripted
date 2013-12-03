@@ -206,7 +206,7 @@ MetaEventNode::MetaEventNode(int id, const QString &name) :
     BaseNode(id, name),
     mInfo(0)
 {
-
+    insertOutput(0, new NodeOutput(QLatin1String("Output")));
 }
 
 bool MetaEventNode::isKnown(const ScriptVariable *var)

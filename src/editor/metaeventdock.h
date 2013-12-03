@@ -42,6 +42,9 @@ public:
     explicit MetaEventDock(QWidget *parent = 0);
     ~MetaEventDock();
 
+private slots:
+    void setList();
+
 private:
     Ui::MetaEventDock *ui;
     MetaEventModel *mModel;

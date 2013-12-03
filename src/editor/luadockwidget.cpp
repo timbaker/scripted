@@ -20,6 +20,7 @@
 
 #include "luamanager.h"
 #include "node.h"
+#include "preferences.h"
 
 #include <QMimeData>
 
@@ -29,9 +30,12 @@ LuaDockWidget::LuaDockWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->listView->setModel(new LuaItemModel(ui->listView));
+    LuaItemModel *model = new LuaItemModel(ui->listView);
+    ui->listView->setModel(model);
     ui->listView->setDragEnabled(true);
     ui->listView->setDragDropMode(QAbstractItemView::DragOnly);
+
+    connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(setList()));
 
     setList();
 }
@@ -144,13 +148,20 @@ QMimeData *LuaItemModel::mimeData(const QModelIndexList &indexes) const
 
 void LuaItemModel::reset()
 {
-    beginResetModel();
-    qDeleteAll(mItems);
-    foreach (LuaInfo *def, luamgr()->commands()) {
-        Item *item = new Item(def);
-        mItems += item;
+    if (mItems.size()) {
+        beginRemoveRows(QModelIndex(), 0, mItems.size() - 1);
+        qDeleteAll(mItems);
+        mItems.clear();
+        endRemoveRows();
     }
-    endResetModel();
+    if (int count = luamgr()->commands().size()) {
+        beginInsertRows(QModelIndex(), 0, count - 1);
+        foreach (LuaInfo *def, luamgr()->commands()) {
+            Item *item = new Item(def);
+            mItems += item;
+        }
+        endInsertRows();
+    }
 }
 
 LuaItemModel::Item *LuaItemModel::itemAt(const QModelIndex &index) const

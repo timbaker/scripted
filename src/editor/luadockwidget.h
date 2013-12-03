@@ -74,6 +74,7 @@ public:
     explicit LuaDockWidget(QWidget *parent = 0);
     ~LuaDockWidget();
 
+private slots:
     void setList();
 
 private:
