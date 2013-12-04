@@ -30,6 +30,7 @@ public:
     explicit NodeConnectionsList(QWidget *parent = 0);
 
     void setNode(BaseNode *node);
+    void setOutputName(const QString &outputName);
     void selectConnection(NodeConnection *cxn);
 
 private slots:

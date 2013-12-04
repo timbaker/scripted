@@ -17,6 +17,7 @@
 
 #include "projectactions.h"
 
+#include "connectionsdialog.h"
 #include "documentmanager.h"
 #include "editnodevariabledialog.h"
 #include "node.h"
@@ -432,6 +433,12 @@ void ProjectActions::reorderConnection(BaseNode *node, int oldIndex, int newInde
     doc->changer()->beginUndoMacro(doc->undoStack(), tr("Reorder Connection"));
     doc->changer()->doReorderConnection(node, oldIndex, newIndex);
     doc->changer()->endUndoMacro();
+}
+
+void ProjectActions::connectionsDialog(BaseNode *node, const QString &outputName)
+{
+    ConnectionsDialog d(document(), node, outputName, mainwin());
+    d.exec();
 }
 
 void ProjectActions::editNodeVariableValue(ScriptVariable *var)

@@ -71,6 +71,8 @@ public slots:
     void removeConnection(BaseNode *node, NodeConnection *cxn);
     void reorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
+    void connectionsDialog(BaseNode *node, const QString &outputName);
+
     void editNodeVariableValue(ScriptVariable *var);
 
     void updateActions();

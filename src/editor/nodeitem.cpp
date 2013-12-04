@@ -34,6 +34,7 @@
 #include <QGraphicsScene>
 #include <QGraphicsSceneDragDropEvent>
 #include <QHeaderView>
+#include <QMenu>
 #include <QMimeData>
 #include <QScrollBar>
 #include <QTableWidget>
@@ -141,25 +142,29 @@ QVariant NodeItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QV
 
 void NodeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
-    mPreDragPosition = pos();
+    if (event->button() == Qt::LeftButton)
+        mPreDragPosition = pos();
     QGraphicsItem::mousePressEvent(event);
 }
 
 void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     QGraphicsItem::mouseReleaseEvent(event);
-    if (mPreDragPosition != pos()) {
-        mScene->document()->changer()->beginUndoCommand(mScene->document()->undoStack(), true);
-        mScene->document()->changer()->doMoveNode(mNode, pos());
-        mScene->document()->changer()->endUndoCommand();
-    }
 
-    if (openRect().contains(event->pos())) {
-        if (ScriptNode *snode = mNode->asScriptNode())
-            ProjectActions::instance()->openProject(snode->source());
-    }
-    if (deleteRect().contains(event->pos())) {
-        ProjectActions::instance()->removeNode(mNode);
+    if (event->button() == Qt::LeftButton) {
+        if (mPreDragPosition != pos()) {
+            mScene->document()->changer()->beginUndoCommand(mScene->document()->undoStack(), true);
+            mScene->document()->changer()->doMoveNode(mNode, pos());
+            mScene->document()->changer()->endUndoCommand();
+        }
+
+        if (openRect().contains(event->pos())) {
+            if (ScriptNode *snode = mNode->asScriptNode())
+                ProjectActions::instance()->openProject(snode->source());
+        }
+        if (deleteRect().contains(event->pos())) {
+            ProjectActions::instance()->removeNode(mNode);
+        }
     }
 }
 
@@ -327,6 +332,24 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->drawText(r.adjusted(size().width() / 4, 0, 0, 0), Qt::AlignCenter, mInput->label());
 }
 
+void NodeInputItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::RightButton) {
+        // If you right click on this item and show the context menu, then right-click
+        // anywhere else on the scene, you still get a right-click event because this
+        // is the mouse-grabber.
+        if (!contains(event->pos()))
+            return;
+        if (mInput->node()->isProjectRootNode()) {
+            QMenu menu;
+            QAction *a = menu.addAction(scene()->tr("Connections..."));
+            QAction *selected = menu.exec(event->screenPos());
+            if (selected == a)
+                ProjectActions::instance()->connectionsDialog(mInput->node(), mInput->name());
+        }
+    }
+}
+
 void NodeInputItem::updateLayout()
 {
     QFontMetricsF fm(mScene->font());
@@ -386,6 +409,24 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         return;
 
     painter->drawText(r, Qt::AlignCenter, mOutput->label());
+}
+
+void NodeOutputItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::RightButton) {
+        // If you right click on this item and show the context menu, then right-click
+        // anywhere else on the scene, you still get a right-click event because this
+        // is the mouse-grabber.
+        if (!contains(event->pos()))
+            return;
+        if (!mOutput->node()->isProjectRootNode()) {
+            QMenu menu;
+            QAction *a = menu.addAction(scene()->tr("Connections..."));
+            QAction *selected = menu.exec(event->screenPos());
+            if (selected == a)
+                ProjectActions::instance()->connectionsDialog(mOutput->node(), mOutput->name());
+        }
+    }
 }
 
 void NodeOutputItem::updateLayout()

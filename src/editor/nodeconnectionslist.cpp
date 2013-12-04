@@ -50,6 +50,15 @@ void NodeConnectionsList::setNode(BaseNode *node)
     }
 }
 
+void NodeConnectionsList::setOutputName(const QString &outputName)
+{
+    for (int i = 0; i < mNode->connectionCount(); i++) {
+        NodeConnection *cxn = mNode->connection(i);
+        if (cxn->mOutput != outputName)
+            setRowHidden(i, QModelIndex(), true);
+    }
+}
+
 void NodeConnectionsList::selectConnection(NodeConnection *cxn)
 {
     int row = mNode->indexOf(cxn);

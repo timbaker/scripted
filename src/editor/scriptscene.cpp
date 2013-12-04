@@ -22,6 +22,7 @@
 #include "node.h"
 #include "nodeitem.h"
 #include "project.h"
+#include "projectactions.h"
 #include "projectchanger.h"
 #include "projectdocument.h"
 #include "scriptmanager.h"
@@ -29,6 +30,7 @@
 #include <QApplication>
 #include <QFileInfo>
 #include <QGraphicsSceneDragDropEvent>
+#include <QMenu>
 #include <QStyleOptionGraphicsItem>
 #include <QMimeData>
 #include <QPainter>
@@ -294,8 +296,8 @@ void ScriptScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
             mConnectionsItem->newConnectionCancel();
             mConnectFrom.clear();
             mConnectTo.clear();
+            return;
         }
-        return;
     }
 
     BaseGraphicsScene::mousePressEvent(event);
@@ -752,6 +754,19 @@ void ConnectionItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
                 }
             }
         }
+    }
+    if (event->button() == Qt::RightButton) {
+        // If you right click on this item and show the context menu, then right-click
+        // anywhere else on the scene, you still get a right-click event because this
+        // is the mouse-grabber.
+        if (!contains(event->pos()))
+            return;
+        QMenu menu;
+        QIcon trash(QLatin1String(":/images/16x16/edit-delete.png"));
+        QAction *a = menu.addAction(trash, scene()->tr("Remove Connection"));
+        QAction *selected = menu.exec(event->screenPos());
+        if (selected == a)
+            ProjectActions::instance()->removeConnection(mConnection->mSender, mConnection);
     }
 
 //    QGraphicsItem::mousePressEvent(event);

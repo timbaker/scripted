@@ -29,6 +29,8 @@ public:
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
 
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+
     static QSize size() { return QSize(22, 28); }
 
     void updateLayout();
@@ -46,6 +48,8 @@ public:
 
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
+
+    void mousePressEvent(QGraphicsSceneMouseEvent *event);
 
     static QSize size() { return QSize(22, 28); }
 

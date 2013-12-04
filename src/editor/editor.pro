@@ -59,7 +59,8 @@ SOURCES += main.cpp\
     metaeventmanager.cpp \
     metaeventdock.cpp \
     preferencesdialog.cpp \
-    luautils.cpp
+    luautils.cpp \
+    connectionsdialog.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -113,7 +114,8 @@ HEADERS  += mainwindow.h \
     metaeventmanager.h \
     metaeventdock.h \
     preferencesdialog.h \
-    luautils.h
+    luautils.h \
+    connectionsdialog.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \
@@ -126,7 +128,8 @@ FORMS    += mainwindow.ui \
     scenescriptdialog.ui \
     editnodevariabledialog.ui \
     metaeventdock.ui \
-    preferencesdialog.ui
+    preferencesdialog.ui \
+    connectionsdialog.ui
 
 RESOURCES += \
     editor.qrc
