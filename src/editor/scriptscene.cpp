@@ -33,6 +33,7 @@
 #include <QMimeData>
 #include <QPainter>
 #include <QUrl>
+#include <QVector2D>
 #include <QtMath>
 
 ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
@@ -611,9 +612,12 @@ void ConnectionItem::updateBounds()
     stroker.setWidth(NODE_RADIUS * 2);
     mShape = stroker.createStroke(path);
 
-    QRectF bounds = mOutputItem->mapToScene(mOutputItem->boundingRect()).boundingRect() |
-            mInputItem->mapToScene(mInputItem->boundingRect()).boundingRect();
-    bounds |= controlPoints().boundingRect().adjusted(-NODE_RADIUS, -NODE_RADIUS, NODE_RADIUS, NODE_RADIUS);
+    mStartPoint = QPointF(mOutputItem->mapToScene(mOutputItem->boundingRect().right() + 2,
+                                                  mOutputItem->boundingRect().center().y()));
+    mEndPoint = QPointF(mInputItem->mapToScene(mInputItem->boundingRect().left() - 2,
+                                               mInputItem->boundingRect().center().y()));
+
+    QRectF bounds = allPoints().boundingRect().adjusted(-NODE_RADIUS, -NODE_RADIUS, NODE_RADIUS, NODE_RADIUS);
     bounds.adjust(-6, -6, 6, 6);
     if (bounds != mBounds) {
         prepareGeometryChange();
@@ -632,29 +636,25 @@ void ConnectionItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, 
 
     QPen pen(mShowNodes ?  QColor(128, 255, 255, 200) : QColor(255, 255, 255, 200), 2);
     painter->setPen(pen);
-    QPointF start(mOutputItem->mapToScene(mOutputItem->boundingRect().right() + 2,
-                                           mOutputItem->boundingRect().center().y()));
-    QPointF end(mInputItem->mapToScene(mInputItem->boundingRect().left() - 2,
-                                       mInputItem->boundingRect().center().y()));
     QPolygonF poly;
-    poly << start << controlPoints();
+    poly << mStartPoint << controlPoints();
     painter->drawPolyline(poly);
 
     int arrowSize = 6;
-    QLineF line(poly.last(), end);
+    QLineF line(poly.last(), mEndPoint);
     line.setLength(line.length() - arrowSize);
     painter->drawLine(line);
 
     QPointF mid = line.pointAt((line.length() /*- arrowSize*/) / line.length());
-    QPointF p1 = QLineF(mid, end).normalVector().p2();
+    QPointF p1 = QLineF(mid, mEndPoint).normalVector().p2();
     QLineF ll(p1, mid);
     ll.setLength(arrowSize * 2);
     QPointF p2 = ll.p2();
     QPainterPath path;
-    path.moveTo(end);
+    path.moveTo(mEndPoint);
     path.lineTo(p1);
     path.lineTo(p2);
-    path.lineTo(end);
+    path.lineTo(mEndPoint);
     painter->fillPath(path, pen.color());
 
     if (mShowNodes) {
@@ -679,8 +679,6 @@ void ConnectionItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
     mShowNodes = true;
     update();
 }
-
-#include <QVector2D>
 
 void ConnectionItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
@@ -816,12 +814,8 @@ void ConnectionItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
 QPolygonF ConnectionItem::allPoints() const
 {
-    QPointF start(mOutputItem->mapToScene(mOutputItem->boundingRect().right() + 2,
-                                           mOutputItem->boundingRect().center().y()));
-    QPointF end(mInputItem->mapToScene(mInputItem->boundingRect().left() - 2,
-                                       mInputItem->boundingRect().center().y()));
     QPolygonF ret;
-    return ret << start << controlPoints() << end;
+    return ret << mStartPoint << controlPoints() << mEndPoint;
 }
 
 QPolygonF ConnectionItem::controlPoints() const
@@ -878,16 +872,20 @@ ConnectionItem *ConnectionsItem::itemFor(NodeConnection *cxn)
 void ConnectionsItem::moved(NodeInputItem *item)
 {
     foreach (ConnectionItem *cxnItem, mConnectionItems) {
-        if (cxnItem->mInputItem == item)
+        if (cxnItem->mInputItem == item) {
             cxnItem->updateBounds();
+            cxnItem->update();
+        }
     }
 }
 
 void ConnectionsItem::moved(NodeOutputItem *item)
 {
     foreach (ConnectionItem *cxnItem, mConnectionItems) {
-        if (cxnItem->mOutputItem == item)
+        if (cxnItem->mOutputItem == item) {
             cxnItem->updateBounds();
+            cxnItem->update();
+        }
     }
 }
 

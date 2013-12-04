@@ -57,6 +57,8 @@ public:
     QPointF mControlPointDragPos;
     bool mMouseMoved;
     bool mAddingNewPoint;
+    QPointF mStartPoint;
+    QPointF mEndPoint;
 };
 
 class ConnectionsItem : public QGraphicsItem
