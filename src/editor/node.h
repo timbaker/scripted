@@ -36,18 +36,30 @@ class NodeInput
 public:
     NodeInput(const QString &name) :
         mNode(0),
-        mName(name)
+        mName(name),
+        mLabel(name)
+    {
+    }
+
+    NodeInput(const QString &name, const QString &label) :
+        mNode(0),
+        mName(name),
+        mLabel(label)
     {
     }
 
     NodeInput(const NodeInput *other) :
         mNode(0),
-        mName(other->mName)
+        mName(other->mName),
+        mLabel(other->mLabel)
     {
     }
 
     void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
+
+    void setLabel(const QString &label) { mLabel = label; }
+    const QString &label() const { return mLabel; }
 
     bool isKnown() const;
 
@@ -57,6 +69,7 @@ public:
 private:
     BaseNode *mNode;
     QString mName;
+    QString mLabel;
 };
 
 class NodeOutput
@@ -64,20 +77,32 @@ class NodeOutput
 public:
     NodeOutput(const QString &name) :
         mNode(0),
-        mName(name)
+        mName(name),
+        mLabel(name)
     {
     }
+
+    NodeOutput(const QString &name, const QString &label) :
+        mNode(0),
+        mName(name),
+        mLabel(label)
+    {
+    }
+
     NodeOutput(const NodeOutput *other) :
         mNode(0),
-        mName(other->mName)
+        mName(other->mName),
+        mLabel(other->mLabel)
     {
     }
 
     void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
 
-    bool isKnown() const;
+    void setLabel(const QString &label) { mLabel = label; }
+    const QString &label() const { return mLabel; }
 
+    bool isKnown() const;
 
     void setNode(BaseNode *node) { mNode = node; }
     BaseNode *node() const { return mNode; }
@@ -85,6 +110,7 @@ public:
 private:
     BaseNode *mNode;
     QString mName;
+    QString mLabel;
 };
 
 class NodeConnection
@@ -205,7 +231,7 @@ public:
     virtual bool isKnown(const NodeInput *input) = 0;
     virtual bool isKnown(const NodeOutput *output) = 0;
 
-    void initFrom(BaseNode *other);
+    void initFrom(const BaseNode *other);
 
     virtual bool isEventNode() { return false; }
     virtual MetaEventNode *asEventNode() { return NULL; }
@@ -233,6 +259,7 @@ class MetaEventNode : public BaseNode
 {
 public:
     MetaEventNode(int id, const QString &name);
+    MetaEventNode(int id, const MetaEventNode &other);
 
     bool isKnown(const ScriptVariable *var);
     bool isKnown(const NodeInput *input);
@@ -243,7 +270,7 @@ public:
 
     bool syncWithInfo();
 
-    void initFrom(MetaEventNode *other);
+    void initFrom(const MetaEventNode *other);
 
     virtual bool isEventNode() { return true; }
     virtual MetaEventNode *asEventNode() { return this; }
@@ -256,6 +283,7 @@ class LuaNode : public BaseNode
 {
 public:
     LuaNode(int id, const QString &name);
+    LuaNode(int id, const LuaNode &other);
 
     bool isKnown(const ScriptVariable *var);
     bool isKnown(const NodeInput *input);
@@ -267,7 +295,7 @@ public:
     using BaseNode::syncWithInfo;
     bool syncWithInfo();
 
-    void initFrom(LuaNode *other);
+    void initFrom(const LuaNode *other);
 
     virtual bool isLuaNode() { return true; }
     virtual LuaNode *asLuaNode() { return this; }

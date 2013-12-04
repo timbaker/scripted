@@ -17,19 +17,13 @@
 
 #include "metaeventmanager.h"
 
+#include "luautils.h"
 #include "node.h"
 #include "preferences.h"
 
 #include <QApplication>
 #include <QDir>
 #include <QFileInfo>
-
-extern "C" {
-
-#include "lualib.h"
-#include "lauxlib.h"
-
-} // extern "C"
 
 SINGLETON_IMPL(MetaEventManager)
 
@@ -160,6 +154,50 @@ bool MetaEventFile::read(const QString &fileName)
     if (!QFileInfo(fileName).exists())
         return false;
 
+#if 1
+    LuaState L;
+    if (!L.loadFile(fileName))
+        return false;
+
+    LuaValue lv = L.getGlobal(QLatin1String("events"));
+    if (lv.type() != LUA_TTABLE)
+        return false;
+
+    LuaNode node(0, QFileInfo(fileName).baseName());
+
+    for (int i = 0; i < lv.mTableValue.size(); i++) {
+        LuaValue *k = lv.mTableValue.mKeys[i];
+        LuaValue *v = lv.mTableValue.mValues[i];
+        if (!v->isTable()) return false;
+        MetaEventNode node(0, QString());
+        for (int j = 0; j < v->mTableValue.size(); j++) {
+            LuaValue *k2 = v->mTableValue.mKeys[j];
+            LuaValue *v2 = v->mTableValue.mValues[j];
+            if (k2->isString(QLatin1String("name"))) {
+                if (v2->mType != LUA_TSTRING) return false;
+                node.setName(v2->toString());
+            }
+            if (k2->isString(QLatin1String("variables"))) {
+                if (!v2->isTable()) return false;
+                for (int m = 0; m < v2->mTableValue.size(); m++) {
+                    LuaValue *k3 = v2->mTableValue.mKeys[m];
+                    LuaValue *v3 = v2->mTableValue.mValues[m];
+                    if (!v3->isTable()) return false;
+                    QMap<QString,QString> ssm = v3->mTableValue.toStringStringMap();
+                    QString name = ssm[QLatin1String("name")];
+                    QString type = ssm[QLatin1String("type")];
+                    QString label = ssm[QLatin1String("label")];
+                    if (label.isEmpty()) label = name;
+                    QString value = ssm[QLatin1String("value")];
+                    node.insertVariable(node.variableCount(), new ScriptVariable(type, name, label, value));
+                }
+            }
+        }
+        mNodes += new MetaEventNode(0, node);
+    }
+
+    return new LuaNode(0, node);
+#else
     if (lua_State *L = luaL_newstate()) {
         luaL_openlibs(L);
         int status = luaL_loadfile(L, fileName.toLatin1().data());
@@ -216,6 +254,7 @@ bool MetaEventFile::read(const QString &fileName)
     }
 
     return false;
+#endif
 }
 
 QList<MetaEventNode *> MetaEventFile::takeNodes()

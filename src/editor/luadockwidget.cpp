@@ -22,6 +22,7 @@
 #include "node.h"
 #include "preferences.h"
 
+#include <QFileInfo>
 #include <QMimeData>
 
 LuaDockWidget::LuaDockWidget(QWidget *parent) :
@@ -88,7 +89,7 @@ QVariant LuaItemModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DisplayRole) {
         if (Item *item = itemAt(index)) {
-            return item->mDefinition->node()->name();
+            return item->mLabel;
         }
     }
 #if 0
@@ -138,7 +139,7 @@ QMimeData *LuaItemModel::mimeData(const QModelIndexList &indexes) const
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     foreach (const QModelIndex &index, indexes) {
         if (Item *item = itemAt(index)) {
-            stream << item->mDefinition->path(); // FIXME: path/to/file.lua
+            stream << item->mInfo->path(); // FIXME: path/to/file.lua
         }
     }
 
@@ -156,8 +157,9 @@ void LuaItemModel::reset()
     }
     if (int count = luamgr()->commands().size()) {
         beginInsertRows(QModelIndex(), 0, count - 1);
-        foreach (LuaInfo *def, luamgr()->commands()) {
-            Item *item = new Item(def);
+        foreach (LuaInfo *info, luamgr()->commands()) {
+            Item *item = new Item(info);
+            item->mLabel = QFileInfo(info->path()).baseName();
             mItems += item;
         }
         endInsertRows();

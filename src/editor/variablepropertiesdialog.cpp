@@ -18,11 +18,18 @@
 #include "variablepropertiesdialog.h"
 #include "ui_variablepropertiesdialog.h"
 
+#include "node.h"
+#include "project.h"
 #include "scriptvariable.h"
 
-VariablePropertiesDialog::VariablePropertiesDialog(const ScriptVariable *var, QWidget *parent) :
+#include <QMessageBox>
+
+VariablePropertiesDialog::VariablePropertiesDialog(Project *project,
+                                                   ScriptVariable *var,
+                                                   QWidget *parent) :
     QDialog(parent),
     ui(new Ui::VariablePropertiesDialog),
+    mProject(project),
     mVariable(var)
 {
     ui->setupUi(this);
@@ -32,9 +39,11 @@ VariablePropertiesDialog::VariablePropertiesDialog(const ScriptVariable *var, QW
     ui->type->addItem(QLatin1String("Integer"));
     ui->type->addItem(QLatin1String("Float"));
     ui->type->addItem(QLatin1String("String"));
+    ui->type->addItem(QLatin1String("MapLocation"));
 
     if (mVariable) {
         ui->nameEdit->setText(var->name());
+        ui->labelEdit->setText(var->label());
         ui->type->setCurrentText(var->type());
     }
 }
@@ -49,7 +58,25 @@ QString VariablePropertiesDialog::name() const
     return ui->nameEdit->text();
 }
 
+QString VariablePropertiesDialog::label() const
+{
+    if (ui->labelEdit->text().isEmpty())
+        return name();
+    return ui->labelEdit->text();
+}
+
 QString VariablePropertiesDialog::type() const
 {
     return ui->type->currentText();
+}
+
+void VariablePropertiesDialog::accept()
+{
+    int index =  mVariable ? mProject->rootNode()->indexOf(mVariable) : -1;
+    if (!mProject->isValidVariableName(name(), index)) {
+        QMessageBox::warning(this, tr("Invalid Variable Name"), tr("The name is invalid or already taken."));
+        return;
+    }
+
+    QDialog::accept();
 }

@@ -17,6 +17,7 @@
 
 #include "luamanager.h"
 
+#include "luautils.h"
 #include "node.h"
 #include "preferences.h"
 #include "scriptvariable.h"
@@ -161,28 +162,70 @@ void LuaManager::fileChangedTimeout()
     mChangedFiles.clear();
 }
 
-extern "C" {
-
-#include "lualib.h"
-#include "lauxlib.h"
-
-// see luaconf.h
-// these are where print() calls go
-void luai_writestring(const char *s, int len)
-{
-}
-
-void luai_writeline()
-{
-}
-
-} // extern "C"
-
 LuaNode *LuaManager::loadLua(const QString &fileName)
 {
     if (!QFileInfo(fileName).exists())
         return NULL;
 
+#if 1
+    LuaState L;
+    if (!L.loadFile(fileName))
+        return NULL;
+
+    LuaValue lv = L.getGlobal(QLatin1String("editor"));
+    if (lv.type() != LUA_TTABLE)
+        return NULL;
+
+    LuaNode node(0, QFileInfo(fileName).baseName());
+
+    for (int i = 0; i < lv.mTableValue.size(); i++) {
+        LuaValue *k = lv.mTableValue.mKeys[i];
+        LuaValue *v = lv.mTableValue.mValues[i];
+        if (k->isString(QLatin1String("inputs"))) {
+            if (!v->isTable()) return NULL;
+            for (int j = 0; j < v->mTableValue.size(); j++) {
+                LuaValue *k2 = v->mTableValue.mKeys[j];
+                LuaValue *v2 = v->mTableValue.mValues[j];
+                if (!v2->isTable()) return false;
+                QMap<QString,QString> ssm = v2->mTableValue.toStringStringMap();
+                QString name = ssm[QLatin1String("name")];
+                QString label = ssm[QLatin1String("label")];
+                if (label.isEmpty()) label = name;
+                node.insertInput(node.inputCount(), new NodeInput(name, label));
+            }
+        }
+        if (k->isString(QLatin1String("outputs"))) {
+            if (!v->isTable()) return NULL;
+            for (int j = 0; j < v->mTableValue.size(); j++) {
+                LuaValue *k2 = v->mTableValue.mKeys[j];
+                LuaValue *v2 = v->mTableValue.mValues[j];
+                if (!v2->isTable()) return false;
+                QMap<QString,QString> ssm = v2->mTableValue.toStringStringMap();
+                QString name = ssm[QLatin1String("name")];
+                QString label = ssm[QLatin1String("label")];
+                if (label.isEmpty()) label = name;
+                node.insertOutput(node.outputCount(), new NodeOutput(name, label));
+            }
+        }
+        if (k->isString(QLatin1String("variables"))) {
+            if (!v->isTable()) return NULL;
+            for (int j = 0; j < v->mTableValue.size(); j++) {
+                LuaValue *k2 = v->mTableValue.mKeys[j];
+                LuaValue *v2 = v->mTableValue.mValues[j];
+                if (!v2->isTable()) return false;
+                QMap<QString,QString> ssm = v2->mTableValue.toStringStringMap();
+                QString name = ssm[QLatin1String("name")];
+                QString type = ssm[QLatin1String("type")];
+                QString label = ssm[QLatin1String("label")];
+                if (label.isEmpty()) label = name;
+                QString value = ssm[QLatin1String("value")];
+                node.insertVariable(node.variableCount(), new ScriptVariable(type, name, label, value));
+            }
+        }
+    }
+
+    return new LuaNode(0, node);
+#else
     if (lua_State *L = luaL_newstate()) {
 
         LuaNode *ret = 0;
@@ -207,7 +250,6 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                             lua_pushnil(L); // space for key
                             while (lua_next(L, -2) != 0) { // pop a key, push key then value
                                 const char *s = lua_tostring(L, -1);
-                                qDebug() << "input" << s;
                                 ret->insertInput(ret->inputCount(), new NodeInput(QLatin1String(s)));
                                 lua_pop(L, 1); // pop value
                             }
@@ -217,7 +259,6 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                             lua_pushnil(L); // space for key
                             while (lua_next(L, -2) != 0) { // pop a key, push key then value
                                 const char *s = lua_tostring(L, -1);
-                                qDebug() << "output" << s;
                                 ret->insertOutput(ret->outputCount(), new NodeOutput(QLatin1String(s)));
                                 lua_pop(L, 1); // pop value
                             }
@@ -228,13 +269,11 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                             while (lua_next(L, -2) != 0) { // pop a key, push key then value
                                 if (!lua_istable(L, -1))
                                     return NULL; // FIXME: lua_close
-                                qDebug() << "variable";
                                 QMap<QString,QString> kv;
                                 lua_pushnil(L); // space for key
                                 while (lua_next(L, -2) != 0) { // pop a key, push key then value
                                     const char *key = lua_tostring(L, -2);
                                     const char *value = lua_tostring(L, -1);
-                                    qDebug() << key << "==" << value;
                                     kv[QLatin1String(key)] = QLatin1String(value);
                                     lua_pop(L, 1); // pop value
                                 }
@@ -253,6 +292,6 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
         lua_close(L);
         return ret;
     }
-
+#endif
     return NULL;
 }

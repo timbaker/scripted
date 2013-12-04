@@ -58,7 +58,8 @@ SOURCES += main.cpp\
     editnodevariabledialog.cpp \
     metaeventmanager.cpp \
     metaeventdock.cpp \
-    preferencesdialog.cpp
+    preferencesdialog.cpp \
+    luautils.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -111,7 +112,8 @@ HEADERS  += mainwindow.h \
     editnodevariabledialog.h \
     metaeventmanager.h \
     metaeventdock.h \
-    preferencesdialog.h
+    preferencesdialog.h \
+    luautils.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \

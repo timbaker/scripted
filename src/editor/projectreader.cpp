@@ -374,7 +374,7 @@ private:
         if (atts.hasAttribute(QLatin1String("value"))) {
             QString value = atts.value(QLatin1String("value")).toString();
             xml.skipCurrentElement();
-            return new ScriptVariable(type, name, value);
+            return new ScriptVariable(type, name, name, value);
         } else {
             QString idStr = atts.value(QLatin1String("referenceid")).toString();
             bool ok;
@@ -385,7 +385,7 @@ private:
             }
             QString varRef = atts.value(QLatin1String("referencevar")).toString();
             xml.skipCurrentElement();
-            return new ScriptVariable(type, name, varRefID, varRef);
+            return new ScriptVariable(type, name, name, varRefID, varRef);
         }
     }
 

@@ -29,7 +29,9 @@ SceneScriptDialog::SceneScriptDialog(ProjectDocument *doc, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SceneScriptDialog),
     mDocument(doc),
-    mSyncDepth(0)
+    mSyncDepth(0),
+    mSelectedInput(-1),
+    mSelectedOutput(-1)
 {
     ui->setupUi(this);
 

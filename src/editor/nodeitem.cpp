@@ -221,6 +221,11 @@ void NodeItem::variablesChanged()
     updateLayout();
 }
 
+bool NodeItem::displaysVariable(ScriptVariable *var)
+{
+    return mVariablesItem->displaysVariable(var);
+}
+
 void NodeItem::updateLayout()
 {
     prepareGeometryChange();
@@ -317,13 +322,13 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     QPen pen(color, 2);
     painter->setPen(pen);
     painter->drawPath(path);
-    painter->drawText(r.adjusted(size().width() / 4, 0, 0, 0), Qt::AlignCenter, mInput->name());
+    painter->drawText(r.adjusted(size().width() / 4, 0, 0, 0), Qt::AlignCenter, mInput->label());
 }
 
 void NodeInputItem::updateLayout()
 {
     QFontMetricsF fm(mScene->font());
-    qreal labelWidth = fm.boundingRect(mInput->name()).width();
+    qreal labelWidth = fm.boundingRect(mInput->label()).width();
     QRectF r(-(size().width() + labelWidth), -size().height() / 2, size().width() + labelWidth, size().height());
     QRectF bounds = r.adjusted(-3, -3, 3, 3); // adjust for pen width
     if (bounds != mBounds) {
@@ -374,16 +379,16 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     if (mOutput->node()->isEventNode())
         return;
 
-    painter->drawText(r, Qt::AlignCenter, mOutput->name());
+    painter->drawText(r, Qt::AlignCenter, mOutput->label());
 }
 
 void NodeOutputItem::updateLayout()
 {
     QFontMetricsF fm(mScene->font());
-    QString name = mOutput->name();
+    QString label = mOutput->label();
     if (mOutput->node()->isEventNode())
-        name.clear();
-    qreal labelWidth = fm.boundingRect(name).width();
+        label.clear();
+    qreal labelWidth = fm.boundingRect(label).width();
     QRectF r(0, -size().height() / 2, size().width() + labelWidth, size().height());
     QRectF bounds = r.adjusted(-3, -3, 3, 3); // adjust for pen width
     if (bounds != mBounds) {
@@ -574,13 +579,14 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     painter->drawRect(valueRect(option->rect).adjusted(0,0,-1,-1));
 
     if (mVariable->node()->isEventNode()) {
-        painter->drawText(valueRect(option->rect).adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->name());
+        painter->drawText(valueRect(option->rect).adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->label());
         return;
     }
 
-    painter->drawText(option->rect, Qt::AlignVCenter, mVariable->name());
+    painter->drawText(option->rect, Qt::AlignVCenter, mVariable->label());
 
     QRectF r = valueRect(option->rect).adjusted(3,0,-3,0);
+    QString value = valueString();
     if (mVariable->variableRef().length()) {
         if (BaseNode *node = mScene->document()->project()->rootNode()->nodeByID(mVariable->variableRefID()))
             if (node->isEventNode())
@@ -590,9 +596,9 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         font.setItalic(true);
         painter->setFont(font);
         painter->drawImage(clearRefRect(option->rect), mRemoveVarRefImage);
-        painter->drawText(r, Qt::AlignVCenter, mVariable->variableRef());
+        painter->drawText(r, Qt::AlignVCenter, value);
     } else
-        painter->drawText(r, Qt::AlignVCenter, mVariable->value());
+        painter->drawText(r, Qt::AlignVCenter, value);
 }
 
 void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
@@ -640,25 +646,20 @@ void BaseVariableItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         QRect pixmapR = r.translated(-r.topLeft());
         QPixmap pixmap(r.width(), r.height());
         QColor bg(238, 238, 255);
-        if (mVariable->node()->isEventNode())
+        ScriptVariable *var = mVariable;
+        if (mVariable->variableRef().length())
+            var = referencedVariable();
+        if (var && var->node()->isEventNode())
             bg = QColor(255, 255, 155);
         pixmap.fill(bg);
         QPainter painter(&pixmap);
         QFont font = mScene->font();
         painter.drawRect(pixmapR.adjusted(0,0,-1,-1));
-        if (mVariable->node()->isEventNode()) {
-            painter.setFont(font);
-            painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->name());
-        } else {
-            if (mVariable->variableRef().length()) {
-                font.setItalic(true);
-                painter.setFont(font);
-                painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->variableRef());
-            } else {
-                painter.setFont(font);
-                painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->value());
-            }
-        }
+        QString value = valueString();
+        if (mVariable->variableRef().length())
+            font.setItalic(true);
+        painter.setFont(font);
+        painter.drawText(pixmapR.adjusted(3,0,-3,0), Qt::AlignVCenter, value);
         painter.end();
         drag.setPixmap(pixmap);
         drag.setHotSpot((event->pos() - r.topLeft()).toPoint());
@@ -777,26 +778,22 @@ void BaseVariableItem::updateLayout(int groupLabelWidth, int groupValueWidth)
     }
 }
 
-QSize BaseVariableItem::nameSizeHint()
+QSize BaseVariableItem::labelSizeHint()
 {
     if (mVariable->node()->isEventNode())
         return QSize(0, 0);
     QFontMetrics fm(mScene->font());
-    return fm.boundingRect(mVariable->name()).size() + QSize(4, 3 + 3);
+    return fm.boundingRect(mVariable->label()).size() + QSize(4, 3 + 3);
 }
 
 QSize BaseVariableItem::valueSizeHint()
 {
-    if (mVariable->node()->isEventNode())
-        return QSize(0, 0);
-
     QFontMetrics fm(mScene->font());
-    QString value = mVariable->value();
-    if (mVariable->variableRef().length())
-        value = mVariable->variableRef();
+    QString value = valueString();
+    bool xbox = true;
     if (mVariable->node()->isEventNode())
-        value = mVariable->name();
-    return fm.boundingRect(value).size() + QSize(3 + 3 + 16 + 2, 3 + 16 + 3);
+        xbox = false;
+    return fm.boundingRect(value).size() + QSize(3 + 3 + (xbox ? 16 + 2 : 0), 3 + 3);
 }
 
 QRectF BaseVariableItem::valueRect(const QRectF &itemRect)
@@ -809,6 +806,29 @@ QRectF BaseVariableItem::clearRefRect(const QRectF &itemRect)
     return QRectF(itemRect.right() - 16 - 2,
                   itemRect.top() + (itemRect.height() - mRemoveVarRefImage.height()) / 2,
                   mRemoveVarRefImage.width(), mRemoveVarRefImage.height());
+}
+
+ScriptVariable *BaseVariableItem::referencedVariable()
+{
+    if (mVariable->variableRef().length()) {
+        if (BaseNode *node = mScene->document()->project()->rootNode()->nodeByID(mVariable->variableRefID()))
+            if (ScriptVariable *var = node->variable(mVariable->variableRef()))
+                return var;
+    }
+    return NULL;
+}
+
+QString BaseVariableItem::valueString()
+{
+    if (mVariable->node()->isEventNode())
+        return mVariable->label();
+    QString value = mVariable->value();
+    if (mVariable->variableRef().length()) {
+        value = mVariable->variableRef();
+        if (ScriptVariable *var = referencedVariable())
+            value = var->label();
+    }
+    return value;
 }
 
 /////
@@ -843,7 +863,7 @@ void VariableGroupItem::updateLayout()
 {
     int maxLabelWidth = 0, maxValueWidth = 96;
     foreach (BaseVariableItem *item, mItems) {
-        maxLabelWidth = qMax(maxLabelWidth, item->nameSizeHint().width());
+        maxLabelWidth = qMax(maxLabelWidth, item->labelSizeHint().width());
         maxValueWidth = qMax(maxValueWidth, item->valueSizeHint().width());
     }
 
@@ -875,4 +895,13 @@ void VariableGroupItem::syncWithNode()
 #else
     mItems = items + unknowns;
 #endif
+}
+
+bool VariableGroupItem::displaysVariable(ScriptVariable *var)
+{
+    foreach (BaseVariableItem *item, mItems) {
+        if (item->mVariable == var) return true;
+        if (item->referencedVariable() == var) return true;
+    }
+    return false;
 }

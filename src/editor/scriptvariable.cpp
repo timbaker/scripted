@@ -20,44 +20,52 @@
 #include "node.h"
 
 ScriptVariable::ScriptVariable(const QString &type, const QString &name,
-                               const QString &value) :
+                               const QString &label, const QString &value) :
     mNode(0),
     mType(type),
     mName(name),
+    mLabel(label),
     mValue(value),
     mVariableRefNodeID(-1)
 {
+    Q_ASSERT(mLabel.size());
 }
 
 ScriptVariable::ScriptVariable(const QString &type, const QString &name,
+                               const QString &label,
                                int refNodeID, const QString &refVarName) :
     mNode(0),
     mType(type),
     mName(name),
+    mLabel(label),
     mVariableRefNodeID(refNodeID),
     mVariableRef(refVarName)
 {
+    Q_ASSERT(mLabel.size());
 }
 
 ScriptVariable::ScriptVariable(const ScriptVariable *other) :
     mNode(other->mNode),
     mType(other->mType),
     mName(other->mName),
+    mLabel(other->mLabel),
     mValue(other->mValue),
     mVariableRefNodeID(other->mVariableRefNodeID),
     mVariableRef(other->mVariableRef)
 {
+    Q_ASSERT(mLabel.size());
 }
 
 ScriptVariable::ScriptVariable(const ScriptVariable *other, BaseNode *node) :
     mNode(node),
     mType(other->mType),
     mName(other->mName),
+    mLabel(other->mLabel),
     mValue(other->mValue),
     mVariableRefNodeID(other->mVariableRefNodeID),
     mVariableRef(other->mVariableRef)
 {
-
+    Q_ASSERT(mLabel.size());
 }
 
 bool ScriptVariable::isKnown() const

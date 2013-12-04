@@ -80,3 +80,12 @@ bool Project::isValidOutputName(const QString &name, int index)
             return false;
     return true;
 }
+
+bool Project::isValidVariableName(const QString &name, int index)
+{
+    if (name.isEmpty()) return false;
+    if (ScriptVariable *var = rootNode()->variable(name))
+        if (rootNode()->indexOf(var) != index)
+            return false;
+    return true;
+}

@@ -356,9 +356,9 @@ void ProjectActions::renameOutput(int index, const QString &name)
 
 void ProjectActions::addVariable()
 {
-    VariablePropertiesDialog d(NULL, MainWindow::instance());
+    VariablePropertiesDialog d(document()->project(), NULL, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
-        ScriptVariable *var = new ScriptVariable(d.type(), d.name(), QString());
+        ScriptVariable *var = new ScriptVariable(d.type(), d.name(), d.label(), QString());
         ProjectDocument *doc = document();
         doc->changer()->beginUndoCommand(doc->undoStack());
         doc->changer()->doAddVariable(doc->project()->rootNode(),
@@ -393,11 +393,12 @@ void ProjectActions::removeVariable(ScriptVariable *var)
 
 void ProjectActions::variableProperties(ScriptVariable *var)
 {
-    VariablePropertiesDialog d(var, MainWindow::instance());
+    VariablePropertiesDialog d(document()->project(), var, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
         ScriptVariable newVar(var);
         newVar.setName(d.name());
         newVar.setType(d.type());
+        newVar.setLabel(d.label());
         ProjectDocument *doc = document();
         doc->changer()->beginUndoMacro(doc->undoStack(), tr("Change Variable"));
         foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {

@@ -26,8 +26,8 @@
 class ScriptVariable
 {
 public:
-    ScriptVariable(const QString &type, const QString &name, const QString &value);
-    ScriptVariable(const QString &type, const QString &name, int refNodeID, const QString &refVarName);
+    ScriptVariable(const QString &type, const QString &name, const QString &label, const QString &value);
+    ScriptVariable(const QString &type, const QString &name, const QString &label, int refNodeID, const QString &refVarName);
     ScriptVariable(const ScriptVariable *other);
     ScriptVariable(const ScriptVariable *other, BaseNode *node);
 
@@ -39,6 +39,9 @@ public:
 
     void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
+
+    void setLabel(const QString &label) { mLabel = label; }
+    const QString &label() const { return mLabel; }
 
     void setValue(const QString &value) { mValue = value; }
     const QString &value() const { return mValue; }
@@ -62,6 +65,7 @@ private:
     BaseNode *mNode;
     QString mName; // --> User-assigned name in a script
     QString mType; // --> Number, String, Actor, etc
+    QString mLabel;
     QString mValue; // User-defined value, ignored if mVariableRef is valid
     int mVariableRefNodeID; // ID of node with mVariableRef variable
     QString mVariableRef; // Name of a variable containing the value to use

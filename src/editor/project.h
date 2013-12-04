@@ -37,6 +37,7 @@ public:
 
     bool isValidInputName(const QString &name, int index);
     bool isValidOutputName(const QString &name, int index);
+    bool isValidVariableName(const QString &name, int index);
 
     int mNextID; // must come before mRootNode
     ScriptNode* mRootNode;

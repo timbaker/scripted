@@ -117,11 +117,14 @@ public:
     QStringList getDropData(QGraphicsSceneDragDropEvent *event);
 
     void updateLayout(int groupLabelWidth, int groupValueWidth);
-    QSize nameSizeHint();
+    QSize labelSizeHint();
     QSize valueSizeHint();
 
     QRectF valueRect(const QRectF &itemRect);
     QRectF clearRefRect(const QRectF &itemRect);
+
+    ScriptVariable *referencedVariable();
+    QString valueString();
 
     ScriptScene *mScene;
     ScriptVariable *mVariable;
@@ -174,6 +177,8 @@ public:
     void updateLayout();
     void syncWithNode();
 
+    bool displaysVariable(ScriptVariable *var);
+
     ScriptScene *mScene;
     BaseNode *mNode;
     QList<BaseVariableItem*> mItems;
@@ -203,6 +208,7 @@ public:
     void inputsChanged();
     void outputsChanged();
     void variablesChanged();
+    bool displaysVariable(ScriptVariable *var);
     void updateLayout();
     void syncWithNode();
 

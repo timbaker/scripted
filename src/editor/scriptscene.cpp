@@ -540,7 +540,7 @@ void ScriptScene::afterChangeVariable(ScriptVariable *var, const ScriptVariable 
 {
     Q_UNUSED(oldValue)
     foreach (NodeItem *nodeItem, mNodeItems)
-        if (BaseVariableItem *varItem = nodeItem->variableItem(var)) {
+        if (nodeItem->displaysVariable(var)) {
             nodeItem->updateLayout();
         }
 }
@@ -675,6 +675,7 @@ QPainterPath ConnectionItem::shape() const
 
 void ConnectionItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
+    Q_UNUSED(event)
     mShowNodes = true;
     update();
 }
@@ -718,6 +719,7 @@ void ConnectionItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 
 void ConnectionItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
+    Q_UNUSED(event)
     mHighlightIndex = -1;
 //    if (mShowNodes) {
         mShowNodes = false;
@@ -921,6 +923,7 @@ void ConnectionsItem::newConnectionClick(const QPointF &scenePos)
 
 void ConnectionsItem::newConnectionEnd(NodeInputItem *inputItem)
 {
+    Q_UNUSED(inputItem)
     mScene->removeItem(mNewConnectionItem);
 }
 
@@ -994,7 +997,7 @@ QRectF ScriptAreaItem::boundingRect() const
     return mBounds;
 }
 
-void ScriptAreaItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *)
+void ScriptAreaItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     QBrush brush(QColor(255, 255, 255, 200), Qt::Dense4Pattern);
     QPen pen;

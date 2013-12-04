@@ -162,7 +162,7 @@ QVariant ScriptVariablesModel::data(const QModelIndex &index, int role) const
 {
     if (role == Qt::DisplayRole) {
         if (Item *item = itemAt(index)) {
-            return item->mVariable->name();
+            return item->mVariable->label();
         }
     }
 #if 0

@@ -89,6 +89,8 @@ MainWindow::MainWindow(QWidget *parent) :
             SLOT(currentModeAboutToChange(IMode*)));
     connect(ModeManager::instance(), SIGNAL(currentModeChanged()),
             SLOT(currentModeChanged()));
+
+    ProjectActions::instance()->updateActions();
 }
 
 MainWindow::~MainWindow()

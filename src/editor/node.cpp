@@ -107,7 +107,7 @@ ScriptVariable *BaseNode::removeVariable(ScriptVariable *var)
     return mVariables.takeAt(index);
 }
 
-void BaseNode::initFrom(BaseNode *other)
+void BaseNode::initFrom(const BaseNode *other)
 {
     mName = other->mName;
 
@@ -142,9 +142,13 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
     // Sync variables
     QList<ScriptVariable*> variables, myUnknownVariables;
     foreach (ScriptVariable *var, infoNode->variables()) {
-        if (ScriptVariable *myVar = variable(var->name()))
+        if (ScriptVariable *myVar = variable(var->name())) {
+            if (myVar->label() != var->label()) {
+                myVar->setLabel(var->label());
+                changed = true;
+            }
             variables += myVar;
-        else {
+        } else {
             variables += new ScriptVariable(var);
             variables.last()->setNode(this);
         }
@@ -161,9 +165,13 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
     // Sync inputs
     QList<NodeInput*> inputs, myUnknownInputs;
     foreach (NodeInput *input, infoNode->inputs()) {
-        if (NodeInput *myInput = this->input(input->name()))
+        if (NodeInput *myInput = this->input(input->name())) {
+            if (myInput->label() != input->label()) {
+                myInput->setLabel(input->label());
+                changed = true;
+            }
             inputs += myInput;
-        else {
+        } else {
             inputs += new NodeInput(input);
             inputs.last()->setNode(this);
         }
@@ -180,9 +188,13 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
     // Sync outputs
     QList<NodeOutput*> outputs, myUnknownOutputs;
     foreach (NodeOutput *output, infoNode->outputs()) {
-        if (NodeOutput *myOutput = this->output(output->name()))
+        if (NodeOutput *myOutput = this->output(output->name())) {
+            if (myOutput->label() != output->label()) {
+                myOutput->setLabel(output->label());
+                changed = true;
+            }
             outputs += myOutput;
-        else {
+        } else {
             outputs += new NodeOutput(output);
             outputs.last()->setNode(this);
         }
@@ -209,6 +221,12 @@ MetaEventNode::MetaEventNode(int id, const QString &name) :
     insertOutput(0, new NodeOutput(QLatin1String("Output")));
 }
 
+MetaEventNode::MetaEventNode(int id, const MetaEventNode &other) :
+    BaseNode(id, other.mName)
+{
+    initFrom(&other);
+}
+
 bool MetaEventNode::isKnown(const ScriptVariable *var)
 {
     return mInfo && mInfo->node() && mInfo->node()->variable(var->name());
@@ -230,7 +248,7 @@ bool MetaEventNode::syncWithInfo()
     return BaseNode::syncWithInfo(mInfo->node());
 }
 
-void MetaEventNode::initFrom(MetaEventNode *other)
+void MetaEventNode::initFrom(const MetaEventNode *other)
 {
     BaseNode::initFrom(other);
     mInfo = other->mInfo;
@@ -242,6 +260,12 @@ LuaNode::LuaNode(int id, const QString &name) :
     BaseNode(id, name),
     mInfo(0)
 {
+}
+
+LuaNode::LuaNode(int id, const LuaNode &other) :
+    BaseNode(id, other.name())
+{
+    initFrom(&other);
 }
 
 bool LuaNode::isKnown(const ScriptVariable *var)
@@ -329,7 +353,7 @@ bool LuaNode::syncWithInfo()
 #endif
 }
 
-void LuaNode::initFrom(LuaNode *other)
+void LuaNode::initFrom(const LuaNode *other)
 {
     BaseNode::initFrom(other);
     mInfo = other->mInfo;

@@ -50,16 +50,17 @@ private:
     {
     public:
         Item() :
-            mDefinition(0)
+            mInfo(0)
         {
         }
 
-        Item(LuaInfo *def) :
-            mDefinition(def)
+        Item(LuaInfo *info) :
+            mInfo(info)
         {
         }
 
-        LuaInfo *mDefinition;
+        LuaInfo *mInfo;
+        QString mLabel;
     };
 
     Item *itemAt(const QModelIndex &index) const;

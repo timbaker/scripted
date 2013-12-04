@@ -31,15 +31,20 @@ class VariablePropertiesDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit VariablePropertiesDialog(const ScriptVariable *var, QWidget *parent = 0);
+    explicit VariablePropertiesDialog(Project *project, ScriptVariable *var, QWidget *parent = 0);
     ~VariablePropertiesDialog();
 
     QString name() const;
+    QString label() const;
     QString type() const;
+
+private slots:
+    void accept();
 
 private:
     Ui::VariablePropertiesDialog *ui;
-    const ScriptVariable *mVariable;
+    Project *mProject;
+    ScriptVariable *mVariable;
 };
 
 #endif // VARIABLEPROPERTIESDIALOG_H
