@@ -390,7 +390,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
             stream >> eventName;
             if (MetaEventInfo *info = eventmgr()->info(eventName)) {
                 if (MetaEventNode *node = info->node()) { // may go to NULL if a MetaEvents.lua couldn't be reloaded
-                    MetaEventNode *newNode = new MetaEventNode(mDocument->project()->mNextID++, node->name());
+                    MetaEventNode *newNode = new MetaEventNode(mDocument->project()->mNextID++, node->label());
                     newNode->initFrom(node);
                     newNode->setPos(event->scenePos());
                     mDocument->changer()->beginUndoCommand(mDocument->undoStack());
@@ -409,7 +409,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
             if (!info.isFile()) continue;
             if (info.suffix() != QLatin1String("pzs")) continue;
             if (ScriptInfo *scriptInfo = scriptmgr()->scriptInfo(info.absoluteFilePath())) {
-                ScriptNode *node = new ScriptNode(mDocument->project()->mNextID++, scriptInfo->node()->name());
+                ScriptNode *node = new ScriptNode(mDocument->project()->mNextID++, scriptInfo->node()->label());
                 node->initFrom(scriptInfo->node());
                 node->setPos(event->scenePos());
                 node->setInfo(scriptInfo);
@@ -432,7 +432,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
         stream >> path;
         if (LuaInfo *def = luamgr()->luaInfo(path)) {
             if (LuaNode *lnode = def->node()) { // may go to NULL if a .lua file couldn't be reloaded
-                LuaNode *node = new LuaNode(mDocument->project()->mNextID++, def->node()->name());
+                LuaNode *node = new LuaNode(mDocument->project()->mNextID++, def->node()->label());
                 node->initFrom(lnode);
                 node->mInfo = def;
                 node->setPos(event->scenePos());

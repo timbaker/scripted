@@ -43,7 +43,7 @@ private slots:
     void moveCxnDown();
     void removeCxn();
 
-    void nameEdited();
+    void labelEdited();
     void afterRenameNode(BaseNode *node, const QString &oldName);
 
     void syncUI();

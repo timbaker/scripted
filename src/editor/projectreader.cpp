@@ -76,7 +76,7 @@ public:
         if (xml.readNextStartElement() && xml.name() == QLatin1String("script")) {
             project = readProject();
             if (project)
-                project->rootNode()->setName(QFileInfo(path).baseName());
+                project->rootNode()->setLabel(QFileInfo(path).baseName());
         } else {
             xml.raiseError(tr("Not a script file."));
         }
@@ -121,7 +121,7 @@ private:
                         nextID = node->id() + 1;
                 }
             } else if (xml.name() == QLatin1String("variable")) {
-                if (ScriptVariable *v = readVariable()) {
+                if (ScriptVariable *v = readVariable(true)) {
                     mProject->rootNode()->insertVariable(mProject->rootNode()->variableCount(), v);
                 }
             } else
@@ -204,7 +204,7 @@ private:
                     node->insertOutput(node->outputCount(), output);
 #endif
             } else if (xml.name() == QLatin1String("variable")) {
-                if (ScriptVariable *v = readVariable()) {
+                if (ScriptVariable *v = readVariable(false)) {
                     node->insertVariable(node->variableCount(), v);
                 }
             } else
@@ -257,7 +257,7 @@ private:
                 node->setSource(getRelativeFile(atts, "file"));
                 xml.skipCurrentElement();
             } else if (xml.name() == QLatin1String("variable")) {
-                if (ScriptVariable *v = readVariable()) {
+                if (ScriptVariable *v = readVariable(false)) {
                     node->insertVariable(node->variableCount(), v);
                 }
             } else
@@ -303,7 +303,7 @@ private:
                 node->setSource(getRelativeFile(atts, "file"));
                 xml.skipCurrentElement();
             } else if (xml.name() == QLatin1String("variable")) {
-                if (ScriptVariable *p = readVariable()) {
+                if (ScriptVariable *p = readVariable(false)) {
                     node->insertVariable(node->variableCount(), p);
                 }
             } else
@@ -365,16 +365,17 @@ private:
         return cxn;
     }
 
-    ScriptVariable *readVariable()
+    ScriptVariable *readVariable(bool rootNode)
     {
         Q_ASSERT(xml.isStartElement() && xml.name() == QLatin1String("variable"));
         const QXmlStreamAttributes atts = xml.attributes();
         QString type = atts.value(QLatin1String("type")).toString();
         QString name = atts.value(QLatin1String("name")).toString();
+        QString label = rootNode ? atts.value(QLatin1String("label")).toString() : name;
         if (atts.hasAttribute(QLatin1String("value"))) {
             QString value = atts.value(QLatin1String("value")).toString();
             xml.skipCurrentElement();
-            return new ScriptVariable(type, name, name, value);
+            return new ScriptVariable(type, name, label, value);
         } else {
             QString idStr = atts.value(QLatin1String("referenceid")).toString();
             bool ok;

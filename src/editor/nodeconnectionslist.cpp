@@ -44,7 +44,7 @@ void NodeConnectionsList::setNode(BaseNode *node)
     int row = 0;
     foreach (NodeConnection *cxn, node->connections()) {
        mModel->setItem(row, 0, new QStandardItem(cxn->mOutput));
-       mModel->setItem(row, 1, new QStandardItem(cxn->mReceiver->name() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
+       mModel->setItem(row, 1, new QStandardItem(cxn->mReceiver->label() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
        mModel->setItem(row, 2, new QStandardItem(cxn->mInput));
        row++;
     }
@@ -80,7 +80,7 @@ void NodeConnectionsList::afterAddConnection(int index, NodeConnection *cxn)
 {
     mModel->insertRow(index);
     mModel->setItem(index, 0, new QStandardItem(cxn->mOutput));
-    mModel->setItem(index, 1, new QStandardItem(cxn->mReceiver->name() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
+    mModel->setItem(index, 1, new QStandardItem(cxn->mReceiver->label() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
     mModel->setItem(index, 2, new QStandardItem(cxn->mInput));
 
     selectionModel()->select(mModel->index(index, 0),
@@ -101,7 +101,7 @@ void NodeConnectionsList::afterReorderConnection(BaseNode *node, int oldIndex, i
     mModel->insertRow(newIndex);
     NodeConnection *cxn = node->connection(newIndex);
     mModel->setItem(newIndex, 0, new QStandardItem(cxn->mOutput));
-    mModel->setItem(newIndex, 1, new QStandardItem(cxn->mReceiver->name() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
+    mModel->setItem(newIndex, 1, new QStandardItem(cxn->mReceiver->label() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
     mModel->setItem(newIndex, 2, new QStandardItem(cxn->mInput));
 
     selectionModel()->select(mModel->index(newIndex, 0),

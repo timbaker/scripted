@@ -140,20 +140,20 @@ public:
     RenameNode(ProjectChanger *changer, BaseNode *node, const QString &name) :
         ProjectChange(changer),
         mNode(node),
-        mOldName(node->name()),
+        mOldName(node->label()),
         mNewName(name)
     {
     }
 
     void redo()
     {
-        mNode->setName(mNewName);
+        mNode->setLabel(mNewName);
         mChanger->afterRenameNode(mNode, mOldName);
     }
 
     void undo()
     {
-        mNode->setName(mOldName);
+        mNode->setLabel(mOldName);
         mChanger->afterRenameNode(mNode, mNewName);
     }
 

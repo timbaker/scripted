@@ -84,7 +84,7 @@ void MetaEventDock::setList()
     foreach (MetaEventInfo *info, eventmgr()->events()) {
         if (!info->node()) continue;
         QList<QStandardItem*> items;
-        items += new QStandardItem(info->node() ? info->node()->name() : tr("FIXME"));
+        items += new QStandardItem(info->node() ? info->node()->label() : tr("FIXME"));
         mModel->appendRow(items);
     }
 }

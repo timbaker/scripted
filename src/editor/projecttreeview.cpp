@@ -93,7 +93,7 @@ QVariant ProjectTreeModel::data(const QModelIndex &index, int role) const
     if (BaseNode *node = item->node) {
         switch (role) {
         case Qt::DisplayRole:
-            return node->name();
+            return node->label();
         default:
             return QVariant();
         }

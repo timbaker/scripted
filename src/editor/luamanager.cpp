@@ -189,6 +189,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                 if (!v2->isTable()) return false;
                 QMap<QString,QString> ssm = v2->mTableValue.toStringStringMap();
                 QString name = ssm[QLatin1String("name")];
+                if (node.input(name)) return false;
                 QString label = ssm[QLatin1String("label")];
                 if (label.isEmpty()) label = name;
                 node.insertInput(node.inputCount(), new NodeInput(name, label));
@@ -202,6 +203,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                 if (!v2->isTable()) return false;
                 QMap<QString,QString> ssm = v2->mTableValue.toStringStringMap();
                 QString name = ssm[QLatin1String("name")];
+                if (node.output(name)) return false;
                 QString label = ssm[QLatin1String("label")];
                 if (label.isEmpty()) label = name;
                 node.insertOutput(node.outputCount(), new NodeOutput(name, label));
@@ -215,6 +217,7 @@ LuaNode *LuaManager::loadLua(const QString &fileName)
                 if (!v2->isTable()) return false;
                 QMap<QString,QString> ssm = v2->mTableValue.toStringStringMap();
                 QString name = ssm[QLatin1String("name")];
+                if (node.variable(name)) return false;
                 QString type = ssm[QLatin1String("type")];
                 QString label = ssm[QLatin1String("label")];
                 if (label.isEmpty()) label = name;

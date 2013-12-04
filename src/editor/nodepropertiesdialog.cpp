@@ -46,7 +46,7 @@ NodePropertiesDialog::NodePropertiesDialog(ProjectDocument *doc, QWidget *parent
     connect(ui->removeCxn, SIGNAL(clicked()), SLOT(removeCxn()));
     connect(ui->connectionsTable->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             SLOT(cxnSelChanged()));
-    connect(ui->nameEdit, SIGNAL(textChanged(QString)), SLOT(nameEdited()));
+    connect(ui->labelEdit, SIGNAL(textChanged(QString)), SLOT(labelEdited()));
 
     connect(doc->changer(), SIGNAL(afterRenameNode(BaseNode*,QString)),
             SLOT(afterRenameNode(BaseNode*,QString)));
@@ -61,7 +61,8 @@ void NodePropertiesDialog::setNode(BaseNode *node)
 {
     mNode = node;
     mSyncDepth++;
-    ui->nameEdit->setText(mNode->name());
+    ui->labelEdit->setText(mNode->label());
+    ui->IDlabel->setText(tr("ID: %1").arg(node->id()));
     QString source;
     if (LuaNode *lnode = mNode->asLuaNode())
         source = lnode->source();
@@ -119,11 +120,11 @@ void NodePropertiesDialog::removeCxn()
     ProjectActions::instance()->removeConnection(mNode, mCurrentCxn);
 }
 
-void NodePropertiesDialog::nameEdited()
+void NodePropertiesDialog::labelEdited()
 {
     if (mSyncDepth) return;
     mSyncDepth++;
-    ProjectActions::instance()->renameNode(mNode, ui->nameEdit->text());
+    ProjectActions::instance()->renameNode(mNode, ui->labelEdit->text());
     mSyncDepth--;
 }
 
@@ -132,8 +133,8 @@ void NodePropertiesDialog::afterRenameNode(BaseNode *node, const QString &oldNam
     Q_UNUSED(oldName);
     if (mSyncDepth) return;
     mSyncDepth++;
-    if (node->name() != ui->nameEdit->text())
-        ui->nameEdit->setText(node->name());
+    if (node->label() != ui->labelEdit->text())
+        ui->labelEdit->setText(node->label());
     mSyncDepth--;
 }
 

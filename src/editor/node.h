@@ -130,7 +130,7 @@ class BaseNode
 public:
     BaseNode(int id, const QString &name) :
         mID(id),
-        mName(name)
+        mLabel(name)
     {
     }
 
@@ -139,8 +139,8 @@ public:
     void setID(int id) { mID = id; }
     int id()const { return mID; }
 
-    void setName(const QString &name) { mName = name; }
-    const QString &name() const { return mName; }
+    void setLabel(const QString &label) { mLabel = label; }
+    const QString &label() const { return mLabel; }
 
     void setPos(qreal x, qreal y) { mPosition = QPointF(x, y); }
     void setPos(const QPointF &pos) { mPosition = pos; }
@@ -215,7 +215,7 @@ public:
     {
         return mVariables;
     }
-    ScriptVariable *variable(const QString &name);
+    ScriptVariable *variable(const QString &label);
     int variableCount() const
     {
         return mVariables.size();
@@ -246,7 +246,7 @@ public:
 
 protected:
     int mID;
-    QString mName;
+    QString mLabel;
     QList<ScriptVariable*> mVariables;
     QList<NodeInput*> mInputs;
     QList<NodeOutput*> mOutputs;
@@ -258,7 +258,7 @@ protected:
 class MetaEventNode : public BaseNode
 {
 public:
-    MetaEventNode(int id, const QString &name);
+    MetaEventNode(int id, const QString &label);
     MetaEventNode(int id, const MetaEventNode &other);
 
     bool isKnown(const ScriptVariable *var);
@@ -282,7 +282,7 @@ private:
 class LuaNode : public BaseNode
 {
 public:
-    LuaNode(int id, const QString &name);
+    LuaNode(int id, const QString &label);
     LuaNode(int id, const LuaNode &other);
 
     bool isKnown(const ScriptVariable *var);

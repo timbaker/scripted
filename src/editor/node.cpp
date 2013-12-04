@@ -109,7 +109,7 @@ ScriptVariable *BaseNode::removeVariable(ScriptVariable *var)
 
 void BaseNode::initFrom(const BaseNode *other)
 {
-    mName = other->mName;
+    mLabel = other->mLabel;
 
     qDeleteAll(mVariables);
     mVariables.clear();
@@ -222,7 +222,7 @@ MetaEventNode::MetaEventNode(int id, const QString &name) :
 }
 
 MetaEventNode::MetaEventNode(int id, const MetaEventNode &other) :
-    BaseNode(id, other.mName)
+    BaseNode(id, other.mLabel)
 {
     initFrom(&other);
 }
@@ -263,7 +263,7 @@ LuaNode::LuaNode(int id, const QString &name) :
 }
 
 LuaNode::LuaNode(int id, const LuaNode &other) :
-    BaseNode(id, other.name())
+    BaseNode(id, other.label())
 {
     initFrom(&other);
 }

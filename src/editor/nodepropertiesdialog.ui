@@ -29,12 +29,19 @@
          <item>
           <widget class="QLabel" name="label_6">
            <property name="text">
-            <string>Name:</string>
+            <string>Label:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="nameEdit"/>
+          <widget class="QLineEdit" name="labelEdit"/>
+         </item>
+         <item>
+          <widget class="QLabel" name="IDlabel">
+           <property name="text">
+            <string>ID: NN</string>
+           </property>
+          </widget>
          </item>
          <item>
           <spacer name="horizontalSpacer_2">
@@ -146,58 +153,7 @@
        <item row="0" column="0">
         <widget class="NodeConnectionsList" name="connectionsTable"/>
        </item>
-       <item row="1" column="0">
-        <widget class="QGroupBox" name="groupBox">
-         <property name="title">
-          <string>Connection</string>
-         </property>
-         <layout class="QGridLayout" name="gridLayout_4">
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Target entities named:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="comboBox">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label">
-            <property name="text">
-             <string>My output named:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QComboBox" name="comboBox_2">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Via this input:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QComboBox" name="comboBox_3">
-            <property name="editable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item row="3" column="0">
+       <item row="2" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QToolButton" name="addCxn">

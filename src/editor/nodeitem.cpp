@@ -101,11 +101,11 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     QColor bg(238, 238, 255);
     if (mNode->isEventNode())
         bg = QColor(255, 255, 155);
-    QRect textRect = painter->fontMetrics().boundingRect(mNode->name());
+    QRect textRect = painter->fontMetrics().boundingRect(mNode->label());
     QRectF nameRect = QRectF(mBounds.x(), mBounds.y(), textRect.width() + 6, textRect.height() + 6);
     painter->fillRect(nameRect, bg);
     painter->drawRect(nameRect);
-    painter->drawText(nameRect, Qt::AlignCenter, mNode->name());
+    painter->drawText(nameRect, Qt::AlignCenter, mNode->label());
 
     QRectF bodyRect = mBounds.adjusted(0, nameRect.height(), 0, 0);
     painter->fillRect(bodyRect, bg);
@@ -237,7 +237,7 @@ void NodeItem::updateLayout()
     int inputsHeight = mInputsItem->childrenBoundingRect().height();
     int outputsHeight = mOutputsItem->childrenBoundingRect().height();
     QSize variablesSize = mVariablesItem->childrenBoundingRect().size().toSize();
-    QSize nameSize = QFontMetrics(mScene->font()).boundingRect(mNode->name()).size() + QSize(6, 6);
+    QSize nameSize = QFontMetrics(mScene->font()).boundingRect(mNode->label()).size() + QSize(6, 6);
     int buttonsWidth = 2 + qMax(nameSize.height(), 16) * 2 + 1;
     int variablesPadding = 8;
 
@@ -263,7 +263,7 @@ void NodeItem::syncWithNode()
 
 QRectF NodeItem::nameRect()
 {
-    QRect textRect = QFontMetrics(mScene->font()).boundingRect(mNode->name());
+    QRect textRect = QFontMetrics(mScene->font()).boundingRect(mNode->label());
     return QRectF(mBounds.x(), mBounds.y(), textRect.width() + 6, textRect.height() + 6);
 }
 

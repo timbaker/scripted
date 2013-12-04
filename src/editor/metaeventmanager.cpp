@@ -75,7 +75,7 @@ bool MetaEventManager::readEventFile(const QString &fileName)
         QList<MetaEventInfo*> &newEvents = mEventsByFile[fileName];
         newEvents.clear();
         foreach (MetaEventNode *node, file.takeNodes()) {
-            MetaEventInfo *info = mEventInfo[node->name()];
+            MetaEventInfo *info = mEventInfo[node->label()];
             if (info) {
                 delete info->node();
                 node->setInfo(info);
@@ -87,7 +87,7 @@ bool MetaEventManager::readEventFile(const QString &fileName)
                 info->mNode = node;
                 info->mPath = fileName;
                 node->setInfo(info);
-                mEventInfo[node->name()] = info;
+                mEventInfo[node->label()] = info;
                 emit infoChanged(info);
             }
             newEvents += info;
@@ -175,7 +175,7 @@ bool MetaEventFile::read(const QString &fileName)
             LuaValue *v2 = v->mTableValue.mValues[j];
             if (k2->isString(QLatin1String("name"))) {
                 if (v2->mType != LUA_TSTRING) return false;
-                node.setName(v2->toString());
+                node.setLabel(v2->toString());
             }
             if (k2->isString(QLatin1String("variables"))) {
                 if (!v2->isTable()) return false;
