@@ -343,9 +343,12 @@ void NodeInputItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         if (mInput->node()->isProjectRootNode()) {
             QMenu menu;
             QAction *a = menu.addAction(scene()->tr("Connections..."));
+            QAction *b = menu.addAction(scene()->tr("Inputs/Outputs..."));
             QAction *selected = menu.exec(event->screenPos());
             if (selected == a)
                 ProjectActions::instance()->connectionsDialog(mInput->node(), mInput->name());
+            if (selected == b)
+                ProjectActions::instance()->sceneScriptDialog();
         }
     }
 }
@@ -420,7 +423,13 @@ void NodeOutputItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         // is the mouse-grabber.
         if (!contains(event->pos()))
             return;
-        if (!mOutput->node()->isProjectRootNode()) {
+        if (mOutput->node()->isProjectRootNode()) {
+            QMenu menu;
+            QAction *a = menu.addAction(scene()->tr("Inputs/Outputs..."));
+            QAction *selected = menu.exec(event->screenPos());
+            if (selected == a)
+                ProjectActions::instance()->sceneScriptDialog();
+        } else {
             QMenu menu;
             QAction *a = menu.addAction(scene()->tr("Connections..."));
             QAction *selected = menu.exec(event->screenPos());

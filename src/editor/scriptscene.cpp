@@ -764,9 +764,12 @@ void ConnectionItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
             return;
         QMenu menu;
         QIcon trash(QLatin1String(":/images/16x16/edit-delete.png"));
-        QAction *a = menu.addAction(trash, scene()->tr("Remove Connection"));
+        QAction *a = menu.addAction(scene()->tr("Connections..."));
+        QAction *b = menu.addAction(trash, scene()->tr("Remove Connection"));
         QAction *selected = menu.exec(event->screenPos());
         if (selected == a)
+            ProjectActions::instance()->connectionsDialog(mConnection->mSender, mConnection->mOutput);
+        if (selected == b)
             ProjectActions::instance()->removeConnection(mConnection->mSender, mConnection);
     }
 
