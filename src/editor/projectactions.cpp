@@ -307,11 +307,14 @@ void ProjectActions::reorderInput(int oldIndex, int newIndex)
     doc->changer()->endUndoCommand();
 }
 
-void ProjectActions::renameInput(int index, const QString &name)
+void ProjectActions::changeInput(NodeInput *input, const QString &name, const QString &label)
 {
     ProjectDocument *doc = document();
     doc->changer()->beginUndoCommand(doc->undoStack(), true);
-    doc->changer()->doRenameInput(doc->project()->rootNode()->input(index), name);
+    NodeInput newValue(input, input->node());
+    newValue.setName(name);
+    newValue.setLabel(label);
+    doc->changer()->doChangeInput(input, &newValue);
     doc->changer()->endUndoCommand();
 }
 
@@ -347,11 +350,14 @@ void ProjectActions::reorderOutput(int oldIndex, int newIndex)
     doc->changer()->endUndoCommand();
 }
 
-void ProjectActions::renameOutput(int index, const QString &name)
+void ProjectActions::changeOutput(NodeOutput *output, const QString &name, const QString &label)
 {
     ProjectDocument *doc = document();
     doc->changer()->beginUndoCommand(doc->undoStack(), true);
-    doc->changer()->doRenameOutput(doc->project()->rootNode()->output(index), name);
+    NodeOutput newValue(output, output->node());
+    newValue.setName(name);
+    newValue.setLabel(label);
+    doc->changer()->doChangeOutput(output, &newValue);
     doc->changer()->endUndoCommand();
 }
 

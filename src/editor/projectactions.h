@@ -57,12 +57,12 @@ public slots:
     void addInput();
     void removeInput(int index);
     void reorderInput(int oldIndex, int newIndex);
-    void renameInput(int index, const QString &name);
+    void changeInput(NodeInput *input, const QString &name, const QString &label);
 
     void addOutput();
     void removeOutput(int index);
     void reorderOutput(int oldIndex, int newIndex);
-    void renameOutput(int index, const QString &name);
+    void changeOutput(NodeOutput *output, const QString &name, const QString &label);
 
     void addVariable();
     void removeVariable(ScriptVariable *var);

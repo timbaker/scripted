@@ -55,6 +55,13 @@ public:
     {
     }
 
+    NodeInput(const NodeInput *other, BaseNode *node) :
+        mNode(node),
+        mName(other->mName),
+        mLabel(other->mLabel)
+    {
+    }
+
     void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
 
@@ -65,6 +72,13 @@ public:
 
     void setNode(BaseNode *node) { mNode = node; }
     BaseNode *node() const { return mNode; }
+
+    void initFrom(const NodeInput *other)
+    {
+        mNode = other->mNode;
+        mName = other->mName;
+        mLabel = other->mLabel;
+    }
 
 private:
     BaseNode *mNode;
@@ -96,6 +110,13 @@ public:
     {
     }
 
+    NodeOutput(const NodeOutput *other, BaseNode *node) :
+        mNode(node),
+        mName(other->mName),
+        mLabel(other->mLabel)
+    {
+    }
+
     void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
 
@@ -106,6 +127,13 @@ public:
 
     void setNode(BaseNode *node) { mNode = node; }
     BaseNode *node() const { return mNode; }
+
+    void initFrom(const NodeOutput *other)
+    {
+        mNode = other->mNode;
+        mName = other->mName;
+        mLabel = other->mLabel;
+    }
 
 private:
     BaseNode *mNode;

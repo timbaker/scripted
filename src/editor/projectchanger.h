@@ -104,12 +104,12 @@ public:
     void doAddInput(BaseNode *node, int index, NodeInput *input);
     void doRemoveInput(NodeInput *input);
     void doReorderInput(BaseNode *node, int oldIndex, int newIndex);
-    void doRenameInput(NodeInput *input, const QString &name);
+    void doChangeInput(NodeInput *input, const NodeInput *newValue);
 
     void doAddOutput(BaseNode *node, int index, NodeOutput *output);
     void doRemoveOutput(NodeOutput *output);
     void doReorderOutput(BaseNode *node, int oldIndex, int newIndex);
-    void doRenameOutput(NodeOutput *output, const QString &name);
+    void doChangeOutput(NodeOutput *output, const NodeOutput *newValue);
 
     void doAddConnection(int index, NodeConnection *cxn);
     void doRemoveConnection(BaseNode *node, NodeConnection *cxn);
@@ -133,12 +133,12 @@ signals:
     void afterAddInput(BaseNode *node, int index, NodeInput *input);
     void afterRemoveInput(BaseNode *node, int index, NodeInput *input);
     void afterReorderInput(BaseNode *node, int oldIndex, int newIndex);
-    void afterRenameInput(NodeInput *input, const QString &oldName);
+    void afterChangeInput(NodeInput *input, const NodeInput *oldValue);
 
     void afterAddOutput(BaseNode *node, int index, NodeOutput *output);
     void afterRemoveOutput(BaseNode *node, int index, NodeOutput *output);
     void afterReorderOutput(BaseNode *node, int oldIndex, int newIndex);
-    void afterRenameOutput(NodeOutput *output, const QString &name);
+    void afterChangeOutput(NodeOutput *output, const NodeOutput *oldValue);
 
     void afterAddConnection(int index, NodeConnection *cxn);
     void beforeRemoveConnection(int index, NodeConnection *cxn);

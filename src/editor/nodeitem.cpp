@@ -359,6 +359,7 @@ void NodeInputItem::updateLayout()
     if (bounds != mBounds) {
         prepareGeometryChange();
         mBounds = bounds;
+        mScene->moved(this); // update connections
     }
 }
 
@@ -441,6 +442,7 @@ void NodeOutputItem::updateLayout()
     if (bounds != mBounds) {
         prepareGeometryChange();
         mBounds = bounds;
+        mScene->moved(this); // update connections
     }
 }
 

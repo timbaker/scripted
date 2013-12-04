@@ -37,12 +37,12 @@ private slots:
     void afterAddInput(BaseNode *node, int index, NodeInput *input);
     void afterRemoveInput(BaseNode *node, int index, NodeInput *input);
     void afterReorderInput(BaseNode *node, int oldIndex, int newIndex);
-    void afterRenameInput(NodeInput *input, const QString &oldName);
+    void afterChangeInput(NodeInput *input, const NodeInput *oldValue);
 
     void afterAddOutput(BaseNode *node, int index, NodeOutput *output);
     void afterRemoveOutput(BaseNode *node, int index, NodeOutput *output);
     void afterReorderOutput(BaseNode *node, int oldIndex, int newIndex);
-    void afterRenameOutput(NodeOutput *output, const QString &oldName);
+    void afterChangeOutput(NodeOutput *output, const NodeOutput *oldValue);
 
     void addInput();
     void removeInput();
@@ -50,6 +50,7 @@ private slots:
     void moveInputDown();
     void inputSelectionChanged();
     void inputNameChanged();
+    void inputLabelChanged();
 
     void addOutput();
     void removeOutput();
@@ -57,6 +58,7 @@ private slots:
     void moveOutputDown();
     void outputSelectionChanged();
     void outputNameChanged();
+    void outputLabelChanged();
 
     void syncUI();
 

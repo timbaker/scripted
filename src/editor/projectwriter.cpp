@@ -172,6 +172,8 @@ public:
     {
         xml.writeStartElement(QLatin1String("input"));
         xml.writeAttribute(QLatin1String("name"), input->name());
+        if (input->node() && input->node()->isProjectRootNode())
+            xml.writeAttribute(QLatin1String("label"), input->label());
         xml.writeEndElement();
     }
 
@@ -179,6 +181,8 @@ public:
     {
         xml.writeStartElement(QLatin1String("output"));
         xml.writeAttribute(QLatin1String("name"), output->name());
+        if (output->node() && output->node()->isProjectRootNode())
+            xml.writeAttribute(QLatin1String("label"), output->label());
         xml.writeEndElement();
     }
 

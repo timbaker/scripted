@@ -17,14 +17,31 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
        <string>Inputs</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="2" column="0">
+       <item row="0" column="0">
+        <widget class="QListWidget" name="inputsList"/>
+       </item>
+       <item row="1" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Name:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="inputName"/>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QToolButton" name="addInput">
@@ -109,20 +126,17 @@
          </item>
         </layout>
        </item>
-       <item row="0" column="0">
-        <widget class="QListWidget" name="inputsList"/>
-       </item>
-       <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item row="2" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="label_3">
            <property name="text">
-            <string>Input name:</string>
+            <string>Label:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="inputName"/>
+          <widget class="QLineEdit" name="inputLabel"/>
          </item>
         </layout>
        </item>
@@ -136,21 +150,7 @@
        <item row="0" column="0">
         <widget class="QListWidget" name="outputsList"/>
        </item>
-       <item row="1" column="0">
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
-         <item>
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Output name:</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="outputName"/>
-         </item>
-        </layout>
-       </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
           <widget class="QToolButton" name="addOutput">
@@ -232,6 +232,34 @@
             </size>
            </property>
           </spacer>
+         </item>
+        </layout>
+       </item>
+       <item row="1" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Name:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="outputName"/>
+         </item>
+        </layout>
+       </item>
+       <item row="2" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Label:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="outputLabel"/>
          </item>
         </layout>
        </item>

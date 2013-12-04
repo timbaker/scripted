@@ -258,35 +258,36 @@ public:
     int mNewIndex;
 };
 
-class RenameInput : public ProjectChange
+class ChangeInput : public ProjectChange
 {
 public:
-    RenameInput(ProjectChanger *changer, NodeInput *input, const QString &name) :
+    ChangeInput(ProjectChanger *changer, NodeInput *input, const NodeInput *newValue) :
         ProjectChange(changer),
         mInput(input),
-        mOldName(input->name()),
-        mNewName(name)
+        mNewValue(newValue, newValue->node()),
+        mOldValue(input, input->node())
     {
+        Q_ASSERT(newValue->node() != 0);
     }
 
     void redo()
     {
-        mInput->setName(mNewName);
-        mChanger->afterRenameInput(mInput, mOldName);
+        mInput->initFrom(&mNewValue);
+        mChanger->afterChangeInput(mInput, &mOldValue);
     }
 
     void undo()
     {
-        mInput->setName(mOldName);
-        mChanger->afterRenameInput(mInput, mNewName);
+        mInput->initFrom(&mOldValue);
+        mChanger->afterChangeInput(mInput, &mNewValue);
     }
 
     bool merge(ProjectChange *other)
     {
-        RenameInput *o = (RenameInput*) other;
+        ChangeInput *o = (ChangeInput*) other;
         if (!(o->mInput == mInput))
             return false;
-        mNewName = o->mNewName;
+        mNewValue = o->mNewValue;
         return true;
     }
 
@@ -294,12 +295,12 @@ public:
 
     QString text() const
     {
-        return mChanger->tr("Rename Input");
+        return mChanger->tr("Change Input");
     }
 
     NodeInput *mInput;
-    QString mOldName;
-    QString mNewName;
+    NodeInput mNewValue;
+    NodeInput mOldValue;
 };
 
 class AddOutput : public ProjectChange
@@ -382,35 +383,36 @@ public:
     int mNewIndex;
 };
 
-class RenameOutput : public ProjectChange
+class ChangeOutput : public ProjectChange
 {
 public:
-    RenameOutput(ProjectChanger *changer, NodeOutput *output, const QString &name) :
+    ChangeOutput(ProjectChanger *changer, NodeOutput *output, const NodeOutput *newValue) :
         ProjectChange(changer),
         mOutput(output),
-        mOldName(output->name()),
-        mNewName(name)
+        mNewValue(newValue, newValue->node()),
+        mOldValue(output, output->node())
     {
+        Q_ASSERT(newValue->node() != 0);
     }
 
     void redo()
     {
-        mOutput->setName(mNewName);
-        mChanger->afterRenameOutput(mOutput, mOldName);
+        mOutput->initFrom(&mNewValue);
+        mChanger->afterChangeOutput(mOutput, &mOldValue);
     }
 
     void undo()
     {
-        mOutput->setName(mOldName);
-        mChanger->afterRenameOutput(mOutput, mNewName);
+        mOutput->initFrom(&mOldValue);
+        mChanger->afterChangeOutput(mOutput, &mNewValue);
     }
 
     bool merge(ProjectChange *other)
     {
-        RenameOutput *o = (RenameOutput*) other;
+        ChangeOutput *o = (ChangeOutput*) other;
         if (!(o->mOutput == mOutput))
             return false;
-        mNewName = o->mNewName;
+        mNewValue = o->mNewValue;
         return true;
     }
 
@@ -422,8 +424,8 @@ public:
     }
 
     NodeOutput *mOutput;
-    QString mOldName;
-    QString mNewName;
+    NodeOutput mNewValue;
+    NodeOutput mOldValue;
 };
 
 class AddConnection : public ProjectChange
@@ -1994,9 +1996,9 @@ void ProjectChanger::doReorderInput(BaseNode *node, int oldIndex, int newIndex)
     addChange(new ReorderInput(this, node, oldIndex, newIndex));
 }
 
-void ProjectChanger::doRenameInput(NodeInput *input, const QString &name)
+void ProjectChanger::doChangeInput(NodeInput *input, const NodeInput *newValue)
 {
-    addChange(new RenameInput(this, input, name));
+    addChange(new ChangeInput(this, input, newValue));
 }
 
 void ProjectChanger::doAddOutput(BaseNode *node, int index, NodeOutput *output)
@@ -2015,9 +2017,9 @@ void ProjectChanger::doReorderOutput(BaseNode *node, int oldIndex, int newIndex)
     addChange(new ReorderOutput(this, node, oldIndex, newIndex));
 }
 
-void ProjectChanger::doRenameOutput(NodeOutput *output, const QString &name)
+void ProjectChanger::doChangeOutput(NodeOutput *output, const NodeOutput *newValue)
 {
-    addChange(new RenameOutput(this, output, name));
+    addChange(new ChangeOutput(this, output, newValue));
 }
 
 void ProjectChanger::doAddConnection(int index, NodeConnection *cxn)

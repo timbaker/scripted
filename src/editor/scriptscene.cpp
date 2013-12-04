@@ -152,7 +152,7 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
             SLOT(inputsChanged(BaseNode*)));
     connect(mDocument->changer(), SIGNAL(afterReorderInput(BaseNode*,int,int)),
             SLOT(inputsChanged(BaseNode*)));
-    connect(mDocument->changer(), SIGNAL(afterRenameInput(NodeInput*,QString)),
+    connect(mDocument->changer(), SIGNAL(afterChangeInput(NodeInput*,const NodeInput*)),
             SLOT(inputsChanged()));
 
     connect(mDocument->changer(), SIGNAL(afterAddOutput(BaseNode*,int,NodeOutput*)),
@@ -161,7 +161,7 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
             SLOT(outputsChanged(BaseNode*)));
     connect(mDocument->changer(), SIGNAL(afterReorderOutput(BaseNode*,int,int)),
             SLOT(outputsChanged(BaseNode*)));
-    connect(mDocument->changer(), SIGNAL(afterRenameOutput(NodeOutput*,QString)),
+    connect(mDocument->changer(), SIGNAL(afterChangeOutput(NodeOutput*,const NodeOutput*)),
             SLOT(outputsChanged()));
 
     connect(mDocument->changer(), SIGNAL(afterAddConnection(int,NodeConnection*)),
@@ -756,6 +756,7 @@ void ConnectionItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         }
     }
     if (event->button() == Qt::RightButton) {
+        if (mControlPointIndex != -1) return; // right-click to cancel move
         // If you right click on this item and show the context menu, then right-click
         // anywhere else on the scene, you still get a right-click event because this
         // is the mouse-grabber.

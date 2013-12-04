@@ -100,10 +100,10 @@ private:
                 if (NodeConnection *cxn = readConnection(mProject->mRootNode))
                     mProject->rootNode()->insertConnection(mProject->rootNode()->connectionCount(), cxn);
             } else if (xml.name() == QLatin1String("input")) {
-                if (NodeInput *input = readInput())
+                if (NodeInput *input = readInput(mProject->mRootNode))
                     mProject->rootNode()->insertInput(mProject->rootNode()->inputCount(), input);
             } else if (xml.name() == QLatin1String("output")) {
-                if (NodeOutput *output = readOutput())
+                if (NodeOutput *output = readOutput(mProject->mRootNode))
                     mProject->rootNode()->insertOutput(mProject->rootNode()->outputCount(), output);
             } else if (xml.name() == QLatin1String("event-node")) {
                 if (MetaEventNode *node = readEventNode()) {
@@ -244,10 +244,10 @@ private:
                 if (NodeConnection *cxn = readConnection(node))
                     node->insertConnection(node->connectionCount(), cxn);
             } else if (xml.name() == QLatin1String("input")) {
-                if (NodeInput *input = readInput())
+                if (NodeInput *input = readInput(node))
                     node->insertInput(node->inputCount(), input);
             } else if (xml.name() == QLatin1String("output")) {
-                if (NodeOutput *output = readOutput())
+                if (NodeOutput *output = readOutput(node))
                     node->insertOutput(node->outputCount(), output);
             } else if (xml.name() == QLatin1String("source")) {
                 const QXmlStreamAttributes atts = xml.attributes();
@@ -288,10 +288,10 @@ private:
                 if (NodeConnection *cxn = readConnection(node))
                     node->insertConnection(node->connectionCount(), cxn);
             } else if (xml.name() == QLatin1String("input")) {
-                if (NodeInput *input = readInput())
+                if (NodeInput *input = readInput(node))
                     node->insertInput(node->inputCount(), input);
             } else if (xml.name() == QLatin1String("output")) {
-                if (NodeOutput *output = readOutput())
+                if (NodeOutput *output = readOutput(node))
                     node->insertOutput(node->outputCount(), output);
             } else if (xml.name() == QLatin1String("source")) {
                 const QXmlStreamAttributes atts = xml.attributes();
@@ -308,7 +308,7 @@ private:
         return node;
     }
 
-    NodeInput *readInput()
+    NodeInput *readInput(BaseNode *node)
     {
         Q_ASSERT(xml.isStartElement() && xml.name() == QLatin1String("input"));
         const QXmlStreamAttributes atts = xml.attributes();
@@ -317,11 +317,17 @@ private:
             xml.raiseError(tr("Empty or missing input name"));
             return NULL;
         }
+        QString label = name;
+        if (node->isProjectRootNode()) {
+            label = atts.value(QLatin1String("label")).toString();
+            if (label.isEmpty())
+                label = name;
+        }
         xml.skipCurrentElement();
-        return new NodeInput(name);
+        return new NodeInput(name, label);
     }
 
-    NodeOutput *readOutput()
+    NodeOutput *readOutput(BaseNode *node)
     {
         Q_ASSERT(xml.isStartElement() && xml.name() == QLatin1String("output"));
         const QXmlStreamAttributes atts = xml.attributes();
@@ -329,6 +335,12 @@ private:
         if (name.isEmpty()) {
             xml.raiseError(tr("Empty or missing output name"));
             return NULL;
+        }
+        QString label = name;
+        if (node->isProjectRootNode()) {
+            label = atts.value(QLatin1String("label")).toString();
+            if (label.isEmpty())
+                label = name;
         }
         xml.skipCurrentElement();
         return new NodeOutput(name);
