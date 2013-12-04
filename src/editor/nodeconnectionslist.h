@@ -41,6 +41,9 @@ private slots:
     void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
 private:
+    void setItems(int row);
+
+private:
     QStandardItemModel *mModel;
     ProjectDocument *mDocument;
     BaseNode *mNode;

@@ -28,7 +28,7 @@ NodeConnectionsList::NodeConnectionsList(QWidget *widget) :
     mDocument(0),
     mNode(0)
 {
-    mModel->setHorizontalHeaderLabels(QStringList() << tr("My Output") << tr("Target") << tr("Target Input"));
+    mModel->setHorizontalHeaderLabels(QStringList() << tr("From") << tr("To"));
     setModel(mModel);
 
     setRootIsDecorated(false);
@@ -41,13 +41,8 @@ void NodeConnectionsList::setNode(BaseNode *node)
     mNode = node;
 //    QStandardItem *rootItem = mModel->invisibleRootItem();
     mModel->removeRows(0, mModel->rowCount());
-    int row = 0;
-    foreach (NodeConnection *cxn, node->connections()) {
-       mModel->setItem(row, 0, new QStandardItem(cxn->mOutput));
-       mModel->setItem(row, 1, new QStandardItem(cxn->mReceiver->label() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
-       mModel->setItem(row, 2, new QStandardItem(cxn->mInput));
-       row++;
-    }
+    for (int row = 0; row < node->connectionCount(); row++)
+        setItems(row);
 }
 
 void NodeConnectionsList::setOutputName(const QString &outputName)
@@ -87,10 +82,11 @@ void NodeConnectionsList::setDocument(Document *doc)
 
 void NodeConnectionsList::afterAddConnection(int index, NodeConnection *cxn)
 {
+    if (cxn->mSender != mNode)
+        return;
+
     mModel->insertRow(index);
-    mModel->setItem(index, 0, new QStandardItem(cxn->mOutput));
-    mModel->setItem(index, 1, new QStandardItem(cxn->mReceiver->label() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
-    mModel->setItem(index, 2, new QStandardItem(cxn->mInput));
+    setItems(index);
 
     selectionModel()->select(mModel->index(index, 0),
                              QItemSelectionModel::Clear |
@@ -100,21 +96,61 @@ void NodeConnectionsList::afterAddConnection(int index, NodeConnection *cxn)
 
 void NodeConnectionsList::beforeRemoveConnection(int index, NodeConnection *cxn)
 {
+    if (cxn->mSender != mNode)
+        return;
+
     mModel->removeRow(index);
 }
 
 void NodeConnectionsList::afterReorderConnection(BaseNode *node, int oldIndex, int newIndex)
 {
-//    mModel->moveRow(QModelIndex(), oldIndex, QModelIndex(), newIndex);
+    if (node != mNode)
+        return;
+
+    //    mModel->moveRow(QModelIndex(), oldIndex, QModelIndex(), newIndex);
     mModel->removeRow(oldIndex);
     mModel->insertRow(newIndex);
-    NodeConnection *cxn = node->connection(newIndex);
-    mModel->setItem(newIndex, 0, new QStandardItem(cxn->mOutput));
-    mModel->setItem(newIndex, 1, new QStandardItem(cxn->mReceiver->label() + " (" + QString::number(cxn->mReceiver->id()) + ")"));
-    mModel->setItem(newIndex, 2, new QStandardItem(cxn->mInput));
+    setItems(newIndex);
 
     selectionModel()->select(mModel->index(newIndex, 0),
                              QItemSelectionModel::Clear |
                              QItemSelectionModel::Rows |
                              QItemSelectionModel::SelectCurrent);
+}
+
+static QString inputLabel(BaseNode *node, const QString &name)
+{
+    if (NodeInput *input = node->input(name))
+        return input->label();
+    return name;
+}
+
+static QString outputLabel(BaseNode *node, const QString &name)
+{
+    if (NodeOutput *output = node->output(name))
+        return output->label();
+    return name;
+}
+
+void NodeConnectionsList::setItems(int row)
+{
+    NodeConnection *cxn = mNode->connection(row);
+
+    QStandardItem *item0 = new QStandardItem(tr("%1 \"%2\"")
+                                             .arg(tr(cxn->mSender->isProjectRootNode() ? "input" : "output"))
+                                             .arg(cxn->mSender->isProjectRootNode()
+                                                  ? inputLabel(cxn->mSender, cxn->mOutput)
+                                                  : outputLabel(cxn->mSender, cxn->mOutput)));
+    QStandardItem *item1 = new QStandardItem(tr("\"%1\" %2 \"%3\"")
+                                             .arg(cxn->mReceiver->label())
+                                             .arg(tr(cxn->mReceiver->isProjectRootNode() ? "output" : "input"))
+                                             .arg(cxn->mReceiver->isProjectRootNode()
+                                                  ? outputLabel(cxn->mReceiver, cxn->mInput)
+                                                  : inputLabel(cxn->mReceiver, cxn->mInput)));
+
+    item0->setEditable(false);
+    item1->setEditable(false);
+
+    mModel->setItem(row, 0, item0);
+    mModel->setItem(row, 1, item1);
 }

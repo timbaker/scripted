@@ -29,6 +29,8 @@ ConnectionsDialog::ConnectionsDialog(ProjectDocument *doc, BaseNode *node,
     setConnectionsTable();
     ui->connectionsTable->setOutputName(outputName);
 
+    ui->connectionsTable->header()->resizeSection(0, 250);
+
     syncUI();
 }
 
