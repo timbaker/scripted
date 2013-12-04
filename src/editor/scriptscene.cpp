@@ -40,8 +40,6 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
     BaseGraphicsScene(ProjectSceneType, parent),
     mDocument(doc),
     mConnectionsItem(new ConnectionsItem(this)),
-    mConnectFrom(0),
-    mConnectTo(0),
     mGridItem(new GridItem(this)),
     mAreaItem(new ScriptAreaItem(this))
 {
@@ -228,6 +226,16 @@ QRectF ScriptScene::boundsOfAllNodes()
     return r;
 }
 
+NodeInputItem *ScriptScene::rootInputItem(const QString &name)
+{
+    return mAreaItem->mInputsItem->itemFor(name);
+}
+
+NodeOutputItem *ScriptScene::rootOutputItem(const QString &name)
+{
+    return mAreaItem->mOutputsItem->itemFor(name);
+}
+
 void ScriptScene::moved(NodeInputItem *item)
 {
     mConnectionsItem->moved(item);
@@ -241,47 +249,51 @@ void ScriptScene::moved(NodeOutputItem *item)
 void ScriptScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
-        if (mConnectTo) {
-            if (mConnectTo) {
-                mConnectTo->mConnectHighlight = false;
-                mConnectTo->update();
+        if (mConnectTo.isValid()) {
+            mConnectTo.setHighlight(false);
 
-                NodeConnection *cxn = new NodeConnection;
-                cxn->mSender = mConnectFrom->mOutput->node();
-                cxn->mOutput = mConnectFrom->mOutput->name();
-                cxn->mReceiver = mConnectTo->mInput->node();
-                cxn->mInput = mConnectTo->mInput->name();
-                cxn->mControlPoints = mConnectionsItem->mNewConnectionPoints.mid(1, mConnectionsItem->mNewConnectionPoints.size() - 2);
-                int index = cxn->mSender->connectionCount();
+            NodeConnection *cxn = new NodeConnection;
+            cxn->mSender = mConnectFrom.node();
+            cxn->mOutput = mConnectFrom.name();
+            cxn->mReceiver = mConnectTo.node();
+            cxn->mInput = mConnectTo.name();
+            cxn->mControlPoints = mConnectionsItem->mNewConnectionPoints.mid(1, mConnectionsItem->mNewConnectionPoints.size() - 2);
+            int index = cxn->mSender->connectionCount();
 
-                mDocument->changer()->beginUndoCommand(mDocument->undoStack());
-                mDocument->changer()->doAddConnection(index, cxn);
-                mDocument->changer()->endUndoCommand();
+            mDocument->changer()->beginUndoCommand(mDocument->undoStack());
+            mDocument->changer()->doAddConnection(index, cxn);
+            mDocument->changer()->endUndoCommand();
 
-                mConnectTo = 0;
-            }
-            mConnectionsItem->newConnectionEnd(mConnectTo);
-            mConnectFrom = 0;
+            mConnectFrom.clear();
+            mConnectTo.clear();
+            mConnectionsItem->newConnectionEnd();
             return;
         }
-        if (mConnectFrom) {
+        if (mConnectFrom.isValid()) {
             mConnectionsItem->newConnectionClick(event->scenePos());
             return;
         }
         foreach (QGraphicsItem *item, items(event->scenePos())) {
+            if (NodeInputItem *inputItem = dynamic_cast<NodeInputItem*>(item)) {
+                if (inputItem->mInput->node()->isProjectRootNode()) {
+                    mConnectFrom.input = inputItem;
+                    mConnectionsItem->newConnectionStart(mConnectFrom.connectPosRight());
+                }
+            }
             if (NodeOutputItem *outputItem = dynamic_cast<NodeOutputItem*>(item)) {
-                mConnectFrom = outputItem;
-                QPointF start(outputItem->mapToScene(outputItem->boundingRect().right() + 2,
-                                                     outputItem->boundingRect().center().y()));
-                mConnectionsItem->newConnectionStart(outputItem);
+                if (!outputItem->mOutput->node()->isProjectRootNode()) {
+                    mConnectFrom.output = outputItem;
+                    mConnectionsItem->newConnectionStart(mConnectFrom.connectPosRight());
+                }
             }
         }
     }
     if (event->button() == Qt::RightButton) {
-        if (mConnectFrom) {
+        if (mConnectFrom.isValid()) {
+            mConnectTo.setHighlight(false);
             mConnectionsItem->newConnectionCancel();
-            mConnectFrom = 0;
-            mConnectTo = 0;
+            mConnectFrom.clear();
+            mConnectTo.clear();
         }
         return;
     }
@@ -291,31 +303,35 @@ void ScriptScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void ScriptScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
-    if (mConnectFrom) {
+    if (mConnectFrom.isValid()) {
         mConnectionsItem->newConnectionHotspot(event->scenePos());
 
-        NodeInputItem *highlight = 0;
+        InputOrOutputItem highlight;
         foreach (QGraphicsItem *item, items(event->scenePos())) {
+            // Can connect to any node's inputs except for the root node
             if (NodeInputItem *inputItem = dynamic_cast<NodeInputItem*>(item)) {
-#if 1 // inputs can connect to themselves
-                highlight = inputItem;
-#else
-                if (inputItem->mInput->mNode != mConnectFrom->mOutput->mNode) {
-                    highlight = inputItem;
-                }
-#endif
+                if (inputItem->mInput->node()->isProjectRootNode())
+                    break;
+                highlight.input = inputItem;
+                break;
+            }
+            // Any node except root can connect to root node's outputs
+            if (NodeOutputItem *outputItem = dynamic_cast<NodeOutputItem*>(item)) {
+                if (!outputItem->mOutput->node()->isProjectRootNode())
+                    break;
+                if (mConnectFrom.node()->isProjectRootNode())
+                    break;
+                highlight.output = outputItem;
                 break;
             }
         }
         if (mConnectTo != highlight) {
-            if (mConnectTo) {
-                mConnectTo->mConnectHighlight = false;
-                mConnectTo->update();
-                mConnectTo = 0;
+            if (mConnectTo.isValid()) {
+                mConnectTo.setHighlight(false);
+                mConnectTo.clear();
             }
-            if (highlight) {
-                highlight->mConnectHighlight = true;
-                highlight->update();
+            if (highlight.isValid()) {
+                highlight.setHighlight(true);
                 mConnectTo = highlight;
             }
         }
@@ -590,11 +606,12 @@ void ScriptScene::infoChanged(LuaInfo *info)
 
 /////
 
-ConnectionItem::ConnectionItem(NodeConnection *cxn, NodeOutputItem *outItem, NodeInputItem *inItem, QGraphicsItem *parent) :
+ConnectionItem::ConnectionItem(NodeConnection *cxn, InputOrOutputItem from,
+                               InputOrOutputItem to, QGraphicsItem *parent) :
     QGraphicsItem(parent),
     mConnection(cxn),
-    mOutputItem(outItem),
-    mInputItem(inItem),
+    mConnectFrom(from),
+    mConnectTo(to),
     mShowNodes(false),
     mControlPointIndex(-1),
     mHighlightIndex(-1),
@@ -606,16 +623,14 @@ ConnectionItem::ConnectionItem(NodeConnection *cxn, NodeOutputItem *outItem, Nod
 
 void ConnectionItem::updateBounds()
 {
+    mStartPoint = mConnectFrom.connectPosRight();
+    mEndPoint = mConnectTo.connectPosLeft();
+
     QPainterPath path;
     path.addPolygon(allPoints());
     QPainterPathStroker stroker;
     stroker.setWidth(NODE_RADIUS * 2);
     mShape = stroker.createStroke(path);
-
-    mStartPoint = QPointF(mOutputItem->mapToScene(mOutputItem->boundingRect().right() + 2,
-                                                  mOutputItem->boundingRect().center().y()));
-    mEndPoint = QPointF(mInputItem->mapToScene(mInputItem->boundingRect().left() - 2,
-                                               mInputItem->boundingRect().center().y()));
 
     QRectF bounds = allPoints().boundingRect().adjusted(-NODE_RADIUS, -NODE_RADIUS, NODE_RADIUS, NODE_RADIUS);
     bounds.adjust(-6, -6, 6, 6);
@@ -634,7 +649,11 @@ void ConnectionItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, 
 {
     painter->setRenderHint(QPainter::Antialiasing, true);
 
-    QPen pen(mShowNodes ?  QColor(128, 255, 255, 200) : QColor(255, 255, 255, 200), 2);
+    bool highlight = mShowNodes && !ConnectionsItem::mMakingConnection;
+
+    QPen pen(highlight
+             ? QColor(128, 255, 255, 200)
+             : QColor(255, 255, 255, 200), 2);
     painter->setPen(pen);
     QPolygonF poly;
     poly << mStartPoint << controlPoints();
@@ -657,12 +676,13 @@ void ConnectionItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, 
     path.lineTo(mEndPoint);
     painter->fillPath(path, pen.color());
 
-    if (mShowNodes) {
+    if (highlight) {
         painter->setPen(Qt::NoPen);
-//        painter->setBrush(pen.color());
         poly = controlPoints();
         for (int i = 0; i < poly.size(); i++) {
-            painter->setBrush((i == mHighlightIndex) ? QColor(128, 255, 255, 200) : QColor(255, 255, 255, 200));
+            painter->setBrush((i == mHighlightIndex)
+                              ? QColor(128, 255, 255, 200)
+                              : QColor(255, 255, 255, 200));
             painter->drawEllipse(poly[i], NODE_RADIUS, NODE_RADIUS);
         }
     }
@@ -682,7 +702,6 @@ void ConnectionItem::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 
 void ConnectionItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
 {
-#if 1
     int highlight = -1;
     for (int i = 0; i < mConnection->mControlPoints.size(); i++) {
         QPointF p = mConnection->mControlPoints[i];
@@ -695,34 +714,14 @@ void ConnectionItem::hoverMoveEvent(QGraphicsSceneHoverEvent *event)
         mHighlightIndex = highlight;
         update();
     }
-#else
-    QPolygonF poly = allPoints;
-
-    bool showNodes = false;
-    int controlPointIndex = -1;
-    for (int i = 0; i < poly.size() - 1; i++) {
-        QVector2D dir = (QVector2D(poly[i+1]) - QVector2D(poly[i])).normalized();
-        float d = QVector2D(event->scenePos()).distanceToLine(QVector2D(poly[i]), dir);
-        if (d < NODE_RADIUS) {
-            showNodes = true;
-            break;
-        }
-    }
-    if (showNodes != mShowNodes) {
-        mShowNodes = showNodes;
-        update();
-    }
-#endif
 }
 
 void ConnectionItem::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
     Q_UNUSED(event)
     mHighlightIndex = -1;
-//    if (mShowNodes) {
-        mShowNodes = false;
-        update();
-//    }
+    mShowNodes = false;
+    update();
 }
 
 void ConnectionItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
@@ -830,6 +829,8 @@ QPolygonF ConnectionItem::controlPoints() const
 
 /////
 
+bool ConnectionsItem::mMakingConnection = false;
+
 ConnectionsItem::ConnectionsItem(ProjectScene *scene, QGraphicsItem *parent) :
     QGraphicsItem(parent),
     mScene(scene),
@@ -846,15 +847,36 @@ void ConnectionsItem::updateConnections()
     qDeleteAll(mConnectionItems);
     mConnectionItems.clear();
 
-    foreach (NodeItem *item, mScene->objectItems()) {
+    foreach (NodeConnection *cxn, mScene->document()->project()->rootNode()->connections()) {
+        InputOrOutputItem from, to;
+        from.input = mScene->rootInputItem(cxn->mOutput); // input -> input
+
+        NodeItem *receiverItem = mScene->itemForNode(cxn->mReceiver);
+        NodeInput *input = receiverItem ? receiverItem->node()->input(cxn->mInput) : 0;
+        to.input = input ? receiverItem->inputItem(input) : 0;
+
+        if (from.isValid() && to.isValid()) {
+            mConnectionItems += new ConnectionItem(cxn, from, to, this);
+            mConnectionItems.last()->updateBounds();
+        }
+    }
+
+    foreach (NodeItem *item, mScene->nodeItems()) {
         foreach (NodeConnection *cxn, item->node()->connections()) {
+            InputOrOutputItem from, to;
             NodeOutput *output = item->node()->output(cxn->mOutput);
-            NodeOutputItem *outputItem = output ? item->outputItem(output) : 0;
-            NodeItem *receiverItem = mScene->itemForNode(cxn->mReceiver);
-            NodeInput *input = receiverItem ? receiverItem->node()->input(cxn->mInput) : 0;
-            NodeInputItem *inputItem = input ? receiverItem->inputItem(input) : 0;
-            if (outputItem && inputItem) {
-                mConnectionItems += new ConnectionItem(cxn, outputItem, inputItem, this);
+            from.output = output ? item->outputItem(output) : 0;
+
+            if (cxn->mReceiver->isProjectRootNode()) {
+                to.output = mScene->rootOutputItem(cxn->mInput); // output -> output
+            } else {
+                NodeItem *receiverItem = mScene->itemForNode(cxn->mReceiver);
+                NodeInput *input = receiverItem ? receiverItem->node()->input(cxn->mInput) : 0;
+                to.input = input ? receiverItem->inputItem(input) : 0;
+            }
+
+            if (from.isValid() && to.isValid()) {
+                mConnectionItems += new ConnectionItem(cxn, from, to, this);
                 mConnectionItems.last()->updateBounds();
             }
         }
@@ -872,7 +894,7 @@ ConnectionItem *ConnectionsItem::itemFor(NodeConnection *cxn)
 void ConnectionsItem::moved(NodeInputItem *item)
 {
     foreach (ConnectionItem *cxnItem, mConnectionItems) {
-        if (cxnItem->mInputItem == item) {
+        if (cxnItem->mConnectFrom.item() == item || cxnItem->mConnectTo.item() == item) {
             cxnItem->updateBounds();
             cxnItem->update();
         }
@@ -882,19 +904,19 @@ void ConnectionsItem::moved(NodeInputItem *item)
 void ConnectionsItem::moved(NodeOutputItem *item)
 {
     foreach (ConnectionItem *cxnItem, mConnectionItems) {
-        if (cxnItem->mOutputItem == item) {
+        if (cxnItem->mConnectFrom.item() == item || cxnItem->mConnectTo.item() == item) {
             cxnItem->updateBounds();
             cxnItem->update();
         }
     }
 }
 
-void ConnectionsItem::newConnectionStart(NodeOutputItem *outputItem)
+void ConnectionsItem::newConnectionStart(const QPointF &scenePos)
 {
-    mNewConnectionStart = outputItem;
+    mMakingConnection = true;
+
     mNewConnectionPoints.clear();
-    mNewConnectionPoints += outputItem->mapToScene(outputItem->boundingRect().right() + 2,
-                                                   outputItem->boundingRect().center().y());
+    mNewConnectionPoints += scenePos;
     mNewConnectionPoints += mNewConnectionPoints.last();
 
     QPainterPath path;
@@ -919,15 +941,15 @@ void ConnectionsItem::newConnectionClick(const QPointF &scenePos)
     mNewConnectionItem->setPath(path);
 }
 
-void ConnectionsItem::newConnectionEnd(NodeInputItem *inputItem)
+void ConnectionsItem::newConnectionEnd()
 {
-    Q_UNUSED(inputItem)
+    mMakingConnection = false;
     mScene->removeItem(mNewConnectionItem);
 }
 
 void ConnectionsItem::newConnectionCancel()
 {
-    mNewConnectionStart = 0;
+    mMakingConnection = false;
     mScene->removeItem(mNewConnectionItem);
 }
 
@@ -1013,7 +1035,55 @@ void ScriptAreaItem::updateBounds()
         mBounds = bounds;
         mInputsItem->setPos(mBounds.x() - 1, mBounds.center().y());
         mOutputsItem->setPos(mBounds.right() + 1, mBounds.center().y());
-//        mInputsItem->updateLayout();
-//        mOutputsItem->updateLayout();
+
+        foreach (NodeInputItem *item, mInputsItem->mItems)
+            mScene->mConnectionsItem->moved(item);
+        foreach (NodeOutputItem *item, mOutputsItem->mItems)
+            mScene->mConnectionsItem->moved(item);
     }
+}
+
+/////
+
+BaseNode *InputOrOutputItem::node()
+{
+    if (input) return input->mInput->node();
+    if (output) return output->mOutput->node();
+    return 0;
+}
+
+QString InputOrOutputItem::name()
+{
+    if (input) return input->mInput->name();
+    if (output) return output->mOutput->name();
+    return QString();
+}
+
+void InputOrOutputItem::setHighlight(bool hl)
+{
+    if (input) input->mConnectHighlight = hl, input->update();
+    if (output) output->mConnectHighlight = hl, output->update();
+}
+
+QGraphicsItem *InputOrOutputItem::item()
+{
+    if (input) return input;
+    if (output) return output;
+    return 0;
+}
+
+QPointF InputOrOutputItem::connectPosLeft()
+{
+    if (QGraphicsItem *item = this->item())
+        return item->mapToScene(item->boundingRect().left() - 2,
+                                item->boundingRect().center().y());
+    return QPointF();
+}
+
+QPointF InputOrOutputItem::connectPosRight()
+{
+    if (QGraphicsItem *item = this->item())
+        return item->mapToScene(item->boundingRect().right() + 2,
+                                item->boundingRect().center().y());
+    return QPointF();
 }

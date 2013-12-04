@@ -130,6 +130,7 @@ class BaseNode
 public:
     BaseNode(int id, const QString &name) :
         mID(id),
+        mIsProjectRootNode(false),
         mLabel(name)
     {
     }
@@ -244,8 +245,12 @@ public:
 
     bool syncWithInfo(BaseNode *infoNode);
 
+    void setProjectRootNode() {  mIsProjectRootNode = true; }
+    bool isProjectRootNode() { return mIsProjectRootNode; }
+
 protected:
     int mID;
+    bool mIsProjectRootNode;
     QString mLabel;
     QList<ScriptVariable*> mVariables;
     QList<NodeInput*> mInputs;

@@ -78,6 +78,8 @@ public:
             writeInput(input);
         foreach (NodeOutput *output, node->outputs())
             writeOutput(output);
+        foreach (NodeConnection *cxn, node->connections())
+            writeConnection(cxn);
         foreach (BaseNode *child, node->nodes())
             writeNode(child);
 

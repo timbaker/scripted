@@ -168,7 +168,7 @@ bool ProjectActions::saveProjectAs()
     } else {
         QString path = settings.value(KEY_SAVE_PROJECT_DIRECTORY).toString();
         if (path.isEmpty() || !QDir(path).exists())
-            path = QDir::currentPath();
+            path = prefs()->scriptsDirectory();
         suggestedFileName = path;
         suggestedFileName += QLatin1Char('/');
         suggestedFileName += tr("untitled.pzs");

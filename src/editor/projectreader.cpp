@@ -96,7 +96,10 @@ private:
         int nextID = mProject->mNextID;
 
         while (xml.readNextStartElement()) {
-            if (xml.name() == QLatin1String("input")) {
+            if (xml.name() == QLatin1String("connection")) {
+                if (NodeConnection *cxn = readConnection(mProject->mRootNode))
+                    mProject->rootNode()->insertConnection(mProject->rootNode()->connectionCount(), cxn);
+            } else if (xml.name() == QLatin1String("input")) {
                 if (NodeInput *input = readInput())
                     mProject->rootNode()->insertInput(mProject->rootNode()->inputCount(), input);
             } else if (xml.name() == QLatin1String("output")) {
@@ -130,7 +133,12 @@ private:
             mProject->mNextID = nextID;
         }
 
-        foreach (BaseNode *node, mProject->rootNode()->nodes()) {
+        if (xml.hasError()) {
+            delete mProject;
+            return 0;
+        }
+
+        foreach (BaseNode *node, mProject->rootNode()->nodesPlusSelf()) {
             foreach (ScriptVariable *var, node->variables()) {
                 if (var->variableRef().length()) {
                     BaseNode *node = mProject->rootNode()->nodeByID(var->variableRefID());
@@ -191,10 +199,8 @@ private:
 
         while (xml.readNextStartElement()) {
             if (xml.name() == QLatin1String("connection")) {
-                if (NodeConnection *cxn = readConnection()) {
-                    cxn->mSender = node;
+                if (NodeConnection *cxn = readConnection(node))
                     node->insertConnection(node->connectionCount(), cxn);
-                }
 #if 0
             } else if (xml.name() == QLatin1String("input")) {
                 if (NodeInput *input = readInput())
@@ -230,22 +236,13 @@ private:
         if (!getDoublePair(atts, QLatin1String("pos"), x, y))
             return 0;
 
-//        LuaInfo *def = luamgr()->command(defName);
         LuaNode *node = new LuaNode(id, name);
-#if 0
-        if (def)
-            node->mDefinition = def;
-        else
-            node->mDefinition = 0; // dummy definition for "not found"
-#endif
         node->setPos(x, y);
 
         while (xml.readNextStartElement()) {
             if (xml.name() == QLatin1String("connection")) {
-                if (NodeConnection *cxn = readConnection()) {
-                    cxn->mSender = node;
+                if (NodeConnection *cxn = readConnection(node))
                     node->insertConnection(node->connectionCount(), cxn);
-                }
             } else if (xml.name() == QLatin1String("input")) {
                 if (NodeInput *input = readInput())
                     node->insertInput(node->inputCount(), input);
@@ -288,10 +285,8 @@ private:
 
         while (xml.readNextStartElement()) {
             if (xml.name() == QLatin1String("connection")) {
-                if (NodeConnection *cxn = readConnection()) {
-                    cxn->mSender = node;
+                if (NodeConnection *cxn = readConnection(node))
                     node->insertConnection(node->connectionCount(), cxn);
-                }
             } else if (xml.name() == QLatin1String("input")) {
                 if (NodeInput *input = readInput())
                     node->insertInput(node->inputCount(), input);
@@ -339,7 +334,7 @@ private:
         return new NodeOutput(name);
     }
 
-    NodeConnection *readConnection()
+    NodeConnection *readConnection(BaseNode *node)
     {
         Q_ASSERT(xml.isStartElement() && xml.name() == QLatin1String("connection"));
         const QXmlStreamAttributes atts = xml.attributes();
@@ -347,7 +342,7 @@ private:
         bool ok;
         QString s = atts.value(QLatin1String("receiver")).toString();
         int rcvr = s.toInt(&ok);
-        if (!ok || rcvr < 1) {
+        if (!ok || rcvr < 0) {
             xml.raiseError(tr("Expected receiver=int but got \"%2\"").arg(s));
             return 0;
         }
@@ -357,6 +352,7 @@ private:
             return 0;
 
         NodeConnection *cxn = new NodeConnection;
+        cxn->mSender = node;
         cxn->mOutput = outputName;
         cxn->mInput = inputName;
         cxn->mReceiver = (ScriptNode*)rcvr;

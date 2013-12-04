@@ -111,7 +111,8 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->fillRect(bodyRect, bg);
     painter->drawRect(bodyRect);
 
-    if (option->state & QStyle::State_MouseOver) {
+    if (option->state & QStyle::State_MouseOver &&
+            !ConnectionsItem::mMakingConnection) {
         QRectF r = deleteRect();
         painter->fillRect(r, bg);
 //        painter->drawRect(r);
@@ -311,7 +312,8 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     if (mInput->node() != mScene->document()->project()->rootNode() && !mInput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
-        color = color.lighter();
+        if (!ConnectionsItem::mMakingConnection)
+            color = color.lighter();
     painter->fillPath(path, color);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -342,7 +344,8 @@ void NodeInputItem::updateLayout()
 NodeOutputItem::NodeOutputItem(ScriptScene *scene, NodeOutput *pin, QGraphicsItem *parent) :
     QGraphicsItem(parent),
     mScene(scene),
-    mOutput(pin)
+    mOutput(pin),
+    mConnectHighlight(false)
 {
     setAcceptHoverEvents(true);
     updateLayout();
@@ -367,12 +370,15 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     if (mOutput->node() != mScene->document()->project()->rootNode() && !mOutput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
-        color = color.lighter();
+        if (!ConnectionsItem::mMakingConnection)
+            color = color.lighter();
     painter->fillPath(path, color);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
-//    QPen pen(QColor(197, 224, 229, 128), 2);
-    QPen pen(QColor(Qt::black), 2);
+    color = Qt::black;
+    if (mConnectHighlight)
+        color = QColor(Qt::green);
+    QPen pen(color, 2);
     painter->setPen(pen);
     painter->drawPath(path);
 

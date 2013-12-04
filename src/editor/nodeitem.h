@@ -54,6 +54,7 @@ public:
     ScriptScene *mScene;
     NodeOutput *mOutput;
     QRectF mBounds;
+    bool mConnectHighlight;
 };
 
 class NodeInputGroupItem : public QGraphicsItem

@@ -23,10 +23,31 @@
 
 #include <QGraphicsItem>
 
+struct InputOrOutputItem
+{
+    InputOrOutputItem() : input(0), output(0) {}
+    bool isValid() { return input != 0 || output != 0; }
+    void clear() { input = 0; output = 0; }
+    BaseNode *node();
+    QString name();
+    void setHighlight(bool hl);
+    bool operator ==(const InputOrOutputItem &other)
+    { return input == other.input && output == other.output; }
+    bool operator !=(const InputOrOutputItem &other)
+    { return input != other.input || output != other.output; }
+    QGraphicsItem *item();
+    QPointF connectPosLeft();
+    QPointF connectPosRight();
+
+    NodeInputItem *input;
+    NodeOutputItem *output;
+};
+
 class ConnectionItem : public QGraphicsItem
 {
 public:
-    ConnectionItem(NodeConnection *cxn, NodeOutputItem *outItem, NodeInputItem *inItem, QGraphicsItem *parent = 0);
+    ConnectionItem(NodeConnection *cxn, InputOrOutputItem from,
+                   InputOrOutputItem to, QGraphicsItem *parent = 0);
 
     void updateBounds();
 
@@ -46,11 +67,12 @@ public:
     QPolygonF controlPoints() const;
 
     static const int NODE_RADIUS = 8;
+
     QRectF mBounds;
     QPainterPath mShape;
     NodeConnection *mConnection;
-    NodeOutputItem *mOutputItem;
-    NodeInputItem *mInputItem;
+    InputOrOutputItem mConnectFrom;
+    InputOrOutputItem mConnectTo;
     bool mShowNodes;
     int mControlPointIndex;
     int mHighlightIndex;
@@ -75,10 +97,10 @@ public:
     void moved(NodeInputItem *item);
     void moved(NodeOutputItem *item);
 
-    void newConnectionStart(NodeOutputItem *outputItem);
+    void newConnectionStart(const QPointF &scenePos);
     void newConnectionHotspot(const QPointF &scenePos);
     void newConnectionClick(const QPointF &scenePos);
-    void newConnectionEnd(NodeInputItem *inputItem);
+    void newConnectionEnd();
     void newConnectionCancel();
 
     void afterSetControlPoints(NodeConnection *cxn);
@@ -86,9 +108,9 @@ public:
     ProjectScene *mScene;
     QList<ConnectionItem*> mConnectionItems;
 
-    NodeOutputItem *mNewConnectionStart;
     QPolygonF mNewConnectionPoints;
     QGraphicsPathItem *mNewConnectionItem;
+    static bool mMakingConnection;
 };
 
 class GridItem : public QGraphicsItem
@@ -134,12 +156,15 @@ public:
 
     NodeItem *createItemForNode(BaseNode *node);
     NodeItem *itemForNode(BaseNode *node);
-    const QList<NodeItem*> &objectItems() const
+    const QList<NodeItem*> &nodeItems() const
     {
         return mNodeItems;
     }
 
     QRectF boundsOfAllNodes();
+
+    NodeInputItem *rootInputItem(const QString &name);
+    NodeOutputItem *rootOutputItem(const QString &name);
 
     void moved(NodeInputItem *item);
     void moved(NodeOutputItem *item);
@@ -184,11 +209,13 @@ private:
     ProjectDocument *mDocument;
     QList<NodeItem*> mNodeItems;
     ConnectionsItem *mConnectionsItem;
-    NodeOutputItem *mConnectFrom;
-    NodeInputItem *mConnectTo;
+    InputOrOutputItem mConnectFrom;
+    InputOrOutputItem mConnectTo;
     GridItem *mGridItem;
     ScriptAreaItem *mAreaItem;
     bool mDragHasPZS;
+
+    friend class ScriptAreaItem;
 };
 
 #endif // SCRIPTSCENE_H

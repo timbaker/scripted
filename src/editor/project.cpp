@@ -25,6 +25,7 @@ Project::Project() :
     mNextID(1),
     mRootNode(new ScriptNode(0, QLatin1String("FIXME")))
 {
+    mRootNode->setProjectRootNode();
 #if 0
     int i = 0;
     foreach (DraftDefinition *def, CommandsManager::instance()->commands()) {
