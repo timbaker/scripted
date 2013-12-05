@@ -77,6 +77,11 @@ void NodeConnectionsList::setDocument(Document *doc)
                 SLOT(beforeRemoveConnection(int,NodeConnection*)));
         connect(mDocument->changer(), SIGNAL(afterReorderConnection(BaseNode*,int,int)),
                 SLOT(afterReorderConnection(BaseNode*,int,int)));
+
+        connect(mDocument->changer(), SIGNAL(afterChangeInput(NodeInput*,const NodeInput*)),
+                SLOT(afterChangeInput(NodeInput*,const NodeInput*)));
+        connect(mDocument->changer(), SIGNAL(afterChangeOutput(NodeOutput*,const NodeOutput*)),
+                SLOT(afterChangeOutput(NodeOutput*,const NodeOutput*)));
     }
 }
 
@@ -116,6 +121,18 @@ void NodeConnectionsList::afterReorderConnection(BaseNode *node, int oldIndex, i
                              QItemSelectionModel::Clear |
                              QItemSelectionModel::Rows |
                              QItemSelectionModel::SelectCurrent);
+}
+
+// These 2 methods only get called if there were some redo actions possible when
+// a dialog using this list was displayed and the user clicked the redo button
+void NodeConnectionsList::afterChangeInput(NodeInput *input, const NodeInput *oldValue)
+{
+    setNode(mNode);
+}
+
+void NodeConnectionsList::afterChangeOutput(NodeOutput *output, const NodeOutput *oldValue)
+{
+    setNode(mNode);
 }
 
 static QString inputLabel(BaseNode *node, const QString &name)

@@ -40,6 +40,9 @@ private slots:
     void beforeRemoveConnection(int index, NodeConnection *cxn);
     void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
+    void afterChangeInput(NodeInput *input, const NodeInput *oldValue);
+    void afterChangeOutput(NodeOutput *output, const NodeOutput *oldValue);
+
 private:
     void setItems(int row);
 
