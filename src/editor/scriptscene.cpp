@@ -184,7 +184,15 @@ ScriptScene::ScriptScene(ProjectDocument *doc, QObject *parent) :
     connect(scriptmgr(), SIGNAL(infoChanged(ScriptInfo*)),
             SLOT(infoChanged(ScriptInfo*)));
 
-    mConnectionsItem->updateConnections();
+    int index = 0;
+    foreach (NodeConnection *cxn, mDocument->project()->rootNode()->connections())
+        mConnectionsItem->afterAddConnection(index++, cxn);
+
+    foreach (BaseNode *node, mDocument->project()->rootNode()->nodes()) {
+        index = 0;
+        foreach (NodeConnection *cxn, node->connections())
+            mConnectionsItem->afterAddConnection(index++, cxn);
+    }
 }
 
 void ScriptScene::setTool(AbstractTool *tool)
@@ -472,7 +480,7 @@ void ScriptScene::sceneRectChanged()
 void ScriptScene::afterAddNode(int index, BaseNode *node)
 {
     mNodeItems.insert(index, createItemForNode(node));
-    mConnectionsItem->updateConnections();
+    mConnectionsItem->afterAddNode(index, node);
     mAreaItem->updateBounds();
 }
 
@@ -480,7 +488,7 @@ void ScriptScene::afterRemoveNode(int index, BaseNode *node)
 {
     Q_UNUSED(node)
     delete mNodeItems.takeAt(index);
-    mConnectionsItem->updateConnections();
+    mConnectionsItem->afterRemoveNode(index, node);
     mAreaItem->updateBounds();
 }
 
@@ -511,6 +519,8 @@ void ScriptScene::inputsChanged(BaseNode *node)
             if (node == item->node())
                 item->inputsChanged();
     }
+
+    mConnectionsItem->updateConnections();
 }
 
 void ScriptScene::outputsChanged(BaseNode *node)
@@ -523,6 +533,8 @@ void ScriptScene::outputsChanged(BaseNode *node)
             if (node == item->node())
                 item->outputsChanged();
     }
+
+    mConnectionsItem->updateConnections();
 }
 
 void ScriptScene::inputsChanged()
@@ -537,16 +549,12 @@ void ScriptScene::outputsChanged()
 
 void ScriptScene::afterAddConnection(int index, NodeConnection *cxn)
 {
-    Q_UNUSED(index)
-    Q_UNUSED(cxn)
-    mConnectionsItem->updateConnections();
+    mConnectionsItem->afterAddConnection(index, cxn);
 }
 
 void ScriptScene::afterRemoveConnection(int index, NodeConnection *cxn)
 {
-    Q_UNUSED(index)
-    Q_UNUSED(cxn)
-    mConnectionsItem->updateConnections();
+    mConnectionsItem->afterRemoveConnection(index, cxn);
 }
 
 void ScriptScene::afterSetControlPoints(NodeConnection *cxn, const QPolygonF &oldPoints)
@@ -587,9 +595,9 @@ void ScriptScene::infoChanged(MetaEventInfo *info)
     foreach (NodeItem *item, mNodeItems)
         item->infoChanged(info);
 
-    mConnectionsItem->updateConnections();
-
     mAreaItem->updateBounds();
+
+    mConnectionsItem->updateConnections();
 }
 
 void ScriptScene::infoChanged(ScriptInfo *info)
@@ -597,9 +605,9 @@ void ScriptScene::infoChanged(ScriptInfo *info)
     foreach (NodeItem *item, mNodeItems)
         item->infoChanged(info);
 
-    mConnectionsItem->updateConnections();
-
     mAreaItem->updateBounds();
+
+    mConnectionsItem->updateConnections();
 }
 
 void ScriptScene::infoChanged(LuaInfo *info)
@@ -607,30 +615,63 @@ void ScriptScene::infoChanged(LuaInfo *info)
     foreach (NodeItem *item, mNodeItems)
         item->infoChanged(info);
 
-    mConnectionsItem->updateConnections();
-
     mAreaItem->updateBounds();
+
+    mConnectionsItem->updateConnections();
 }
 
 /////
 
-ConnectionItem::ConnectionItem(NodeConnection *cxn, InputOrOutputItem from,
-                               InputOrOutputItem to, QGraphicsItem *parent) :
+ConnectionItem::ConnectionItem(ProjectScene *scene, NodeConnection *cxn, QGraphicsItem *parent) :
     QGraphicsItem(parent),
+    mScene(scene),
     mConnection(cxn),
-    mConnectFrom(from),
-    mConnectTo(to),
     mShowNodes(false),
     mControlPointIndex(-1),
     mHighlightIndex(-1),
     mAddingNewPoint(false)
 {
     setAcceptHoverEvents(true);
-//    updateBounds();
+    //    updateBounds();
+}
+
+void ConnectionItem::syncWithNodes()
+{
+    NodeItem *senderItem = mScene->itemForNode(mConnection->mSender); // NULL for root node
+    NodeItem *receiverItem = mScene->itemForNode(mConnection->mReceiver); // NULL for root node
+    InputOrOutputItem from, to;
+
+    if (mConnection->mSender->isProjectRootNode()) {
+        from.input = mScene->rootInputItem(mConnection->mOutput); // input -> input
+        NodeInput *input = receiverItem ? receiverItem->node()->input(mConnection->mInput) : 0;
+        to.input = input ? receiverItem->inputItem(input) : 0;
+    } else {
+        NodeOutput *output = mConnection->mSender->output(mConnection->mOutput);
+        from.output = output ? senderItem->outputItem(output) : 0;
+
+        if (mConnection->mReceiver->isProjectRootNode()) {
+            to.output = mScene->rootOutputItem(mConnection->mInput); // output -> output
+        } else {
+            NodeInput *input = receiverItem ? receiverItem->node()->input(mConnection->mInput) : 0;
+            to.input = input ? receiverItem->inputItem(input) : 0;
+        }
+    }
+
+    mConnectFrom = from;
+    mConnectTo = to;
 }
 
 void ConnectionItem::updateBounds()
 {
+    if (!mConnectFrom.isValid() || !mConnectTo.isValid()) {
+        if (QRectF() != mBounds) {
+            prepareGeometryChange();
+            mBounds = QRectF();
+            mShape = QPainterPath();
+        }
+        return;
+    }
+
     mStartPoint = mConnectFrom.connectPosRight();
     mEndPoint = mConnectTo.connectPosLeft();
 
@@ -655,6 +696,9 @@ QRectF ConnectionItem::boundingRect() const
 
 void ConnectionItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
+    if (!mConnectFrom.isValid() || !mConnectTo.isValid())
+        return;
+
     painter->setRenderHint(QPainter::Antialiasing, true);
 
     bool highlight = mShowNodes && !ConnectionsItem::mMakingConnection;
@@ -869,42 +913,9 @@ ConnectionsItem::ConnectionsItem(ProjectScene *scene, QGraphicsItem *parent) :
 
 void ConnectionsItem::updateConnections()
 {
-    qDeleteAll(mConnectionItems);
-    mConnectionItems.clear();
-
-    foreach (NodeConnection *cxn, mScene->document()->project()->rootNode()->connections()) {
-        InputOrOutputItem from, to;
-        from.input = mScene->rootInputItem(cxn->mOutput); // input -> input
-
-        NodeItem *receiverItem = mScene->itemForNode(cxn->mReceiver);
-        NodeInput *input = receiverItem ? receiverItem->node()->input(cxn->mInput) : 0;
-        to.input = input ? receiverItem->inputItem(input) : 0;
-
-        if (from.isValid() && to.isValid()) {
-            mConnectionItems += new ConnectionItem(cxn, from, to, this);
-            mConnectionItems.last()->updateBounds();
-        }
-    }
-
-    foreach (NodeItem *item, mScene->nodeItems()) {
-        foreach (NodeConnection *cxn, item->node()->connections()) {
-            InputOrOutputItem from, to;
-            NodeOutput *output = item->node()->output(cxn->mOutput);
-            from.output = output ? item->outputItem(output) : 0;
-
-            if (cxn->mReceiver->isProjectRootNode()) {
-                to.output = mScene->rootOutputItem(cxn->mInput); // output -> output
-            } else {
-                NodeItem *receiverItem = mScene->itemForNode(cxn->mReceiver);
-                NodeInput *input = receiverItem ? receiverItem->node()->input(cxn->mInput) : 0;
-                to.input = input ? receiverItem->inputItem(input) : 0;
-            }
-
-            if (from.isValid() && to.isValid()) {
-                mConnectionItems += new ConnectionItem(cxn, from, to, this);
-                mConnectionItems.last()->updateBounds();
-            }
-        }
+    foreach (ConnectionItem *item, mConnectionItems) {
+        item->syncWithNodes();
+        item->updateBounds();
     }
 }
 
@@ -914,6 +925,14 @@ ConnectionItem *ConnectionsItem::itemFor(NodeConnection *cxn)
         if (item->mConnection == cxn)
             return item;
     return 0;
+}
+
+int ConnectionsItem::indexOf(NodeConnection *cxn)
+{
+    for (int i = 0; i < mConnectionItems.size(); i++)
+        if (mConnectionItems[i]->mConnection == cxn)
+            return i;
+    return -1;
 }
 
 void ConnectionsItem::moved(NodeInputItem *item)
@@ -976,6 +995,34 @@ void ConnectionsItem::newConnectionCancel()
 {
     mMakingConnection = false;
     mScene->removeItem(mNewConnectionItem);
+}
+
+void ConnectionsItem::afterAddNode(int index, BaseNode *node)
+{
+    for (int i = 0; i < node->connectionCount(); i++)
+        afterAddConnection(i, node->connection(i));
+}
+
+void ConnectionsItem::afterRemoveNode(int index, BaseNode *node)
+{
+    Q_UNUSED(index)
+    foreach (NodeConnection *cxn, node->connections())
+        delete itemFor(cxn);
+}
+
+void ConnectionsItem::afterAddConnection(int index, NodeConnection *cxn)
+{
+    ConnectionItem *item = new ConnectionItem(mScene, cxn, this);
+    mConnectionItems += item;
+    item->syncWithNodes();
+    item->updateBounds();
+}
+
+void ConnectionsItem::afterRemoveConnection(int index, NodeConnection *cxn)
+{
+    index = indexOf(cxn);
+    if (index != -1)
+        delete mConnectionItems.takeAt(index);
 }
 
 void ConnectionsItem::afterSetControlPoints(NodeConnection *cxn)

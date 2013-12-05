@@ -191,15 +191,40 @@ public:
 
     void redo()
     {
-        mNode->insertInput(mIndex, mInput);
-        mChanger->afterAddInput(mNode, mIndex, mInput);
+        if (mNode->isProjectRootNode()) {
+            mNode->insertInput(mIndex, mInput);
+            mChanger->afterAddInput(mNode, mIndex, mInput);
+        } else {
+            // AddInput/RemoveInput will only be used by the "Remove Unknowns" command
+            // for child nodes of the project's root node.
+            // When LuaInfo etc changes, inputs are magically added/removed/reordered
+            // *outside of the undo/redo system*.
+
+            // Add the input only if there isn't a known one now.
+            if (mNode->input(mInput->name()) == 0) {
+                int index = mNode->inputCount();
+                mNode->insertInput(index, mInput);
+                mChanger->afterAddInput(mNode, index, mInput);
+            }
+        }
     }
 
     void undo()
     {
-//        mChanger->beforeRemoveInput(mIndex, mInput);
-        mNode->removeInput(mIndex);
-        mChanger->afterRemoveInput(mNode, mIndex, mInput);
+        if (mNode->isProjectRootNode()) {
+//            mChanger->beforeRemoveInput(mIndex, mInput);
+            mNode->removeInput(mIndex);
+            mChanger->afterRemoveInput(mNode, mIndex, mInput);
+        } else {
+            // Remove the input only if it is still unknown.
+            NodeInput *input = mNode->input(mInput->name());
+            if (!input->isKnown()) {
+                int index = mNode->indexOf(input);
+                mNode->removeInput(index);
+                mChanger->afterRemoveInput(mNode, index, input);
+            }
+
+        }
     }
 
     QString text() const
@@ -316,15 +341,41 @@ public:
 
     void redo()
     {
-        mNode->insertOutput(mIndex, mOutput);
-        mChanger->afterAddOutput(mNode,mIndex, mOutput);
+        if (mNode->isProjectRootNode()) {
+            mNode->insertOutput(mIndex, mOutput);
+            mChanger->afterAddOutput(mNode, mIndex, mOutput);
+        } else {
+            // AddOutput/RemoveOutput will only be used by the "Remove Unknowns" command
+            // for child nodes of the project's root node.
+            // When LuaInfo etc changes, outputs are magically added/removed/reordered
+            // *outside of the undo/redo system*.
+
+            // Add the output only if there isn't a known one now.
+            if (mNode->input(mOutput->name()) == 0) {
+                int index = mNode->outputCount();
+                mNode->insertOutput(index, mOutput);
+                mChanger->afterAddOutput(mNode, index, mOutput);
+            }
+
+        }
     }
 
     void undo()
     {
-//        mChanger->beforeRemoveOutput(mIndex, mOutput);
-        mNode->removeOutput(mIndex);
-        mChanger->afterRemoveOutput(mNode, mIndex, mOutput);
+        if (mNode->isProjectRootNode()) {
+//            mChanger->beforeRemoveOutput(mIndex, mOutput);
+            mNode->removeOutput(mIndex);
+            mChanger->afterRemoveOutput(mNode, mIndex, mOutput);
+        } else {
+            // Remove the output only if it is still unknown.
+            NodeOutput *output = mNode->output(mOutput->name());
+            if (!output->isKnown()) {
+                int index = mNode->indexOf(output);
+                mNode->removeOutput(index);
+                mChanger->afterRemoveOutput(mNode, index, output);
+            }
+
+        }
     }
 
     QString text() const
@@ -554,15 +605,34 @@ public:
 
     void redo()
     {
-        mNode->insertVariable(mIndex, mVariable);
-        mChanger->afterAddVariable(mNode, mIndex, mVariable);
+        if (mNode->isProjectRootNode()) {
+            mNode->insertVariable(mIndex, mVariable);
+            mChanger->afterAddVariable(mNode, mIndex, mVariable);
+        } else {
+            if (mNode->variable(mVariable->name()) == 0) {
+                int index = mNode->variableCount();
+                mNode->insertVariable(index, mVariable);
+                mChanger->afterAddVariable(mNode, index, mVariable);
+            }
+
+        }
     }
 
     void undo()
     {
-        mChanger->beforeRemoveVariable(mNode, mIndex, mVariable);
-        mNode->removeVariable(mVariable);
-        mChanger->afterRemoveVariable(mNode, mIndex, mVariable);
+        if (mNode->isProjectRootNode()) {
+//            mChanger->beforeRemoveVariable(mIndex, mVariable);
+            mNode->removeVariable(mVariable);
+            mChanger->afterRemoveVariable(mNode, mIndex, mVariable);
+        } else {
+            ScriptVariable *var = mNode->variable(mVariable->name());
+            if (!var->isKnown()) {
+                int index = mNode->indexOf(var);
+                mNode->removeVariable(var);
+                mChanger->afterRemoveVariable(mNode, index, mVariable);
+            }
+
+        }
     }
 
     QString text() const

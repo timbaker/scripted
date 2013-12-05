@@ -46,9 +46,9 @@ struct InputOrOutputItem
 class ConnectionItem : public QGraphicsItem
 {
 public:
-    ConnectionItem(NodeConnection *cxn, InputOrOutputItem from,
-                   InputOrOutputItem to, QGraphicsItem *parent = 0);
+    ConnectionItem(ProjectScene *scene, NodeConnection *cxn, QGraphicsItem *parent = 0);
 
+    void syncWithNodes();
     void updateBounds();
 
     QRectF boundingRect() const;
@@ -68,6 +68,7 @@ public:
 
     static const int NODE_RADIUS = 8;
 
+    ProjectScene *mScene;
     QRectF mBounds;
     QPainterPath mShape;
     NodeConnection *mConnection;
@@ -93,6 +94,7 @@ public:
 
     void updateConnections();
     ConnectionItem *itemFor(NodeConnection *cxn);
+    int indexOf(NodeConnection *cxn);
 
     void moved(NodeInputItem *item);
     void moved(NodeOutputItem *item);
@@ -103,6 +105,11 @@ public:
     void newConnectionEnd();
     void newConnectionCancel();
 
+    void afterAddNode(int index, BaseNode *node);
+    void afterRemoveNode(int index, BaseNode *node);
+
+    void afterAddConnection(int index, NodeConnection *cxn);
+    void afterRemoveConnection(int index, NodeConnection *cxn);
     void afterSetControlPoints(NodeConnection *cxn);
 
     ProjectScene *mScene;
