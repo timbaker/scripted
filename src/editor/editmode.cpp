@@ -21,6 +21,8 @@
 #include "documentmanager.h"
 #include "embeddedmainwindow.h"
 #include "luadockwidget.h"
+#include "luadocument.h"
+#include "luaeditor.h"
 #include "metaeventdock.h"
 #include "mainwindow.h"
 #include "projectactions.h"
@@ -71,37 +73,30 @@ EditModeToolBar::EditModeToolBar(QWidget *parent) :
 
 /////
 
-EditModePerDocumentStuff::EditModePerDocumentStuff(EditMode *mode, ProjectDocument *doc) :
+EditModePerDocumentStuff::EditModePerDocumentStuff(EditMode *mode, Document *doc) :
     QObject(doc),
     mMode(mode),
-    mDocument(doc),
-    mScene(new ProjectScene(doc)),
-    mView(new ProjectView(doc))
+    mDocument(doc)
 {
-    mView->setScene(mScene);
-    mScene->setParent(mView);
-
     connect(document(), SIGNAL(fileNameChanged()), SLOT(updateDocumentTab()));
 //    connect(document(), SIGNAL(cleanChanged()), SLOT(updateDocumentTab()));
+#if 1
+    connect(document(), SIGNAL(cleanChanged()), SLOT(updateDocumentTab()));
+#else
     connect(document()->undoStack(), SIGNAL(cleanChanged(bool)), SLOT(updateDocumentTab()));
+#endif
 }
 
 EditModePerDocumentStuff::~EditModePerDocumentStuff()
 {
-    // mView is added to a QTabWidget.
-    // Removing a tab does not delete the page widget.
-    // mScene is a child of the view.
-    delete mView;
 }
 
 void EditModePerDocumentStuff::activate()
 {
-    ToolManager::instance()->setScene(mScene);
 }
 
 void EditModePerDocumentStuff::deactivate()
 {
-//    ToolManager::instance()->setScene(0);
 }
 
 void EditModePerDocumentStuff::updateDocumentTab()
@@ -117,6 +112,85 @@ void EditModePerDocumentStuff::updateDocumentTab()
 
     QString tooltipText = QDir::toNativeSeparators(document()->fileName());
     mMode->mTabWidget->setTabToolTip(tabIndex, tooltipText);
+}
+
+/////
+
+
+
+EditModePerLuaDocumentStuff::EditModePerLuaDocumentStuff(EditMode *mode, LuaDocument *doc) :
+    EditModePerDocumentStuff(mode, doc),
+    mEditor(new LuaEditor)
+{
+    QFont font;
+    font.setFamily("Courier");
+    font.setFixedPitch(true);
+    font.setPointSize(10);
+    mEditor->setFont(font);
+
+    /*highlighter =*/ new Highlighter(mEditor->document());
+
+    QFile file(doc->fileName());
+    if (file.open(QFile::ReadOnly | QFile::Text))
+        mEditor->setPlainText(file.readAll());
+
+    doc->setEditor(mEditor); // a bit kludgey
+}
+
+EditModePerLuaDocumentStuff::~EditModePerLuaDocumentStuff()
+{
+    // widget() is added to a QTabWidget.
+    // Removing a tab does not delete the page widget.
+    delete widget();
+}
+
+QWidget *EditModePerLuaDocumentStuff::widget() const
+{
+    return mEditor;
+}
+
+void EditModePerLuaDocumentStuff::activate()
+{
+    ToolManager::instance()->setScene(0);
+}
+
+void EditModePerLuaDocumentStuff::deactivate()
+{
+
+}
+
+/////
+
+EditModePerProjectDocumentStuff::EditModePerProjectDocumentStuff(EditMode *mode, ProjectDocument *doc) :
+    EditModePerDocumentStuff(mode, doc),
+    mScene(new ProjectScene(doc)),
+    mView(new ProjectView(doc))
+{
+    mView->setScene(mScene);
+    mScene->setParent(mView);
+}
+
+EditModePerProjectDocumentStuff::~EditModePerProjectDocumentStuff()
+{
+    // widget() is added to a QTabWidget.
+    // Removing a tab does not delete the page widget.
+    // mScene is a child of the view.
+    delete widget();
+}
+
+QWidget *EditModePerProjectDocumentStuff::widget() const
+{
+    return mView;
+}
+
+void EditModePerProjectDocumentStuff::activate()
+{
+    ToolManager::instance()->setScene(mScene);
+}
+
+void EditModePerProjectDocumentStuff::deactivate()
+{
+    //    ToolManager::instance()->setScene(0);
 }
 
 /////
@@ -187,10 +261,16 @@ EditMode::EditMode(QObject *parent) :
 
 void EditMode::readSettings(QSettings &settings)
 {
+    settings.beginGroup(QLatin1String("EditMode"));
+    mMainWindow->readSettings(settings);
+    settings.endGroup();
 }
 
 void EditMode::writeSettings(QSettings &settings)
 {
+    settings.beginGroup(QLatin1String("EditMode"));
+    mMainWindow->writeSettings(settings);
+    settings.endGroup();
 }
 
 void EditMode::onActiveStateChanged(bool active)
@@ -233,11 +313,14 @@ void EditMode::documentTabCloseRequested(int index)
 
 void EditMode::documentAdded(Document *doc)
 {
-    mDocumentStuff[doc] = new EditModePerDocumentStuff(this, doc->asProjectDocument());
+    if (LuaDocument *ldoc = doc->asLuaDocument())
+        mDocumentStuff[doc] = new EditModePerLuaDocumentStuff(this, ldoc);
+    if (ProjectDocument *pdoc = doc->asProjectDocument())
+        mDocumentStuff[doc] = new EditModePerProjectDocumentStuff(this, pdoc);
 
     int docIndex = docman()->indexOf(doc);
     mTabWidget->blockSignals(true);
-    mTabWidget->insertTab(docIndex, mDocumentStuff[doc]->view(), doc->displayName());
+    mTabWidget->insertTab(docIndex, mDocumentStuff[doc]->widget(), doc->displayName());
     mTabWidget->blockSignals(false);
     mDocumentStuff[doc]->updateDocumentTab();
 }
@@ -268,4 +351,3 @@ void EditMode::documentAboutToClose(int index, Document *doc)
     // NOTE: This does not delete the tab's widget.
     mTabWidget->removeTab(index);
 }
-

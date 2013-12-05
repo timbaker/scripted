@@ -137,7 +137,7 @@ bool MainWindow::confirmSave()
             QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
 
     switch (ret) {
-    case QMessageBox::Save:    return ProjectActions::instance()->saveProject();
+    case QMessageBox::Save:    return ProjectActions::instance()->saveFile();
     case QMessageBox::Discard: return true;
     case QMessageBox::Cancel:
     default:
@@ -166,6 +166,8 @@ void MainWindow::writeSettings()
     mSettings.setValue(QLatin1String("lastOpenFiles"), fileList);
 
     mSettings.endGroup();
+
+    mEditMode->writeSettings(mSettings);
 }
 
 void MainWindow::readSettings()
@@ -178,6 +180,8 @@ void MainWindow::readSettings()
         resize(1024, 768);
     restoreState(mSettings.value(QLatin1String("state"), QByteArray()).toByteArray());
     mSettings.endGroup();
+
+    mEditMode->readSettings(mSettings);
 }
 
 void MainWindow::openLastFiles()
@@ -218,6 +222,7 @@ void MainWindow::currentDocumentChanged(Document *doc)
         if (!mWelcomeMode->isActive())
             mCurrentDocumentStuff->rememberTool();
         mCurrentDocumentStuff->document()->disconnect(this);
+        mCurrentDocumentStuff->document()->disconnect(ProjectActions::instance());
     }
 
     mCurrentDocumentStuff = doc ? mDocumentStuff[doc] : 0; // FIXME: unset when deleted
@@ -226,6 +231,7 @@ void MainWindow::currentDocumentChanged(Document *doc)
         ModeManager::instance()->setCurrentMode(mEditMode); // handles new documents
         mUndoGroup->setActiveStack(mCurrentDocumentStuff->document()->undoStack());
         connect(doc, SIGNAL(cleanChanged()), ProjectActions::instance(), SLOT(updateActions()));
+        connect(doc, SIGNAL(fileNameChanged()), ProjectActions::instance(), SLOT(updateActions()));
     } else {
         ToolManager::instance()->clearDocument();
         mEditMode->setEnabled(false);

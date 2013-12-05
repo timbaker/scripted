@@ -33,16 +33,18 @@ public:
     Ui::MainWindow *actions()
     { return mActions; }
 
-    ProjectDocument *document();
+    Document *document();
+    ProjectDocument *projectDoc();
 
 public slots:
     void newProject();
     void openProject();
+    bool openLuaFile(const QString &fileName);
     bool openProject(const QString &fileName);
     bool openFile(const QString &fileName);
-    bool saveProject();
-    bool saveProject(const QString &fileName);
-    bool saveProjectAs();
+    bool saveFile();
+    bool saveFile(const QString &fileName);
+    bool saveFileAs();
 
     void preferencesDialog();
 

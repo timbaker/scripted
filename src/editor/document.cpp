@@ -17,6 +17,7 @@
 
 #include "document.h"
 
+#include "luadocument.h"
 #include "projectdocument.h"
 
 #include <QFileInfo>
@@ -28,6 +29,11 @@ Document::Document(DocumentType type)
     , mType(type)
 //    , mView(0)
 {
+}
+
+LuaDocument *Document::asLuaDocument()
+{
+    return isLuaDocument() ? static_cast<LuaDocument*>(this) : NULL;
 }
 
 ProjectDocument *Document::asProjectDocument()

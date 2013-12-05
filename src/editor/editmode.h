@@ -26,6 +26,7 @@
 #include <QToolBar>
 
 class LuaDockWidget;
+class LuaEditor;
 class MetaEventDock;
 class ProjectTreeDock;
 class ScriptsDock;
@@ -46,24 +47,52 @@ class EditModePerDocumentStuff : public QObject
 {
     Q_OBJECT
 public:
-    EditModePerDocumentStuff(EditMode *mode, ProjectDocument *doc);
+    EditModePerDocumentStuff(EditMode *mode, Document *doc);
     ~EditModePerDocumentStuff();
 
-    ProjectDocument *document() const
+    Document *document() const
     { return mDocument; }
 
-    ProjectView *view() const
-    { return mView; }
+    virtual QWidget *widget() const = 0;
 
-    void activate();
-    void deactivate();
+    virtual void activate();
+    virtual void deactivate();
 
 public slots:
     void updateDocumentTab();
 
-private:
+protected:
     EditMode *mMode;
-    ProjectDocument *mDocument;
+    Document *mDocument;
+};
+
+class EditModePerLuaDocumentStuff : public EditModePerDocumentStuff
+{
+public:
+    EditModePerLuaDocumentStuff(EditMode *mode, LuaDocument *doc);
+    ~EditModePerLuaDocumentStuff();
+
+    QWidget *widget() const;
+
+    void activate();
+    void deactivate();
+
+private:
+    LuaEditor *mEditor;
+};
+
+class EditModePerProjectDocumentStuff : public EditModePerDocumentStuff
+{
+public:
+    EditModePerProjectDocumentStuff(EditMode *mode, ProjectDocument *doc);
+    ~EditModePerProjectDocumentStuff();
+
+    QWidget *widget() const;
+
+    void activate();
+    void deactivate();
+
+private:
     ProjectScene *mScene;
     ProjectView *mView;
 };

@@ -15,34 +15,31 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PROJECTDOCUMENT_H
-#define PROJECTDOCUMENT_H
+#ifndef LUADOCUMENT_H
+#define LUADOCUMENT_H
 
 #include "document.h"
-#include "editor_global.h"
 
-class ProjectDocument : public Document
+class LuaEditor;
+
+class LuaDocument : public Document
 {
-    Q_OBJECT
 public:
-    ProjectDocument(Project *prj, const QString &fileName);
+    LuaDocument(const QString &fileName);
+
+    bool isModified() const;
 
     void setFileName(const QString &fileName);
     const QString &fileName() const;
-    QString extension() const { return QLatin1String(".pzs"); }
-    QString filter() const { return tr("ScriptEd files (*.pzs)"); }
+    QString extension() const { return QLatin1String(".lua"); }
+    QString filter() const { return tr("Lua files (*.lua)"); }
     bool save(const QString &filePath, QString &error);
 
-    Project *project() const
-    { return mProject; }
-
-    ProjectChanger *changer() const
-    { return mChanger; }
+    void setEditor(LuaEditor *editor);
 
 private:
     QString mFileName;
-    Project *mProject;
-    ProjectChanger *mChanger;
+    LuaEditor *mEditor;
 };
 
-#endif // PROJECTDOCUMENT_H
+#endif // LUADOCUMENT_H

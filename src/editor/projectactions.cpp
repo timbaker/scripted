@@ -20,8 +20,9 @@
 #include "connectionsdialog.h"
 #include "documentmanager.h"
 #include "editnodevariabledialog.h"
-#include "node.h"
+#include "luadocument.h"
 #include "mainwindow.h"
+#include "node.h"
 #include "nodepropertiesdialog.h"
 #include "preferences.h"
 #include "preferencesdialog.h"
@@ -49,8 +50,8 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
 {
     connect(mActions->actionNewProject, SIGNAL(triggered()), SLOT(newProject()));
     connect(mActions->actionOpenProject, SIGNAL(triggered()), SLOT(openProject()));
-    connect(mActions->actionSaveProject, SIGNAL(triggered()), SLOT(saveProject()));
-    connect(mActions->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
+    connect(mActions->actionSaveProject, SIGNAL(triggered()), SLOT(saveFile()));
+    connect(mActions->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveFileAs()));
     connect(mActions->actionQuit, SIGNAL(triggered()), MainWindow::instance(), SLOT(close()));
 
     connect(mActions->actionPreferences, SIGNAL(triggered()), SLOT(preferencesDialog()));
@@ -59,7 +60,12 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
     connect(mActions->actionRemoveUnknowns, SIGNAL(triggered()), SLOT(removeUnknowns()));
 }
 
-ProjectDocument *ProjectActions::document()
+Document *ProjectActions::document()
+{
+    return docman()->currentDocument();
+}
+
+ProjectDocument *ProjectActions::projectDoc()
 {
     if (Document *doc = docman()->currentDocument())
         return doc->asProjectDocument();
@@ -94,6 +100,23 @@ void ProjectActions::openProject()
 
     foreach (const QString &fileName, fileNames)
         openProject(fileName);
+}
+
+bool ProjectActions::openLuaFile(const QString &fileName)
+{
+    int n = docman()->findDocument(fileName);
+    if (n != -1) {
+        docman()->setCurrentDocument(n);
+        return true;
+    }
+
+    docman()->addDocument(new LuaDocument(fileName));
+    if (docman()->failedToAdd())
+        return false;
+
+//    prefs()->addRecentFile(fileName);
+
+    return true;
 }
 
 bool ProjectActions::openProject(const QString &fileName)
@@ -141,56 +164,62 @@ bool ProjectActions::openProject(const QString &fileName)
 
 bool ProjectActions::openFile(const QString &fileName)
 {
+    if (fileName.endsWith(QLatin1String(".lua")))
+        return openLuaFile(fileName);
     if (fileName.endsWith(QLatin1String(".pzs")))
         return openProject(fileName);
     return false;
 }
 
-bool ProjectActions::saveProject()
+bool ProjectActions::saveFile()
 {
     QString fileName = document()->fileName();
     if (!fileName.isEmpty())
-        return saveProject(fileName);
-    return saveProjectAs();
+        return saveFile(fileName);
+    return saveFileAs();
 }
 
-bool ProjectActions::saveProject(const QString &fileName)
+bool ProjectActions::saveFile(const QString &fileName)
 {
     QString error;
     if (!document()->save(fileName, error)) {
-        QMessageBox::critical(MainWindow::instance(), tr("Error Saving Project"), error);
+        QMessageBox::critical(MainWindow::instance(), tr("Error Saving"), error);
         return false;
     }
     prefs()->addRecentFile(fileName);
     return true;
 }
 
-bool ProjectActions::saveProjectAs()
+bool ProjectActions::saveFileAs()
 {
     QSettings settings;
 
     QString suggestedFileName;
     if (!document()->fileName().isEmpty()) {
+#if 1
+        suggestedFileName = document()->fileName();
+#else
         const QFileInfo fileInfo(document()->fileName());
         suggestedFileName = fileInfo.path();
         suggestedFileName += QLatin1Char('/');
         suggestedFileName += fileInfo.completeBaseName();
         suggestedFileName += QLatin1String(".pzs");
+#endif
     } else {
         QString path = settings.value(KEY_SAVE_PROJECT_DIRECTORY).toString();
         if (path.isEmpty() || !QDir(path).exists())
             path = prefs()->scriptsDirectory();
         suggestedFileName = path;
         suggestedFileName += QLatin1Char('/');
-        suggestedFileName += tr("untitled.pzs");
+        suggestedFileName += document()->extension();
     }
 
     const QString fileName =
             QFileDialog::getSaveFileName(MainWindow::instance(), QString(), suggestedFileName,
-                                         tr("PZDraft project (*.pzs)"));
+                                         document()->filter());
     if (!fileName.isEmpty()) {
         settings.setValue(KEY_SAVE_PROJECT_DIRECTORY, QFileInfo(fileName).absolutePath());
-        return saveProject(fileName);
+        return saveFile(fileName);
     }
     return false;
 }
@@ -203,13 +232,13 @@ void ProjectActions::preferencesDialog()
 
 void ProjectActions::sceneScriptDialog()
 {
-    SceneScriptDialog d(document(), MainWindow::instance());
+    SceneScriptDialog d(projectDoc(), MainWindow::instance());
     d.exec();
 }
 
 void ProjectActions::removeConnections(NodeInput *input)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     foreach (BaseNode *node, doc->project()->rootNode()->nodesPlusSelf()) {
         foreach (NodeConnection *cxn, node->connections()) {
             if (cxn->mReceiver == input->node() && cxn->mInput == input->name())
@@ -220,7 +249,7 @@ void ProjectActions::removeConnections(NodeInput *input)
 
 void ProjectActions::removeConnections(NodeOutput *output)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     foreach (NodeConnection *cxn, output->node()->connections()) {
         if (cxn->mOutput == output->name())
             doc->changer()->doRemoveConnection(output->node(), cxn);
@@ -229,7 +258,7 @@ void ProjectActions::removeConnections(NodeOutput *output)
 
 void ProjectActions::removeUnknowns()
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
 
     doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Unknowns"));
     foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
@@ -255,7 +284,7 @@ void ProjectActions::removeUnknowns()
 
 void ProjectActions::removeNode(BaseNode *node)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Node"));
     foreach (BaseNode *node2, doc->project()->rootNode()->nodes()) {
         for (int i = 0; i < node2->connectionCount(); i++) {
@@ -272,7 +301,7 @@ void ProjectActions::removeNode(BaseNode *node)
 
 void ProjectActions::renameNode(BaseNode *node, const QString &name)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack(), true);
     doc->changer()->doRenameNode(node, name);
     doc->changer()->endUndoCommand();
@@ -280,14 +309,14 @@ void ProjectActions::renameNode(BaseNode *node, const QString &name)
 
 void ProjectActions::nodePropertiesDialog(BaseNode *node)
 {
-    NodePropertiesDialog d(document(), MainWindow::instance());
+    NodePropertiesDialog d(projectDoc(), MainWindow::instance());
     d.setNode(node);
     d.exec();
 }
 
 void ProjectActions::addInput()
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     int n = 1;
     QString name;
@@ -303,7 +332,7 @@ void ProjectActions::addInput()
 
 void ProjectActions::removeInput(int index)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     doc->changer()->doRemoveInput(doc->project()->rootNode()->input(index));
     doc->changer()->endUndoCommand();
@@ -311,7 +340,7 @@ void ProjectActions::removeInput(int index)
 
 void ProjectActions::reorderInput(int oldIndex, int newIndex)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     doc->changer()->doReorderInput(doc->project()->rootNode(), oldIndex, newIndex);
     doc->changer()->endUndoCommand();
@@ -319,7 +348,7 @@ void ProjectActions::reorderInput(int oldIndex, int newIndex)
 
 void ProjectActions::changeInput(NodeInput *input, const QString &name, const QString &label)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack(), true);
     NodeInput newValue(input, input->node());
     newValue.setName(name);
@@ -330,7 +359,7 @@ void ProjectActions::changeInput(NodeInput *input, const QString &name, const QS
 
 void ProjectActions::addOutput()
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     int n = 1;
     QString name;
@@ -346,7 +375,7 @@ void ProjectActions::addOutput()
 
 void ProjectActions::removeOutput(int index)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     doc->changer()->doRemoveOutput(doc->project()->rootNode()->output(index));
     doc->changer()->endUndoCommand();
@@ -354,7 +383,7 @@ void ProjectActions::removeOutput(int index)
 
 void ProjectActions::reorderOutput(int oldIndex, int newIndex)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     doc->changer()->doReorderOutput(doc->project()->rootNode(), oldIndex, newIndex);
     doc->changer()->endUndoCommand();
@@ -362,7 +391,7 @@ void ProjectActions::reorderOutput(int oldIndex, int newIndex)
 
 void ProjectActions::changeOutput(NodeOutput *output, const QString &name, const QString &label)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack(), true);
     NodeOutput newValue(output, output->node());
     newValue.setName(name);
@@ -373,10 +402,10 @@ void ProjectActions::changeOutput(NodeOutput *output, const QString &name, const
 
 void ProjectActions::addVariable()
 {
-    VariablePropertiesDialog d(document()->project(), NULL, MainWindow::instance());
+    VariablePropertiesDialog d(projectDoc()->project(), NULL, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
         ScriptVariable *var = new ScriptVariable(d.type(), d.name(), d.label(), QString());
-        ProjectDocument *doc = document();
+        ProjectDocument *doc = projectDoc();
         doc->changer()->beginUndoCommand(doc->undoStack());
         doc->changer()->doAddVariable(doc->project()->rootNode(),
                                       doc->project()->rootNode()->variableCount(),
@@ -392,7 +421,7 @@ void ProjectActions::removeVariable(ScriptVariable *var)
             != QMessageBox::Yes)
         return;
 
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     Q_ASSERT(doc->project()->rootNode()->variables().contains(var));
     doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Variable"));
     foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
@@ -410,13 +439,13 @@ void ProjectActions::removeVariable(ScriptVariable *var)
 
 void ProjectActions::variableProperties(ScriptVariable *var)
 {
-    VariablePropertiesDialog d(document()->project(), var, MainWindow::instance());
+    VariablePropertiesDialog d(projectDoc()->project(), var, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
         ScriptVariable newVar(var);
         newVar.setName(d.name());
         newVar.setType(d.type());
         newVar.setLabel(d.label());
-        ProjectDocument *doc = document();
+        ProjectDocument *doc = projectDoc();
         doc->changer()->beginUndoMacro(doc->undoStack(), tr("Change Variable"));
         foreach (BaseNode *node, doc->project()->rootNode()->nodes()) {
             foreach (ScriptVariable *var2, node->variables()) {
@@ -437,7 +466,7 @@ void ProjectActions::variableProperties(ScriptVariable *var)
 
 void ProjectActions::removeConnection(BaseNode *node, NodeConnection *cxn)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoCommand(doc->undoStack());
     doc->changer()->doRemoveConnection(node, cxn);
     doc->changer()->endUndoCommand();
@@ -445,7 +474,7 @@ void ProjectActions::removeConnection(BaseNode *node, NodeConnection *cxn)
 
 void ProjectActions::reorderConnection(BaseNode *node, int oldIndex, int newIndex)
 {
-    ProjectDocument *doc = document();
+    ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoMacro(doc->undoStack(), tr("Reorder Connection"));
     doc->changer()->doReorderConnection(node, oldIndex, newIndex);
     doc->changer()->endUndoMacro();
@@ -453,7 +482,7 @@ void ProjectActions::reorderConnection(BaseNode *node, int oldIndex, int newInde
 
 void ProjectActions::connectionsDialog(BaseNode *node, const QString &outputName)
 {
-    ConnectionsDialog d(document(), node, outputName, mainwin());
+    ConnectionsDialog d(projectDoc(), node, outputName, mainwin());
     d.exec();
 }
 
@@ -461,7 +490,7 @@ void ProjectActions::editNodeVariableValue(ScriptVariable *var)
 {
     EditNodeVariableDialog d(var, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
-        ProjectDocument *doc = document();
+        ProjectDocument *doc = projectDoc();
         doc->changer()->beginUndoCommand(doc->undoStack());
         ScriptVariable newVar(var);
         newVar.setValue(d.value());
@@ -473,8 +502,10 @@ void ProjectActions::editNodeVariableValue(ScriptVariable *var)
 void ProjectActions::updateActions()
 {
     Document *doc = docman()->currentDocument();
-    ProjectDocument *pdoc = document();
+    ProjectDocument *pdoc = projectDoc();
+    mActions->actionSaveProject->setText(doc ? tr("Save \"%1\"").arg(doc->displayName()) : tr("Save"));
     mActions->actionSaveProject->setEnabled(doc != 0 && doc->isModified());
+    mActions->actionSaveProjectAs->setText(doc ? tr("Save \"%1\" As...").arg(doc->displayName()) : tr("Save As..."));
     mActions->actionSaveProjectAs->setEnabled(doc != 0);
     mActions->actionEditInputsOutputs->setEnabled(pdoc != 0);
     mActions->actionRemoveUnknowns->setEnabled(pdoc != 0);

@@ -159,6 +159,8 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
         }
 
         if (openRect().contains(event->pos())) {
+            if (LuaNode *lnode = mNode->asLuaNode())
+                ProjectActions::instance()->openLuaFile(lnode->source());
             if (ScriptNode *snode = mNode->asScriptNode())
                 ProjectActions::instance()->openProject(snode->source());
         }

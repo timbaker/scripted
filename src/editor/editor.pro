@@ -60,7 +60,9 @@ SOURCES += main.cpp\
     metaeventdock.cpp \
     preferencesdialog.cpp \
     luautils.cpp \
-    connectionsdialog.cpp
+    connectionsdialog.cpp \
+    luadocument.cpp \
+    luaeditor.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -115,7 +117,9 @@ HEADERS  += mainwindow.h \
     metaeventdock.h \
     preferencesdialog.h \
     luautils.h \
-    connectionsdialog.h
+    connectionsdialog.h \
+    luadocument.h \
+    luaeditor.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \

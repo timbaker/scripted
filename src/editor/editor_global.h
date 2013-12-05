@@ -28,6 +28,7 @@ class BaseNode;
 class Document;
 class MetaEventInfo;
 class MetaEventNode;
+class LuaDocument;
 class LuaNode;
 class LuaInfo;
 class NodeConnection;

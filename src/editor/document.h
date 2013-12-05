@@ -20,8 +20,9 @@
 
 #include <QObject>
 
-class ProjectDocument;
 class BaseGraphicsView;
+class LuaDocument;
+class ProjectDocument;
 
 class QUndoStack;
 
@@ -34,6 +35,7 @@ class Document : public QObject
 
 public:
     enum DocumentType {
+        LuaDocType,
         ProjectDocType
     };
 
@@ -41,8 +43,10 @@ public:
     explicit Document(DocumentType type);
 
     DocumentType type() const { return mType; }
+    bool isLuaDocument() const { return mType == LuaDocType; }
     bool isProjectDocument() const { return mType == ProjectDocType; }
 
+    LuaDocument *asLuaDocument();
     ProjectDocument *asProjectDocument();
 
 //    void setView(BaseGraphicsView *view) { mView = view; }
@@ -53,6 +57,8 @@ public:
 
     virtual void setFileName(const QString &fileName) = 0;
     virtual const QString &fileName() const = 0;
+    virtual QString extension() const = 0;
+    virtual QString filter() const = 0;
     virtual bool save(const QString &filePath, QString &error) = 0;
 
     QString displayName() const;
