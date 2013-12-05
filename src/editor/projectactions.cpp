@@ -96,24 +96,25 @@ void ProjectActions::openProject()
         openProject(fileName);
 }
 
-void ProjectActions::openProject(const QString &fileName)
+bool ProjectActions::openProject(const QString &fileName)
 {
     int n = docman()->findDocument(fileName);
     if (n != -1) {
         docman()->setCurrentDocument(n);
 //        MainWindow::instance()->switchToEditMode();
-        return;
+        return true;
     }
 
     QFileInfo fileInfo(fileName);
+#if 0
     PROGRESS progress(tr("Reading %1").arg(fileInfo.fileName()));
-
+#endif
     ProjectReader reader;
     Project *project = reader.read(fileName);
     if (!project) {
         QMessageBox::critical(MainWindow::instance(), tr("Error Reading Project"),
                               reader.errorString());
-        return;
+        return false;
     }
 
 #if 0
@@ -131,9 +132,18 @@ void ProjectActions::openProject(const QString &fileName)
 
     docman()->addDocument(new ProjectDocument(project, fileName));
     if (docman()->failedToAdd())
-        return;
+        return false;
 
     prefs()->addRecentFile(fileName);
+
+    return true;
+}
+
+bool ProjectActions::openFile(const QString &fileName)
+{
+    if (fileName.endsWith(QLatin1String(".pzs")))
+        return openProject(fileName);
+    return false;
 }
 
 bool ProjectActions::saveProject()

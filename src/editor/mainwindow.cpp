@@ -39,7 +39,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     mCurrentDocumentStuff(0),
-    mSettings(new QSettings(this)),
     mUndoGroup(new QUndoGroup(this))
 {
     ui->setupUi(this);
@@ -148,7 +147,58 @@ bool MainWindow::confirmSave()
 
 void MainWindow::writeSettings()
 {
+    mSettings.beginGroup(QLatin1String("mainwindow"));
+    mSettings.setValue(QLatin1String("geometry"), saveGeometry());
+    mSettings.setValue(QLatin1String("state"), saveState());
+    mSettings.endGroup();
 
+    mSettings.beginGroup(QLatin1String("recentFiles"));
+    if (Document *document = docman()->currentDocument())
+        mSettings.setValue(QLatin1String("lastActive"), document->fileName());
+
+    QStringList fileList;
+    for (int i = 0; i < docman()->documentCount(); i++) {
+        Document *doc = docman()->documentAt(i);
+        if (doc->fileName().isEmpty())
+            continue;
+        fileList.append(doc->fileName());
+    }
+    mSettings.setValue(QLatin1String("lastOpenFiles"), fileList);
+
+    mSettings.endGroup();
+}
+
+void MainWindow::readSettings()
+{
+    mSettings.beginGroup(QLatin1String("mainwindow"));
+    QByteArray geom = mSettings.value(QLatin1String("geometry")).toByteArray();
+    if (!geom.isEmpty())
+        restoreGeometry(geom);
+    else
+        resize(1024, 768);
+    restoreState(mSettings.value(QLatin1String("state"), QByteArray()).toByteArray());
+    mSettings.endGroup();
+}
+
+void MainWindow::openLastFiles()
+{
+    mSettings.beginGroup(QLatin1String("recentFiles"));
+
+    QStringList lastOpenFiles = mSettings.value(
+                QLatin1String("lastOpenFiles")).toStringList();
+
+    for (int i = 0; i < lastOpenFiles.size(); i++) {
+        if (ProjectActions::instance()->openFile(lastOpenFiles.at(i))) {
+            // TODO: restore scale & scroll position
+        }
+    }
+
+    QString lastActiveDocument = mSettings.value(QLatin1String("lastActive")).toString();
+    int documentIndex = docman()->findDocument(lastActiveDocument);
+    if (documentIndex != -1)
+        docman()->setCurrentDocument(documentIndex);
+
+    mSettings.endGroup();
 }
 
 void MainWindow::documentAdded(Document *doc)

@@ -23,6 +23,7 @@
 
 #include <QMainWindow>
 #include <QMap>
+#include <QSettings>
 
 class EditMode;
 class IMode;
@@ -71,6 +72,9 @@ public:
     bool confirmSave();
 
     void writeSettings();
+    void readSettings();
+
+    void openLastFiles();
 
 public slots:
     void documentAdded(Document *doc);
@@ -90,7 +94,7 @@ private:
     bool mDocumentChanging;
     PerDocumentStuff *mCurrentDocumentStuff;
 
-    QSettings *mSettings;
+    QSettings mSettings;
     QUndoGroup *mUndoGroup;
 };
 

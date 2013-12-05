@@ -38,7 +38,8 @@ public:
 public slots:
     void newProject();
     void openProject();
-    void openProject(const QString &fileName);
+    bool openProject(const QString &fileName);
+    bool openFile(const QString &fileName);
     bool saveProject();
     bool saveProject(const QString &fileName);
     bool saveProjectAs();
