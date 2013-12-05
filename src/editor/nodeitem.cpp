@@ -364,7 +364,6 @@ void NodeInputItem::updateLayout()
     if (bounds != mBounds) {
         prepareGeometryChange();
         mBounds = bounds;
-        mScene->moved(this); // update connections
     }
 }
 
@@ -455,7 +454,6 @@ void NodeOutputItem::updateLayout()
     if (bounds != mBounds) {
         prepareGeometryChange();
         mBounds = bounds;
-        mScene->moved(this); // update connections
     }
 }
 
@@ -501,8 +499,11 @@ void NodeInputGroupItem::updateLayout()
 
     int y = 0 - totalHeight / 2 + pinHeight / 2;
     foreach (NodeInputItem *item, mItems) {
+        QRectF bounds = item->mapToScene(item->boundingRect()).boundingRect();
         item->updateLayout();
         item->setPos(0, y);
+        if (bounds != item->mapToScene(item->boundingRect()).boundingRect())
+            mScene->moved(item);
         y += pinHeight + gap;
     }
 }
@@ -577,8 +578,11 @@ void NodeOutputGroupItem::updateLayout()
 
     int y = 0 - totalHeight / 2 + pinHeight / 2;
     foreach (NodeOutputItem *item, mItems) {
+        QRectF bounds = item->mapToScene(item->boundingRect()).boundingRect();
         item->updateLayout();
         item->setPos(0, y);
+        if (bounds != item->mapToScene(item->boundingRect()).boundingRect())
+            mScene->moved(item);
         y += pinHeight + gap;
     }
 }

@@ -587,6 +587,8 @@ void ScriptScene::infoChanged(MetaEventInfo *info)
     foreach (NodeItem *item, mNodeItems)
         item->infoChanged(info);
 
+    mConnectionsItem->updateConnections();
+
     mAreaItem->updateBounds();
 }
 
@@ -595,6 +597,8 @@ void ScriptScene::infoChanged(ScriptInfo *info)
     foreach (NodeItem *item, mNodeItems)
         item->infoChanged(info);
 
+    mConnectionsItem->updateConnections();
+
     mAreaItem->updateBounds();
 }
 
@@ -602,6 +606,8 @@ void ScriptScene::infoChanged(LuaInfo *info)
 {
     foreach (NodeItem *item, mNodeItems)
         item->infoChanged(info);
+
+    mConnectionsItem->updateConnections();
 
     mAreaItem->updateBounds();
 }
