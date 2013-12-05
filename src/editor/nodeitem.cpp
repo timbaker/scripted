@@ -482,12 +482,12 @@ void NodeInputGroupItem::syncWithNode()
     foreach (NodeInputItem *item, mItems)
         if (!items.contains(item))
             unknowns += item;
-#if 1
+    // Qt bug: if you just delete an item, its parent's childBoundingRect is not
+    // updated.
+    foreach (NodeInputItem *item, unknowns)
+        mScene->removeItem(item);
     qDeleteAll(unknowns);
     mItems = items;
-#else
-    mItems = items + unknowns;
-#endif
 }
 
 void NodeInputGroupItem::updateLayout()
@@ -561,12 +561,12 @@ void NodeOutputGroupItem::syncWithNode()
     foreach (NodeOutputItem *item, mItems)
         if (!items.contains(item))
             unknowns += item;
-#if 1
+    // Qt bug: if you just delete an item, its parent's childBoundingRect is not
+    // updated.
+    foreach (NodeOutputItem *item, unknowns)
+        mScene->removeItem(item);
     qDeleteAll(unknowns);
     mItems = items;
-#else
-    mItems = items + unknowns;
-#endif
 }
 
 void NodeOutputGroupItem::updateLayout()
@@ -955,12 +955,12 @@ void VariableGroupItem::syncWithNode()
     foreach (BaseVariableItem *item, mItems)
         if (!items.contains(item))
             unknowns += item;
-#if 1
+    // Qt bug: if you just delete an item, its parent's childBoundingRect is not
+    // updated.
+    foreach (BaseVariableItem *item, unknowns)
+        mScene->removeItem(item);
     qDeleteAll(unknowns);
     mItems = items;
-#else
-    mItems = items + unknowns;
-#endif
 }
 
 bool VariableGroupItem::displaysVariable(ScriptVariable *var)
