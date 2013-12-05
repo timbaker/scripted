@@ -179,13 +179,14 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
             }
             variables += myVar;
         } else {
-            variables += new ScriptVariable(var);
-            variables.last()->setNode(this);
+            variables += new ScriptVariable(var, this);
         }
     }
     foreach (ScriptVariable *myVar, mVariables) {
-        if (!variables.contains(myVar))
+        if (!variables.contains(myVar)) {
+            myVar->setLabel(myVar->name());
             myUnknownVariables += myVar;
+        }
     }
     if (variables != mVariables) {
         mVariables = variables + myUnknownVariables;
@@ -202,13 +203,14 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
             }
             inputs += myInput;
         } else {
-            inputs += new NodeInput(input);
-            inputs.last()->setNode(this);
+            inputs += new NodeInput(input, this);
         }
     }
     foreach (NodeInput *myInput, mInputs) {
-        if (!inputs.contains(myInput))
+        if (!inputs.contains(myInput)) {
+            myInput->setLabel(myInput->name());
             myUnknownInputs += myInput;
+        }
     }
     if (inputs != mInputs) {
         mInputs = inputs + myUnknownInputs;
@@ -225,13 +227,14 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
             }
             outputs += myOutput;
         } else {
-            outputs += new NodeOutput(output);
-            outputs.last()->setNode(this);
+            outputs += new NodeOutput(output, this);
         }
     }
     foreach (NodeOutput *myOutput, mOutputs) {
-        if (!outputs.contains(myOutput))
+        if (!outputs.contains(myOutput)) {
+            myOutput->setLabel(myOutput->name());
             myUnknownOutputs += myOutput;
+        }
     }
     if (outputs != mOutputs) {
         mOutputs = outputs + myUnknownOutputs;
