@@ -26,11 +26,41 @@ bool NodeInput::isKnown() const
     return mNode && mNode->isKnown(this);
 }
 
+bool NodeInput::hasBadConnections()
+{
+    if (mNode) {
+        foreach (NodeConnection *cxn, mNode->connections()) {
+            // Only root node inputs have connections
+            if ((cxn->mOutput == mName) && !cxn->mReceiver->input(cxn->mInput))
+                return true;
+        }
+    }
+    return false;
+}
+
 /////
 
 bool NodeOutput::isKnown() const
 {
     return mNode && mNode->isKnown(this);
+}
+
+bool NodeOutput::hasBadConnections()
+{
+    if (mNode) {
+        foreach (NodeConnection *cxn, mNode->connections()) {
+            if (cxn->mOutput != mName)
+                continue;
+            if (cxn->mReceiver->isProjectRootNode()) {
+                if (!cxn->mReceiver->output(cxn->mInput))
+                    return true;
+            } else {
+                if (!cxn->mReceiver->input(cxn->mInput))
+                    return true;
+            }
+        }
+    }
+    return false;
 }
 
 /////

@@ -314,7 +314,7 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
-    if (mInput->node() != mScene->document()->project()->rootNode() && !mInput->isKnown())
+    if (!mInput->node()->isProjectRootNode() && !mInput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         if (!ConnectionsItem::mMakingConnection)
@@ -324,6 +324,8 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
     painter->setRenderHint(QPainter::Antialiasing, true);
 //    QPen pen(QColor(197, 224, 229, 128), 2);
     color = Qt::black;
+    if (mInput->hasBadConnections())
+        color = Qt::red;
     if (mConnectHighlight)
         color = QColor(Qt::green);
     QPen pen(color, 2);
@@ -394,7 +396,7 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
     painter->setPen(Qt::NoPen);
 //    QColor color = QColor(30, 40, 40);
     QColor color = Qt::gray;
-    if (mOutput->node() != mScene->document()->project()->rootNode() && !mOutput->isKnown())
+    if (!mOutput->node()->isProjectRootNode() && !mOutput->isKnown())
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         if (!ConnectionsItem::mMakingConnection)
@@ -403,6 +405,8 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
 
     painter->setRenderHint(QPainter::Antialiasing, true);
     color = Qt::black;
+    if (mOutput->hasBadConnections())
+        color = Qt::red;
     if (mConnectHighlight)
         color = QColor(Qt::green);
     QPen pen(color, 2);

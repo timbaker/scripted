@@ -151,6 +151,12 @@ void NodeConnectionsList::setItems(int row)
     item0->setEditable(false);
     item1->setEditable(false);
 
+    bool badConnection = cxn->mReceiver->isProjectRootNode()
+            ? !cxn->mReceiver->output(cxn->mInput)
+            : !cxn->mReceiver->input(cxn->mInput);
+    if (badConnection)
+        item1->setForeground(Qt::red);
+
     mModel->setItem(row, 0, item0);
     mModel->setItem(row, 1, item1);
 }

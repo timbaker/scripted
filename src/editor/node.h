@@ -80,6 +80,8 @@ public:
         mLabel = other->mLabel;
     }
 
+    bool hasBadConnections();
+
 private:
     BaseNode *mNode;
     QString mName;
@@ -134,6 +136,8 @@ public:
         mName = other->mName;
         mLabel = other->mLabel;
     }
+
+    bool hasBadConnections();
 
 private:
     BaseNode *mNode;
