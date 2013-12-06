@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>ScriptEd</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout"/>
@@ -33,8 +33,13 @@
     <addaction name="actionNewLuaFile"/>
     <addaction name="actionOpenProject"/>
     <addaction name="actionOpenLuaFile"/>
+    <addaction name="separator"/>
     <addaction name="actionSaveProject"/>
     <addaction name="actionSaveProjectAs"/>
+    <addaction name="actionRevert"/>
+    <addaction name="separator"/>
+    <addaction name="actionClose"/>
+    <addaction name="actionCloseAll"/>
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
@@ -148,6 +153,27 @@
   <action name="actionAboutQt">
    <property name="text">
     <string>About Qt...</string>
+   </property>
+  </action>
+  <action name="actionRevert">
+   <property name="text">
+    <string>Revert</string>
+   </property>
+  </action>
+  <action name="actionClose">
+   <property name="text">
+    <string>Close</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionCloseAll">
+   <property name="text">
+    <string>Close All</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+W</string>
    </property>
   </action>
  </widget>

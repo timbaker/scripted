@@ -50,12 +50,21 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
     QObject(parent),
     mActions(actions)
 {
+    mActions->actionNewProject->setShortcut(QKeySequence::New);
+    mActions->actionSaveProject->setShortcut(QKeySequence::Save);
+    mActions->actionOpenProject->setShortcut(QKeySequence::Open);
+//    mActions->actionClose->setShortcut(QKeySequence::Close); // Ctrl+F4
+    mActions->actionQuit->setShortcut(QKeySequence::Quit);
+
     connect(mActions->actionNewProject, SIGNAL(triggered()), SLOT(newProject()));
     connect(mActions->actionOpenProject, SIGNAL(triggered()), SLOT(openProject()));
     connect(mActions->actionNewLuaFile, SIGNAL(triggered()), SLOT(newLuaFile()));
     connect(mActions->actionOpenLuaFile, SIGNAL(triggered()), SLOT(openLuaFile()));
     connect(mActions->actionSaveProject, SIGNAL(triggered()), SLOT(saveFile()));
     connect(mActions->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveFileAs()));
+    connect(mActions->actionRevert, SIGNAL(triggered()), SLOT(revertToSaved()));
+    connect(mActions->actionClose, SIGNAL(triggered()), SLOT(close()));
+    connect(mActions->actionCloseAll, SIGNAL(triggered()), SLOT(closeAll()));
     connect(mActions->actionQuit, SIGNAL(triggered()), MainWindow::instance(), SLOT(close()));
 
     connect(mActions->actionPreferences, SIGNAL(triggered()), SLOT(preferencesDialog()));
@@ -274,6 +283,21 @@ bool ProjectActions::saveFileAs()
         return saveFile(fileName);
     }
     return false;
+}
+
+void ProjectActions::revertToSaved()
+{
+
+}
+
+void ProjectActions::close()
+{
+    docman()->closeCurrentDocument();
+}
+
+void ProjectActions::closeAll()
+{
+    docman()->closeAllDocuments();
 }
 
 void ProjectActions::preferencesDialog()
@@ -555,10 +579,20 @@ void ProjectActions::updateActions()
 {
     Document *doc = docman()->currentDocument();
     ProjectDocument *pdoc = projectDoc();
+
     mActions->actionSaveProject->setText(doc ? tr("Save \"%1\"").arg(doc->displayName()) : tr("Save"));
     mActions->actionSaveProject->setEnabled(doc != 0 && doc->isModified());
+
     mActions->actionSaveProjectAs->setText(doc ? tr("Save \"%1\" As...").arg(doc->displayName()) : tr("Save As..."));
     mActions->actionSaveProjectAs->setEnabled(doc != 0);
+
+    mActions->actionRevert->setText(doc ? tr("Revert \"%1\" to Saved").arg(doc->displayName()) : tr("Revert to Saved"));
+    mActions->actionRevert->setEnabled(doc != 0 && doc->isModified());
+
+    mActions->actionClose->setText(doc ? tr("Close \"%1\"").arg(doc->displayName()) : tr("Close"));
+    mActions->actionClose->setEnabled(doc != 0);
+    mActions->actionCloseAll->setEnabled(doc != 0);
+
     mActions->actionEditInputsOutputs->setEnabled(pdoc != 0);
     mActions->actionRemoveUnknowns->setEnabled(pdoc != 0);
 }

@@ -47,6 +47,9 @@ public slots:
     bool saveFile();
     bool saveFile(const QString &fileName);
     bool saveFileAs();
+    void revertToSaved();
+    void close();
+    void closeAll();
 
     void preferencesDialog();
 
