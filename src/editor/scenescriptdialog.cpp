@@ -102,12 +102,15 @@ void SceneScriptDialog::afterRemoveInput(BaseNode *node, int index, NodeInput *i
 {
     Q_UNUSED(input)
     if (node != mDocument->project()->rootNode()) return;
+    ui->inputsList->setCurrentRow(-1);
     delete ui->inputsList->takeItem(index);
+    ui->inputsList->setCurrentRow((index > 0) ? index - 1 : index);
 }
 
 void SceneScriptDialog::afterReorderInput(BaseNode *node, int oldIndex, int newIndex)
 {
     if (node != mDocument->project()->rootNode()) return;
+    ui->inputsList->setCurrentRow(-1);
     QListWidgetItem *item = ui->inputsList->takeItem(oldIndex);
     ui->inputsList->insertItem(newIndex, item);
     ui->inputsList->setCurrentRow(newIndex);
@@ -139,12 +142,15 @@ void SceneScriptDialog::afterRemoveOutput(BaseNode *node, int index, NodeOutput 
 {
     Q_UNUSED(output)
     if (node != mDocument->project()->rootNode()) return;
+    ui->outputsList->setCurrentRow(-1);
     delete ui->outputsList->takeItem(index);
+    ui->outputsList->setCurrentRow((index > 0) ? index - 1 : index);
 }
 
 void SceneScriptDialog::afterReorderOutput(BaseNode *node, int oldIndex, int newIndex)
 {
     if (node != mDocument->project()->rootNode()) return;
+    ui->outputsList->setCurrentRow(-1);
     QListWidgetItem *item = ui->outputsList->takeItem(oldIndex);
     ui->outputsList->insertItem(newIndex, item);
     ui->outputsList->setCurrentRow(newIndex);

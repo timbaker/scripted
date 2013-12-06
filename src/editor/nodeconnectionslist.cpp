@@ -73,8 +73,8 @@ void NodeConnectionsList::setDocument(Document *doc)
     if (mDocument) {
         connect(mDocument->changer(), SIGNAL(afterAddConnection(int,NodeConnection*)),
                 SLOT(afterAddConnection(int,NodeConnection*)));
-        connect(mDocument->changer(), SIGNAL(beforeRemoveConnection(int,NodeConnection*)),
-                SLOT(beforeRemoveConnection(int,NodeConnection*)));
+        connect(mDocument->changer(), SIGNAL(afterRemoveConnection(int,NodeConnection*)),
+                SLOT(afterRemoveConnection(int,NodeConnection*)));
         connect(mDocument->changer(), SIGNAL(afterReorderConnection(BaseNode*,int,int)),
                 SLOT(afterReorderConnection(BaseNode*,int,int)));
 
@@ -93,18 +93,22 @@ void NodeConnectionsList::afterAddConnection(int index, NodeConnection *cxn)
     mModel->insertRow(index);
     setItems(index);
 
-    selectionModel()->select(mModel->index(index, 0),
-                             QItemSelectionModel::Clear |
-                             QItemSelectionModel::Rows |
-                             QItemSelectionModel::SelectCurrent);
+    setCurrentIndex(mModel->index(index, 0));
 }
 
-void NodeConnectionsList::beforeRemoveConnection(int index, NodeConnection *cxn)
+void NodeConnectionsList::afterRemoveConnection(int index, NodeConnection *cxn)
 {
     if (cxn->mSender != mNode)
         return;
 
+    selectionModel()->clear();
+
     mModel->removeRow(index);
+
+    if (index - 1 > 0)
+        setCurrentIndex(mModel->index(index - 1, 0));
+    else if (index < mNode->connectionCount())
+        setCurrentIndex(mModel->index(index, 0));
 }
 
 void NodeConnectionsList::afterReorderConnection(BaseNode *node, int oldIndex, int newIndex)
@@ -112,15 +116,14 @@ void NodeConnectionsList::afterReorderConnection(BaseNode *node, int oldIndex, i
     if (node != mNode)
         return;
 
+    selectionModel()->clear();
+
     //    mModel->moveRow(QModelIndex(), oldIndex, QModelIndex(), newIndex);
     mModel->removeRow(oldIndex);
     mModel->insertRow(newIndex);
     setItems(newIndex);
 
-    selectionModel()->select(mModel->index(newIndex, 0),
-                             QItemSelectionModel::Clear |
-                             QItemSelectionModel::Rows |
-                             QItemSelectionModel::SelectCurrent);
+    setCurrentIndex(mModel->index(newIndex, 0));
 }
 
 // These 2 methods only get called if there were some redo actions possible when

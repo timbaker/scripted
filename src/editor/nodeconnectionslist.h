@@ -37,7 +37,7 @@ private slots:
     void setDocument(Document *doc);
 
     void afterAddConnection(int index, NodeConnection *cxn);
-    void beforeRemoveConnection(int index, NodeConnection *cxn);
+    void afterRemoveConnection(int index, NodeConnection *cxn);
     void afterReorderConnection(BaseNode *node, int oldIndex, int newIndex);
 
     void afterChangeInput(NodeInput *input, const NodeInput *oldValue);
