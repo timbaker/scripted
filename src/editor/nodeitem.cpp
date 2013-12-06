@@ -260,6 +260,11 @@ void NodeItem::updateLayout()
     QRectF r = mBounds.adjusted(0, nameSize.height(), 0, 0);
     mInputsItem->setPos(r.left() - 1, r.center().y());
     mOutputsItem->setPos(r.right() + 1, r.center().y());
+
+    foreach (NodeInputItem *item, mInputsItem->mItems)
+        mScene->moved(item);
+    foreach (NodeOutputItem *item, mOutputsItem->mItems)
+        mScene->moved(item);
 }
 
 void NodeItem::syncWithNode()
