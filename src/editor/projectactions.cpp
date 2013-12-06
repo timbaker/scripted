@@ -382,7 +382,7 @@ void ProjectActions::removeNode(BaseNode *node)
 {
     ProjectDocument *doc = projectDoc();
     doc->changer()->beginUndoMacro(doc->undoStack(), tr("Remove Node"));
-    foreach (BaseNode *node2, doc->project()->rootNode()->nodes()) {
+    foreach (BaseNode *node2, doc->project()->rootNode()->nodesPlusSelf()) {
         for (int i = 0; i < node2->connectionCount(); i++) {
             NodeConnection *cxn = node2->connection(i);
             if (cxn->mSender == node || cxn->mReceiver == node) {
