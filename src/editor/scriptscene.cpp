@@ -814,12 +814,20 @@ void ConnectionItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
             return;
         QMenu menu;
         QIcon trash(QLatin1String(":/images/16x16/edit-delete.png"));
-        QAction *a = menu.addAction(scene()->tr("Connections..."));
-        QAction *b = menu.addAction(trash, scene()->tr("Remove Connection"));
+        QIcon sweep(QLatin1String(":/images/16x16/edit-clear.png"));
+        QAction *connections = menu.addAction(mScene->tr("Connections..."));
+        QAction *clear = menu.addAction(sweep, mScene->tr("Clear Control Points"));
+        QAction *remove = menu.addAction(trash, mScene->tr("Remove Connection"));
         QAction *selected = menu.exec(event->screenPos());
-        if (selected == a)
+        if (selected == connections)
             ProjectActions::instance()->connectionsDialog(mConnection->mSender, mConnection->mOutput);
-        if (selected == b)
+        if (selected == clear) {
+            ProjectDocument *doc = mScene->document();
+            doc->changer()->beginUndoCommand(doc->undoStack());
+            doc->changer()->doSetControlPoints(mConnection, QPolygonF());
+            doc->changer()->endUndoCommand();
+        }
+        if (selected == remove)
             ProjectActions::instance()->removeConnection(mConnection->mSender, mConnection);
     }
 
@@ -852,8 +860,7 @@ void ConnectionItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             updateBounds();
             update();
 
-            ScriptScene *scene = (ScriptScene*)this->scene();
-            ProjectDocument *doc = scene->document();
+            ProjectDocument *doc = mScene->document();
             if (!mMouseMoved) {
                 // delete point on click/release without movement
                 doc->changer()->beginUndoCommand(doc->undoStack());
