@@ -191,6 +191,9 @@ void LuaMode::onActiveStateChanged(bool active)
     if (active) {
         if (mCurrentDocumentStuff)
             mCurrentDocumentStuff->activate();
+
+        // When switching from one mode to another, set the current document
+        currentDocumentTabChanged(mTabWidget->currentIndex());
 #if 0
         QMap<QString,QAction*> map;
         foreach (QDockWidget *dockWidget, mMainWindow->dockWidgets()) {
