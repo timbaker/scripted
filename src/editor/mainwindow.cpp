@@ -22,6 +22,7 @@
 #include "documentmanager.h"
 #include "editmode.h"
 #include "fancytabwidget.h"
+#include "luamode.h"
 #include "projectactions.h"
 #include "projectdocument.h"
 #include "toolmanager.h"
@@ -72,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // Do this after connect() calls above -> esp. documentAdded()
     mWelcomeMode = new WelcomeMode(this);
     mEditMode = new EditMode(this);
+    mLuaMode = new LuaMode(this);
 
     ::Utils::StyleHelper::setBaseColor(::Utils::StyleHelper::DEFAULT_BASE_COLOR);
     mTabWidget = new Core::Internal::FancyTabWidget;
@@ -80,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent) :
     new ModeManager(mTabWidget, this);
     ModeManager::instance()->addMode(mWelcomeMode);
     ModeManager::instance()->addMode(mEditMode);
+    ModeManager::instance()->addMode(mLuaMode);
     setCentralWidget(mTabWidget);
 
     mWelcomeMode->setEnabled(true);
@@ -125,7 +128,12 @@ bool MainWindow::confirmSave()
     if (!mCurrentDocumentStuff || !mCurrentDocumentStuff->document()->isModified())
         return true;
 
-    if (ModeManager::instance()->currentMode() == mWelcomeMode)
+    if (mCurrentDocumentStuff->document()->isLuaDocument() &&
+            ModeManager::instance()->currentMode() != mLuaMode)
+        ModeManager::instance()->setCurrentMode(mLuaMode);
+
+    if (mCurrentDocumentStuff->document()->isProjectDocument() &&
+            ModeManager::instance()->currentMode() != mEditMode)
         ModeManager::instance()->setCurrentMode(mEditMode);
 
     if (isMinimized())
@@ -168,6 +176,7 @@ void MainWindow::writeSettings()
     mSettings.endGroup();
 
     mEditMode->writeSettings(mSettings);
+    mLuaMode->writeSettings(mSettings);
 }
 
 void MainWindow::readSettings()
@@ -182,6 +191,7 @@ void MainWindow::readSettings()
     mSettings.endGroup();
 
     mEditMode->readSettings(mSettings);
+    mLuaMode->writeSettings(mSettings);
 }
 
 void MainWindow::openLastFiles()
@@ -211,7 +221,8 @@ void MainWindow::documentAdded(Document *doc)
 
     mDocumentStuff[doc] = new PerDocumentStuff(doc);
 
-    mEditMode->setEnabled(true);
+    mEditMode->setEnabled(docman()->projectDocuments().size());
+    mLuaMode->setEnabled(docman()->luaDocuments().size());
 }
 
 void MainWindow::currentDocumentChanged(Document *doc)
@@ -228,13 +239,17 @@ void MainWindow::currentDocumentChanged(Document *doc)
     mCurrentDocumentStuff = doc ? mDocumentStuff[doc] : 0; // FIXME: unset when deleted
 
     if (mCurrentDocumentStuff) {
-        ModeManager::instance()->setCurrentMode(mEditMode); // handles new documents
+        if (doc->isProjectDocument())
+            ModeManager::instance()->setCurrentMode(mEditMode); // handles new documents
+        if (doc->isLuaDocument())
+            ModeManager::instance()->setCurrentMode(mLuaMode); // handles new documents
         mUndoGroup->setActiveStack(mCurrentDocumentStuff->document()->undoStack());
         connect(doc, SIGNAL(cleanChanged()), ProjectActions::instance(), SLOT(updateActions()));
         connect(doc, SIGNAL(fileNameChanged()), ProjectActions::instance(), SLOT(updateActions()));
     } else {
         ToolManager::instance()->clearDocument();
         mEditMode->setEnabled(false);
+        mLuaMode->setEnabled(false);
     }
 
     ProjectActions::instance()->updateActions();

@@ -38,7 +38,9 @@ public:
 
 public slots:
     void newProject();
+    void newLuaFile();
     void openProject();
+    void openLuaFile();
     bool openLuaFile(const QString &fileName);
     bool openProject(const QString &fileName);
     bool openFile(const QString &fileName);

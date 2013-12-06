@@ -30,7 +30,9 @@
      <string>File</string>
     </property>
     <addaction name="actionNewProject"/>
+    <addaction name="actionNewLuaFile"/>
     <addaction name="actionOpenProject"/>
+    <addaction name="actionOpenLuaFile"/>
     <addaction name="actionSaveProject"/>
     <addaction name="actionSaveProjectAs"/>
     <addaction name="separator"/>
@@ -116,6 +118,24 @@
    </property>
    <property name="text">
     <string>Remove Unknowns</string>
+   </property>
+  </action>
+  <action name="actionNewLuaFile">
+   <property name="icon">
+    <iconset resource="editor.qrc">
+     <normaloff>:/images/16x16/document-new.png</normaloff>:/images/16x16/document-new.png</iconset>
+   </property>
+   <property name="text">
+    <string>New Lua File...</string>
+   </property>
+  </action>
+  <action name="actionOpenLuaFile">
+   <property name="icon">
+    <iconset resource="editor.qrc">
+     <normaloff>:/images/16x16/document-open.png</normaloff>:/images/16x16/document-open.png</iconset>
+   </property>
+   <property name="text">
+    <string>Open Lua File...</string>
    </property>
   </action>
  </widget>

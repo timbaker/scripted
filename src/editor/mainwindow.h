@@ -27,6 +27,7 @@
 
 class EditMode;
 class IMode;
+class LuaMode;
 class WelcomeMode;
 
 namespace Core {
@@ -89,6 +90,7 @@ private:
     Core::Internal::FancyTabWidget *mTabWidget;
     WelcomeMode *mWelcomeMode;
     EditMode *mEditMode;
+    LuaMode *mLuaMode;
 
     QMap<Document*,PerDocumentStuff*> mDocumentStuff;
     bool mDocumentChanging;

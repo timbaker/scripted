@@ -238,7 +238,7 @@ void WelcomeMode::onActivated(const QModelIndex &index)
         prefs()->setScriptsDirectory(fileInfo.canonicalFilePath());
         return;
     }
-    ProjectActions::instance()->openProject(path);
+    ProjectActions::instance()->openFile(path);
 }
 
 void WelcomeMode::browse()
@@ -322,7 +322,7 @@ void WelcomeMode::linkClicked()
     int index = mRecentItems.indexOf(link);
     if (index >= 0) {
         QString fileName = prefs()->recentFiles().at(index);
-        ProjectActions::instance()->openProject(fileName);
+        ProjectActions::instance()->openFile(fileName);
     }
 }
 

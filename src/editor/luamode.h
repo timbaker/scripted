@@ -15,8 +15,8 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EDITMODE_H
-#define EDITMODE_H
+#ifndef LUAMODE_H
+#define LUAMODE_H
 
 #include "imode.h"
 
@@ -27,30 +27,25 @@
 
 class LuaDockWidget;
 class LuaEditor;
-class MetaEventDock;
-class ProjectTreeDock;
-class ScriptsDock;
-class ScriptVariablesDock;
+class LuaMode;
 
 class QTabWidget;
 
-class EditMode;
-
-class EditModeToolBar : public QToolBar
+class LuaModeToolBar : public QToolBar
 {
     Q_OBJECT
 public:
-    EditModeToolBar(QWidget *parent = 0);
+    LuaModeToolBar(QWidget *parent = 0);
 };
 
-class EditModePerDocumentStuff : public QObject
+class LuaModePerDocumentStuff : public QObject
 {
     Q_OBJECT
 public:
-    EditModePerDocumentStuff(EditMode *mode, ProjectDocument *doc);
-    ~EditModePerDocumentStuff();
+    LuaModePerDocumentStuff(LuaMode *mode, LuaDocument *doc);
+    ~LuaModePerDocumentStuff();
 
-    ProjectDocument *document() const
+    LuaDocument *document() const
     { return mDocument; }
 
     QWidget *widget() const;
@@ -62,17 +57,16 @@ public slots:
     void updateDocumentTab();
 
 protected:
-    EditMode *mMode;
-    ProjectDocument *mDocument;
-    ProjectScene *mScene;
-    ProjectView *mView;
+    LuaMode *mMode;
+    LuaDocument *mDocument;
+    LuaEditor *mEditor;
 };
 
-class EditMode : public IMode
+class LuaMode : public IMode
 {
     Q_OBJECT
 public:
-    EditMode(QObject *parent = 0);
+    LuaMode(QObject *parent = 0);
 
     void readSettings(QSettings &settings);
     void writeSettings(QSettings &settings);
@@ -89,17 +83,13 @@ private slots:
 protected:
     EmbeddedMainWindow *mMainWindow;
     QTabWidget *mTabWidget;
-    ProjectTreeDock *mProjectDock;
+    LuaModeToolBar *mToolBar;
     LuaDockWidget *mLuaDock;
-    MetaEventDock *mEventsDock;
-    ScriptsDock *mScriptsDock;
-    ScriptVariablesDock *mVariablesDock;
-    EditModeToolBar *mToolBar;
 
-    EditModePerDocumentStuff *mCurrentDocumentStuff;
-    QMap<Document*,EditModePerDocumentStuff*> mDocumentStuff;
+    LuaModePerDocumentStuff *mCurrentDocumentStuff;
+    QMap<Document*,LuaModePerDocumentStuff*> mDocumentStuff;
 
-    friend class EditModePerDocumentStuff;
+    friend class LuaModePerDocumentStuff;
 };
 
-#endif // EDITMODE_H
+#endif // LUAMODE_H

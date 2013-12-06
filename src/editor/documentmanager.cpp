@@ -132,6 +132,24 @@ Document *DocumentManager::documentAt(int index) const
     return mDocuments.at(index);
 }
 
+QList<LuaDocument *> DocumentManager::luaDocuments() const
+{
+    QList<LuaDocument *> ret;
+    foreach (Document *doc, mDocuments)
+        if (LuaDocument *ldoc = doc->asLuaDocument())
+            ret += ldoc;
+    return ret;
+}
+
+QList<ProjectDocument *> DocumentManager::projectDocuments() const
+{
+    QList<ProjectDocument *> ret;
+    foreach (Document *doc, mDocuments)
+        if (ProjectDocument *ldoc = doc->asProjectDocument())
+            ret += ldoc;
+    return ret;
+}
+
 void DocumentManager::setFailedToAdd()
 {
     mFailedToAdd = true;

@@ -62,7 +62,8 @@ SOURCES += main.cpp\
     luautils.cpp \
     connectionsdialog.cpp \
     luadocument.cpp \
-    luaeditor.cpp
+    luaeditor.cpp \
+    luamode.cpp
 
 HEADERS  += mainwindow.h \
     scriptscene.h \
@@ -100,7 +101,6 @@ HEADERS  += mainwindow.h \
     scriptsdock.h \
     node.h \
     nodeitem.h \
-    scriptscene.h \
     scriptview.h \
     luamanager.h \
     luadockwidget.h \
@@ -119,7 +119,8 @@ HEADERS  += mainwindow.h \
     luautils.h \
     connectionsdialog.h \
     luadocument.h \
-    luaeditor.h
+    luaeditor.h \
+    luamode.h
 
 FORMS    += mainwindow.ui \
     welcomemode.ui \

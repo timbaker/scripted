@@ -17,9 +17,13 @@
 
 #include "luadocument.h"
 
+#include "documentmanager.h"
 #include "luaeditor.h"
+#include "mainwindow.h"
 
+#include <QDir>
 #include <QFileInfo>
+#include <QMessageBox>
 #include <QTemporaryFile>
 #include <QTextStream>
 #include <QUndoStack>
@@ -123,8 +127,22 @@ void LuaDocument::setEditor(LuaEditor *editor)
 {
     if (mEditor)
         mEditor->disconnect(this);
+
     mEditor = editor;
+
     if (mEditor) {
+        if (!fileName().isEmpty()) {
+            QFile file(fileName());
+            if (file.open(QFile::ReadOnly | QFile::Text))
+                mEditor->setPlainText(file.readAll());
+            else {
+                QMessageBox::critical(mainwin(), tr("Error Reading Lua"),
+                                      tr("%1\n%2")
+                                      .arg(QDir::toNativeSeparators(fileName()))
+                                      .arg(file.errorString()));
+                docman()->setFailedToAdd();
+            }
+        }
         connect(mEditor, SIGNAL(modificationChanged(bool)), SIGNAL(cleanChanged()));
     }
 }

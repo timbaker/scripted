@@ -50,6 +50,6 @@ QString Document::displayName() const
 {
     QString displayName = QFileInfo(fileName()).fileName();
     if (displayName.isEmpty())
-        displayName = tr("untitled.iep");
+        displayName = tr("untitled") + extension();
     return displayName;
 }

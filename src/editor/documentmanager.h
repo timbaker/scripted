@@ -18,10 +18,9 @@
 #ifndef DOCUMENTMANAGER_H
 #define DOCUMENTMANAGER_H
 
+#include "editor_global.h"
 #include "singleton.h"
 #include <QObject>
-
-class Document;
 
 class QUndoGroup;
 
@@ -51,6 +50,9 @@ public:
 
     Document *documentAt(int index) const;
     int indexOf(Document *doc) { return mDocuments.indexOf(doc); }
+
+    QList<LuaDocument*> luaDocuments() const;
+    QList<ProjectDocument*> projectDocuments() const;
 
 //    QUndoGroup *undoGroup() const { return mUndoGroup; }
 

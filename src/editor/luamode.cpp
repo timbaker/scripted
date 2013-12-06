@@ -15,7 +15,7 @@
  * this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "editmode.h"
+#include "luamode.h"
 
 #include "basegraphicsview.h"
 #include "documentmanager.h"
@@ -23,15 +23,11 @@
 #include "luadockwidget.h"
 #include "luadocument.h"
 #include "luaeditor.h"
-#include "metaeventdock.h"
 #include "mainwindow.h"
 #include "projectactions.h"
 #include "projectdocument.h"
 #include "scriptscene.h"
 #include "scriptview.h"
-#include "projecttreedock.h"
-#include "scriptsdock.h"
-#include "scriptvariablesdock.h"
 #include "toolmanager.h"
 
 #include <QDir>
@@ -39,80 +35,67 @@
 #include <QUndoStack>
 #include <QVBoxLayout>
 
-EditModeToolBar::EditModeToolBar(QWidget *parent) :
+LuaModeToolBar::LuaModeToolBar(QWidget *parent) :
     QToolBar(parent)
 {
-    setWindowTitle(tr("Editing ToolBar"));
+    setWindowTitle(tr("Lua ToolBar"));
 
     Ui::MainWindow *actions = ProjectActions::instance()->actions();
-    addAction(actions->actionNewProject);
-    addAction(actions->actionOpenProject);
+    addAction(actions->actionNewLuaFile);
+    addAction(actions->actionOpenLuaFile);
     addAction(actions->actionSaveProject);
     addAction(actions->actionSaveProjectAs);
     addSeparator();
-    addAction(actions->menuEdit->actions().first());
-    addAction(actions->menuEdit->actions().at(1));
-#if 0
-    addAction(actions->actionSelectMoveNode);
-    addAction(actions->actionAreaSelectNodes);
-    addAction(actions->actionAddRemoveNode);
-    addAction(actions->actionSelectMovePath);
-    addAction(actions->actionCreatePath);
-    addAction(actions->actionAddPathSegments);
-
-    addSeparator();
-
-    addAction(actions->actionPencil);
-    addAction(actions->actionEraser);
-
-    addSeparator();
-
-    addAction(actions->actionSelectMoveImages);
-#endif
+//    addAction(actions->menuEdit->actions().first());
+//    addAction(actions->menuEdit->actions().at(1));
 }
 
 /////
 
-EditModePerDocumentStuff::EditModePerDocumentStuff(EditMode *mode, ProjectDocument *doc) :
+LuaModePerDocumentStuff::LuaModePerDocumentStuff(LuaMode *mode, LuaDocument *doc) :
     QObject(doc),
     mMode(mode),
     mDocument(doc),
-    mScene(new ProjectScene(doc)),
-    mView(new ProjectView(doc))
+    mEditor(new LuaEditor)
 {
-    mView->setScene(mScene);
-    mScene->setParent(mView);
-
     connect(document(), SIGNAL(fileNameChanged()), SLOT(updateDocumentTab()));
     connect(document(), SIGNAL(cleanChanged()), SLOT(updateDocumentTab()));
+
+    QFont font;
+    font.setFamily("Courier");
+    font.setFixedPitch(true);
+    font.setPointSize(10);
+    mEditor->setFont(font);
+
+    /*highlighter =*/ new Highlighter(mEditor->document());
+
+    doc->setEditor(mEditor); // a bit kludgey
 }
 
-EditModePerDocumentStuff::~EditModePerDocumentStuff()
+LuaModePerDocumentStuff::~LuaModePerDocumentStuff()
 {
     // widget() is added to a QTabWidget.
     // Removing a tab does not delete the page widget.
-    // mScene is a child of the view.
     delete widget();
 }
 
-QWidget *EditModePerDocumentStuff::widget() const
+QWidget *LuaModePerDocumentStuff::widget() const
 {
-    return mView;
+    return mEditor;
 }
 
-void EditModePerDocumentStuff::activate()
+void LuaModePerDocumentStuff::activate()
 {
-    ToolManager::instance()->setScene(mScene);
+    ToolManager::instance()->setScene(0);
 }
 
-void EditModePerDocumentStuff::deactivate()
+void LuaModePerDocumentStuff::deactivate()
 {
-//    ToolManager::instance()->setScene(0);
 }
 
-void EditModePerDocumentStuff::updateDocumentTab()
+void LuaModePerDocumentStuff::updateDocumentTab()
 {
-    int tabIndex = docman()->projectDocuments().indexOf(document());
+    int tabIndex = docman()->luaDocuments().indexOf(document());
     if (tabIndex == -1)
         return;
 
@@ -127,52 +110,39 @@ void EditModePerDocumentStuff::updateDocumentTab()
 
 /////
 
-EditMode::EditMode(QObject *parent) :
+LuaMode::LuaMode(QObject *parent) :
     IMode(parent),
-    mProjectDock(new ProjectTreeDock),
     mLuaDock(new LuaDockWidget),
-    mEventsDock(new MetaEventDock),
-    mScriptsDock(new ScriptsDock),
-    mVariablesDock(new ScriptVariablesDock),
-    mToolBar(new EditModeToolBar),
+    mToolBar(new LuaModeToolBar),
     mCurrentDocumentStuff(0)
 {
-    setDisplayName(tr("Edit"));
+    setDisplayName(tr("Lua"));
 //    setIcon(QIcon(QLatin1String(":images/24x24/document-new.png")));
 
     mMainWindow = new EmbeddedMainWindow;
-    mMainWindow->setObjectName(QLatin1String("EditMode.Widget"));
+    mMainWindow->setObjectName(QLatin1String("LuaMode.Widget"));
 
     mTabWidget = new QTabWidget;
-    mTabWidget->setObjectName(QLatin1String("EditMode.TabWidget"));
+    mTabWidget->setObjectName(QLatin1String("LuaMode.TabWidget"));
     mTabWidget->setDocumentMode(true);
     mTabWidget->setTabsClosable(true);
 
     QVBoxLayout *vbox = new QVBoxLayout;
-    vbox->setObjectName(QLatin1String("EditMode.VBox"));
+    vbox->setObjectName(QLatin1String("LuaMode.VBox"));
     vbox->setMargin(0);
     vbox->addWidget(mTabWidget);
 //    vbox->addLayout(mStatusBar->statusBarLayout);
     vbox->setStretchFactor(mTabWidget, 1);
 
     QWidget *w = new QWidget;
-    w->setObjectName(QLatin1String("EditMode.VBoxWidget"));
+    w->setObjectName(QLatin1String("LuaMode.VBoxWidget"));
     w->setLayout(vbox);
 
     mMainWindow->setCentralWidget(w);
     mMainWindow->addToolBar(mToolBar);
 
-    mMainWindow->registerDockWidget(mProjectDock);
     mMainWindow->registerDockWidget(mLuaDock);
-    mMainWindow->registerDockWidget(mEventsDock);
-    mMainWindow->registerDockWidget(mScriptsDock);
-    mMainWindow->registerDockWidget(mVariablesDock);
-    mMainWindow->addDockWidget(Qt::TopDockWidgetArea, mVariablesDock);
-    mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mProjectDock);
-    mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mEventsDock);
     mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mLuaDock);
-    mMainWindow->addDockWidget(Qt::RightDockWidgetArea, mScriptsDock);
-//    mMainWindow->tabifyDockWidget(mLayersDock, mFileSystemDock);
 
     setWidget(mMainWindow);
 
@@ -191,21 +161,21 @@ EditMode::EditMode(QObject *parent) :
     connect(this, SIGNAL(activeStateChanged(bool)), SLOT(onActiveStateChanged(bool)));
 }
 
-void EditMode::readSettings(QSettings &settings)
+void LuaMode::readSettings(QSettings &settings)
 {
-    settings.beginGroup(QLatin1String("EditMode"));
+    settings.beginGroup(QLatin1String("LuaMode"));
     mMainWindow->readSettings(settings);
     settings.endGroup();
 }
 
-void EditMode::writeSettings(QSettings &settings)
+void LuaMode::writeSettings(QSettings &settings)
 {
-    settings.beginGroup(QLatin1String("EditMode"));
+    settings.beginGroup(QLatin1String("LuaMode"));
     mMainWindow->writeSettings(settings);
     settings.endGroup();
 }
 
-void EditMode::onActiveStateChanged(bool active)
+void LuaMode::onActiveStateChanged(bool active)
 {
 #if 0
     QMenu *menu = MainWindow::instance()->actionsIface()->menuViews;
@@ -233,22 +203,22 @@ void EditMode::onActiveStateChanged(bool active)
     }
 }
 
-void EditMode::currentDocumentTabChanged(int index)
+void LuaMode::currentDocumentTabChanged(int index)
 {
     if (index == -1) return;
-    docman()->setCurrentDocument(docman()->projectDocuments().at(index));
+    docman()->setCurrentDocument(docman()->luaDocuments().at(index));
 }
 
-void EditMode::documentTabCloseRequested(int index)
+void LuaMode::documentTabCloseRequested(int index)
 {
     MainWindow::instance()->documentCloseRequested(index);
 }
 
-void EditMode::documentAdded(Document *doc)
+void LuaMode::documentAdded(Document *doc)
 {
-    if (ProjectDocument *pdoc = doc->asProjectDocument()) {
-        mDocumentStuff[doc] = new EditModePerDocumentStuff(this, pdoc);
-        int docIndex = docman()->projectDocuments().indexOf(pdoc);
+    if (LuaDocument *ldoc = doc->asLuaDocument()) {
+        mDocumentStuff[doc] = new LuaModePerDocumentStuff(this, ldoc);
+        int docIndex = docman()->luaDocuments().indexOf(ldoc);
         mTabWidget->blockSignals(true);
         mTabWidget->insertTab(docIndex, mDocumentStuff[doc]->widget(), doc->displayName());
         mTabWidget->blockSignals(false);
@@ -256,25 +226,25 @@ void EditMode::documentAdded(Document *doc)
     }
 }
 
-void EditMode::currentDocumentChanged(Document *doc)
+void LuaMode::currentDocumentChanged(Document *doc)
 {
     if (mCurrentDocumentStuff) {
         if (isActive())
             mCurrentDocumentStuff->deactivate();
     }
 
-    mCurrentDocumentStuff = (doc && doc->isProjectDocument()) ? mDocumentStuff[doc] : 0;
+    mCurrentDocumentStuff = (doc && doc->isLuaDocument()) ? mDocumentStuff[doc] : 0;
 
     if (mCurrentDocumentStuff) {
-        mTabWidget->setCurrentIndex(docman()->projectDocuments().indexOf(doc->asProjectDocument()));
+        mTabWidget->setCurrentIndex(docman()->luaDocuments().indexOf(doc->asLuaDocument()));
         if (isActive())
             mCurrentDocumentStuff->activate();
     }
 }
 
-void EditMode::documentAboutToClose(int index, Document *doc)
+void LuaMode::documentAboutToClose(int index, Document *doc)
 {
-    if (ProjectDocument *pdoc = doc->asProjectDocument()) {
+    if (LuaDocument *ldoc = doc->asLuaDocument()) {
         // At this point, the document is not in the DocumentManager's list of documents.
         // Removing the current tab will cause another tab to be selected and
         // the current document to change.
@@ -282,7 +252,7 @@ void EditMode::documentAboutToClose(int index, Document *doc)
         QList<Document*> docs = docman()->documents();
         docs.insert(index, doc);
         for (int i = 0; i < docs.size(); i++)
-            if (!doc->isProjectDocument())
+            if (!doc->isLuaDocument())
                 docs.takeAt(i--);
         index = docs.indexOf(doc);
         mTabWidget->removeTab(index);

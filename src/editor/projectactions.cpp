@@ -41,6 +41,8 @@
 
 static const QLatin1String KEY_OPEN_PROJECT_DIRECTORY("OpenProjectDirectory");
 static const QLatin1String KEY_SAVE_PROJECT_DIRECTORY("SaveProjectDirectory");
+static const QLatin1String KEY_OPEN_LUA_DIRECTORY("OpenLuaDirectory");
+static const QLatin1String KEY_SAVE_LUA_DIRECTORY("SaveLuaDirectory");
 
 SINGLETON_IMPL(ProjectActions)
 
@@ -50,6 +52,8 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
 {
     connect(mActions->actionNewProject, SIGNAL(triggered()), SLOT(newProject()));
     connect(mActions->actionOpenProject, SIGNAL(triggered()), SLOT(openProject()));
+    connect(mActions->actionNewLuaFile, SIGNAL(triggered()), SLOT(newLuaFile()));
+    connect(mActions->actionOpenLuaFile, SIGNAL(triggered()), SLOT(openLuaFile()));
     connect(mActions->actionSaveProject, SIGNAL(triggered()), SLOT(saveFile()));
     connect(mActions->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveFileAs()));
     connect(mActions->actionQuit, SIGNAL(triggered()), MainWindow::instance(), SLOT(close()));
@@ -79,6 +83,12 @@ void ProjectActions::newProject()
     docman()->addDocument(doc);
 }
 
+void ProjectActions::newLuaFile()
+{
+    LuaDocument *doc = new LuaDocument(QString());
+    docman()->addDocument(doc);
+}
+
 void ProjectActions::openProject()
 {
     QSettings settings;
@@ -102,6 +112,29 @@ void ProjectActions::openProject()
         openProject(fileName);
 }
 
+void ProjectActions::openLuaFile()
+{
+    QSettings settings;
+
+    QString filter = tr("All Files (*)");
+    filter += QLatin1String(";;");
+
+    QString selectedFilter = tr("Lua Files (*.lua)");
+    filter += selectedFilter;
+
+    QStringList fileNames =
+            QFileDialog::getOpenFileNames(MainWindow::instance(), tr("Open Lua File"),
+                                          settings.value(KEY_OPEN_LUA_DIRECTORY).toString(),
+                                          filter, &selectedFilter);
+    if (fileNames.isEmpty())
+        return;
+
+    settings.setValue(KEY_OPEN_LUA_DIRECTORY, QFileInfo(fileNames[0]).absolutePath());
+
+    foreach (const QString &fileName, fileNames)
+        openLuaFile(fileName);
+}
+
 bool ProjectActions::openLuaFile(const QString &fileName)
 {
     int n = docman()->findDocument(fileName);
@@ -114,7 +147,7 @@ bool ProjectActions::openLuaFile(const QString &fileName)
     if (docman()->failedToAdd())
         return false;
 
-//    prefs()->addRecentFile(fileName);
+    prefs()->addRecentFile(fileName);
 
     return true;
 }
@@ -206,7 +239,9 @@ bool ProjectActions::saveFileAs()
         suggestedFileName += QLatin1String(".pzs");
 #endif
     } else {
-        QString path = settings.value(KEY_SAVE_PROJECT_DIRECTORY).toString();
+        QString path = settings.value(document()->extension() == QLatin1String(".pzs") ?
+                                          KEY_SAVE_PROJECT_DIRECTORY :
+                                          KEY_SAVE_LUA_DIRECTORY).toString();
         if (path.isEmpty() || !QDir(path).exists())
             path = prefs()->scriptsDirectory();
         suggestedFileName = path;
@@ -214,11 +249,18 @@ bool ProjectActions::saveFileAs()
         suggestedFileName += document()->extension();
     }
 
+    QString filter = tr("All Files (*)");
+    filter += QLatin1String(";;");
+
+    QString selectedFilter = document()->filter();
+    filter += selectedFilter;
+
     const QString fileName =
             QFileDialog::getSaveFileName(MainWindow::instance(), QString(), suggestedFileName,
-                                         document()->filter());
+                                         filter, &selectedFilter);
     if (!fileName.isEmpty()) {
-        settings.setValue(KEY_SAVE_PROJECT_DIRECTORY, QFileInfo(fileName).absolutePath());
+        settings.setValue(document()->extension() == QLatin1String(".pzs") ?
+                              KEY_SAVE_PROJECT_DIRECTORY : KEY_SAVE_LUA_DIRECTORY, QFileInfo(fileName).absolutePath());
         return saveFile(fileName);
     }
     return false;
