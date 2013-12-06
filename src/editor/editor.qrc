@@ -78,5 +78,7 @@
         <file>images/24x24/zoom-in.png</file>
         <file>images/24x24/zoom-original.png</file>
         <file>images/24x24/zoom-out.png</file>
+        <file>images/lua-mode.png</file>
+        <file>images/16x16/lua-mode.png</file>
     </qresource>
 </RCC>

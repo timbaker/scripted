@@ -44,6 +44,18 @@ bool LuaState::loadFile(const QString &fileName)
     return true;
 }
 
+bool LuaState::loadString(const QString &str, const QString &name)
+{
+    QByteArray bytes = str.toUtf8().data();
+    int status = luaL_loadbuffer(L, bytes, bytes.size(), name.toLatin1().data());
+    if (status != LUA_OK) {
+        mError = QLatin1String(lua_tostring(L, -1));
+        return false;
+    }
+    mError.clear();
+    return true;
+}
+
 LuaValue LuaState::getGlobal(const QString &name)
 {
     lua_getglobal(L, name.toLatin1().data());

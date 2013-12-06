@@ -30,6 +30,7 @@ class LuaEditor;
 class LuaMode;
 class MetaEventDock;
 
+class QLabel;
 class QTabWidget;
 
 class LuaModeToolBar : public QToolBar
@@ -56,11 +57,14 @@ public:
 
 public slots:
     void updateDocumentTab();
+    void syntaxError(const QString &error);
 
 protected:
     LuaMode *mMode;
     LuaDocument *mDocument;
     LuaEditor *mEditor;
+    QWidget *mWidget;
+    QLabel *mSyntaxLabel;
 };
 
 class LuaMode : public IMode

@@ -17,6 +17,8 @@
 
 #include "luaeditor.h"
 
+#include "editor_global.h"
+
 #include <QApplication>
 #include <QPainter>
 
@@ -161,6 +163,12 @@ LuaEditor::LuaEditor()
     connect(this, SIGNAL(updateRequest(QRect,int)), this, SLOT(updateLineNumberArea(QRect,int)));
     updateLineNumberAreaWidth(0);
     highlightCurrentLine();
+
+    mSyntaxTimer.setInterval(750);
+    mSyntaxTimer.setSingleShot(true);
+    connect(&mSyntaxTimer, SIGNAL(timeout()), SLOT(checkSyntax()));
+
+    connect(this, SIGNAL(textChanged()), &mSyntaxTimer, SLOT(start()));
 }
 
 void LuaEditor::cursorPositionChanged()
@@ -211,6 +219,21 @@ void LuaEditor::updateLineNumberArea(const QRect &rect, int dy)
 
     if (rect.contains(viewport()->rect()))
         updateLineNumberAreaWidth(0);
+}
+
+#include "luautils.h"
+
+void LuaEditor::checkSyntax()
+{
+    LuaState L;
+    L.loadString(toPlainText(), QLatin1String("chunk"));
+    QString error = L.errorString();
+    if (!error.isEmpty()) {
+        int n = error.indexOf(QLatin1String("]:"));
+        if (n >= 0)
+            error = error.mid(n + 2);
+    }
+    emit syntaxError(error);
 }
 
 void LuaEditor::matchParentheses(char ch1, char ch2)

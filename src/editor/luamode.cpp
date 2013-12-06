@@ -32,6 +32,8 @@
 #include "toolmanager.h"
 
 #include <QDir>
+#include <QFrame>
+#include <QLabel>
 #include <QTabWidget>
 #include <QUndoStack>
 #include <QVBoxLayout>
@@ -70,6 +72,26 @@ LuaModePerDocumentStuff::LuaModePerDocumentStuff(LuaMode *mode, LuaDocument *doc
 
     /*highlighter =*/ new Highlighter(mEditor->document());
 
+    QFrame *frame = new QFrame;
+    mWidget = frame;
+    frame->setFrameShadow(mEditor->frameShadow());
+    frame->setFrameShape(mEditor->frameShape());
+    frame->setFrameStyle(mEditor->frameStyle());
+    mEditor->setFrameShape(QFrame::NoFrame);
+    QVBoxLayout *vbox = new QVBoxLayout;
+    vbox->setContentsMargins(0, 0, 0, 0);
+    vbox->setSpacing(0);
+    vbox->setObjectName(QLatin1String("LuaMode.EditorVBox"));
+    mSyntaxLabel = new QLabel;
+    mSyntaxLabel->setFixedHeight(mSyntaxLabel->fontMetrics().lineSpacing() * 2);
+    mSyntaxLabel->setVisible(false);
+    mSyntaxLabel->setFont(font);
+    vbox->addWidget(mSyntaxLabel);
+    vbox->addWidget(mEditor);
+    mWidget->setLayout(vbox);
+
+    connect(mEditor, SIGNAL(syntaxError(QString)), SLOT(syntaxError(QString)));
+
     doc->setEditor(mEditor); // a bit kludgey
 }
 
@@ -82,7 +104,7 @@ LuaModePerDocumentStuff::~LuaModePerDocumentStuff()
 
 QWidget *LuaModePerDocumentStuff::widget() const
 {
-    return mEditor;
+    return mWidget;
 }
 
 void LuaModePerDocumentStuff::activate()
@@ -109,6 +131,16 @@ void LuaModePerDocumentStuff::updateDocumentTab()
     mMode->mTabWidget->setTabToolTip(tabIndex, tooltipText);
 }
 
+void LuaModePerDocumentStuff::syntaxError(const QString &error)
+{
+    if (error.isEmpty()) {
+        mSyntaxLabel->setVisible(false);
+    } else {
+        mSyntaxLabel->setText(error);
+        mSyntaxLabel->setVisible(true);
+    }
+}
+
 /////
 
 LuaMode::LuaMode(QObject *parent) :
@@ -119,7 +151,7 @@ LuaMode::LuaMode(QObject *parent) :
     mCurrentDocumentStuff(0)
 {
     setDisplayName(tr("Lua"));
-//    setIcon(QIcon(QLatin1String(":images/24x24/document-new.png")));
+    setIcon(QIcon(QLatin1String(":images/16x16/lua-mode.png")));
 
     mEventsDock->disableDragAndDrop();
     mLuaDock->disableDragAndDrop();

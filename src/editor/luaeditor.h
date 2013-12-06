@@ -20,6 +20,7 @@
 
 #include <QPlainTextEdit>
 #include <QSyntaxHighlighter>
+#include <QTimer>
 
 class LineNumberArea;
 
@@ -74,6 +75,9 @@ class LuaEditor : public QPlainTextEdit
 public:
     LuaEditor();
 
+signals:
+    void syntaxError(const QString &error);
+
 private slots:
     void cursorPositionChanged();
 
@@ -82,6 +86,8 @@ private slots:
     void updateLineNumberAreaWidth(int newBlockCount);
     void highlightCurrentLine();
     void updateLineNumberArea(const QRect &rect, int dy);
+
+    void checkSyntax();
 
 protected:
     void matchParentheses(char ch1, char ch2);
@@ -95,6 +101,7 @@ protected:
 
     LineNumberArea *lineNumberArea;
     QColor mCurrentLineColor;
+    QTimer mSyntaxTimer;
 
     friend class LineNumberArea;
 };

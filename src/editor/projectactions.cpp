@@ -587,7 +587,7 @@ void ProjectActions::updateActions()
     mActions->actionSaveProjectAs->setEnabled(doc != 0);
 
     mActions->actionRevert->setText(doc ? tr("Revert \"%1\" to Saved").arg(doc->displayName()) : tr("Revert to Saved"));
-    mActions->actionRevert->setEnabled(doc != 0 && doc->isModified());
+    mActions->actionRevert->setEnabled(false/*doc != 0 && doc->isModified()*/);
 
     mActions->actionClose->setText(doc ? tr("Close \"%1\"").arg(doc->displayName()) : tr("Close"));
     mActions->actionClose->setEnabled(doc != 0);

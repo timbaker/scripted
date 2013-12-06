@@ -87,11 +87,16 @@ public:
     ~LuaState();
 
     bool loadFile(const QString &fileName);
+    bool loadString(const QString &str, const QString &name);
     LuaValue getGlobal(const QString &name);
     LuaValue toValue(int stackIndex);
     LuaTableValue toTableValue(int stackIndex);
 
+    QString errorString() { return mError; }
+
+private:
     lua_State *L;
+    QString mError;
 };
 
 #endif // LUAUTILS_H
