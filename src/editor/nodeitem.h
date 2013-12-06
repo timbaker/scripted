@@ -230,6 +230,7 @@ public:
     QPointF mPreDragPosition;
     QImage mOpenImage;
     QImage mDeleteImage;
+    QColor mBgColor;
 };
 
 #endif // DRAFTOBJECTITEM_H

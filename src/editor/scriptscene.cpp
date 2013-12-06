@@ -815,12 +815,14 @@ void ConnectionItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
         QIcon trash(QLatin1String(":/images/16x16/edit-delete.png"));
         QIcon sweep(QLatin1String(":/images/16x16/edit-clear.png"));
         QAction *connections = menu.addAction(mScene->tr("Connections..."));
-        QAction *clear = menu.addAction(sweep, mScene->tr("Clear Control Points"));
+        QAction *clear = 0;
+        if (mConnection->mControlPoints.size())
+            clear = menu.addAction(sweep, mScene->tr("Clear Control Points"));
         QAction *remove = menu.addAction(trash, mScene->tr("Remove Connection"));
         QAction *selected = menu.exec(event->screenPos());
         if (selected == connections)
             ProjectActions::instance()->connectionsDialog(mConnection->mSender, mConnection->mOutput);
-        if (selected == clear) {
+        if (clear != 0 && selected == clear) {
             ProjectDocument *doc = mScene->document();
             doc->changer()->beginUndoCommand(doc->undoStack());
             doc->changer()->doSetControlPoints(mConnection, QPolygonF());

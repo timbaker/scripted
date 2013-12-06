@@ -86,7 +86,10 @@ LuaModePerDocumentStuff::LuaModePerDocumentStuff(LuaMode *mode, LuaDocument *doc
     mSyntaxLabel->setFixedHeight(mSyntaxLabel->fontMetrics().lineSpacing() * 2);
     mSyntaxLabel->setVisible(false);
     mSyntaxLabel->setFont(font);
+    QFrame *seperator = new QFrame;
+    seperator->setFrameStyle(QFrame::HLine);
     vbox->addWidget(mSyntaxLabel);
+    vbox->addWidget(seperator);
     vbox->addWidget(mEditor);
     mWidget->setLayout(vbox);
 

@@ -83,7 +83,7 @@
      <normaloff>:/images/16x16/document-new.png</normaloff>:/images/16x16/document-new.png</iconset>
    </property>
    <property name="text">
-    <string>New Project...</string>
+    <string>New Project</string>
    </property>
   </action>
   <action name="actionOpenProject">
@@ -138,7 +138,7 @@
      <normaloff>:/images/16x16/document-new.png</normaloff>:/images/16x16/document-new.png</iconset>
    </property>
    <property name="text">
-    <string>New Lua File...</string>
+    <string>New Lua File</string>
    </property>
   </action>
   <action name="actionOpenLuaFile">

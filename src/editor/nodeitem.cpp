@@ -59,6 +59,10 @@ NodeItem::NodeItem(ProjectScene *scene, BaseNode *node, QGraphicsItem *parent) :
     setGraphicsEffect(effect);
 #endif
 
+    mBgColor = QColor(238, 238, 255);
+    if (mNode->isEventNode())
+        mBgColor = QColor(255, 255, 155);
+
     updateLayout();
 }
 
@@ -99,9 +103,7 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     pen.setCosmetic(true);
     painter->setPen(pen);
 
-    QColor bg(238, 238, 255);
-    if (mNode->isEventNode())
-        bg = QColor(255, 255, 155);
+    QColor bg = mBgColor;
     QRect textRect = painter->fontMetrics().boundingRect(mNode->label());
     QRectF nameRect = QRectF(mBounds.x(), mBounds.y(), textRect.width() + 6, textRect.height() + 6);
     painter->fillRect(nameRect, bg);
@@ -140,10 +142,37 @@ QVariant NodeItem::itemChange(QGraphicsItem::GraphicsItemChange change, const QV
     return QGraphicsItem::itemChange(change, value);
 }
 
+static QGraphicsItem *childContaining(QGraphicsItem *parent, const QPointF &scenePos)
+{
+    foreach (QGraphicsItem *child, parent->childItems()) {
+        if (child->contains(child->mapFromScene(scenePos)))
+            return child;
+        if (QGraphicsItem *grandchild = childContaining(child, scenePos))
+            return grandchild;
+    }
+    return 0;
+}
+
 void NodeItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
         mPreDragPosition = pos();
+    if (event->button() == Qt::RightButton) {
+        if (!childContaining(this, event->scenePos())) {
+            QMenu menu;
+            QIcon props(QLatin1String(":/images/16x16/document-properties.png"));
+            QIcon trash(QLatin1String(":/images/16x16/edit-delete.png"));
+            QAction *properties = menu.addAction(props, mScene->tr("Node Properties..."));
+            QAction *remove = menu.addAction(trash, mScene->tr("Remove Node"));
+            QAction *selected = menu.exec(event->screenPos());
+            if (selected == properties)
+                ProjectActions::instance()->nodePropertiesDialog(mNode);
+            if (selected == remove) {
+                ProjectActions::instance()->removeNode(mNode);
+                return;
+            }
+        }
+    }
     QGraphicsItem::mousePressEvent(event);
 }
 
@@ -327,7 +356,7 @@ void NodeInputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *opt
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         if (!ConnectionsItem::mMakingConnection)
-            color = color.lighter();
+            color = color.lighter(125);
     painter->fillPath(path, color);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -408,7 +437,7 @@ void NodeOutputItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *op
         color = Qt::red;
     if (option->state & QStyle::State_MouseOver)
         if (!ConnectionsItem::mMakingConnection)
-            color = color.lighter();
+            color = color.lighter(125);
     painter->fillPath(path, color);
 
     painter->setRenderHint(QPainter::Antialiasing, true);
@@ -634,6 +663,7 @@ BaseVariableItem::BaseVariableItem(ScriptScene *scene, ScriptVariable *var, QGra
     mRemoveVarRefImage(QLatin1String(":/images/16x16/window-close.png"))
 {
     setAcceptDrops(true);
+    setAcceptHoverEvents(true);
 
     mGroupLabelWidth = mGroupValueWidth = 32;
 }
@@ -645,27 +675,34 @@ QRectF BaseVariableItem::boundingRect() const
 
 void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
+    QRectF valueRect = this->valueRect(option->rect);
+    if (option->state & QStyle::State_MouseOver)
+        painter->fillRect(valueRect, QColor(128, 128, 128, 32));
+
     QColor color = Qt::black;
     if (!mVariable->isKnown())
         color = Qt::red;
     if (mDropHighlight)
         color = Qt::green;
     painter->setPen(color);
-    painter->drawRect(valueRect(option->rect).adjusted(0,0,-1,-1));
+    painter->drawRect(valueRect.adjusted(0,0,-1,-1));
 
     if (mVariable->node()->isEventNode()) {
-        painter->drawText(valueRect(option->rect).adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->label());
+        painter->drawText(valueRect.adjusted(3,0,-3,0), Qt::AlignVCenter, mVariable->label());
         return;
     }
 
     painter->drawText(option->rect, Qt::AlignVCenter, mVariable->label());
 
-    QRectF r = valueRect(option->rect).adjusted(3,0,-3,0);
+    QRectF r = valueRect.adjusted(3,0,-3,0);
     QString value = valueString();
     if (mVariable->variableRef().length()) {
         if (BaseNode *node = mScene->document()->project()->rootNode()->nodeByID(mVariable->variableRefID()))
-            if (node->isEventNode())
-                painter->fillRect(valueRect(option->rect).adjusted(1,1,-2,-2), QColor(255, 255, 155));
+            if (node->isEventNode()) {
+                painter->fillRect(valueRect.adjusted(1,1,-2,-2), QColor(255, 255, 155));
+                if (option->state & QStyle::State_MouseOver)
+                    painter->fillRect(valueRect, QColor(128, 128, 128, 32));
+            }
 
         QFont font = painter->font();
         font.setItalic(true);
@@ -674,6 +711,7 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         painter->drawText(r, Qt::AlignVCenter, value);
     } else
         painter->drawText(r, Qt::AlignVCenter, value);
+
 }
 
 void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
