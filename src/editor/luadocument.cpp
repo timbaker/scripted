@@ -125,6 +125,23 @@ bool LuaDocument::save(const QString &filePath, QString &error)
     return true;
 }
 
+bool LuaDocument::revertToSaved()
+{
+    if (!fileName().isEmpty()) {
+        QFile file(fileName());
+        if (file.open(QFile::ReadOnly | QFile::Text))
+            mEditor->setPlainText(file.readAll());
+        else {
+            QMessageBox::critical(mainwin(), tr("Error Reading Lua"),
+                                  tr("%1\n%2")
+                                  .arg(QDir::toNativeSeparators(fileName()))
+                                  .arg(file.errorString()));
+            return false;
+        }
+    }
+    return true;
+}
+
 void LuaDocument::setEditor(LuaEditor *editor)
 {
     if (mEditor)

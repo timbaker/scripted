@@ -34,6 +34,7 @@ public:
     QString extension() const { return QLatin1String(".lua"); }
     QString filter() const { return tr("Lua files (*.lua)"); }
     bool save(const QString &filePath, QString &error);
+    bool revertToSaved();
 
     void setEditor(LuaEditor *editor);
 

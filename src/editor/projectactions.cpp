@@ -304,7 +304,10 @@ bool ProjectActions::saveFileAs()
 
 void ProjectActions::revertToSaved()
 {
-
+    if (QMessageBox::question(mainwin(), tr("Revert to Saved"),
+                         tr("You will lose your current changes if you continue.\nReally revert %1?")
+                         .arg(QDir::toNativeSeparators(document()->fileName()))) == QMessageBox::Yes)
+        docman()->currentDocument()->revertToSaved();
 }
 
 void ProjectActions::close()
@@ -607,7 +610,7 @@ void ProjectActions::updateActions()
     mActions->actionSaveProjectAs->setEnabled(doc != 0);
 
     mActions->actionRevert->setText(doc ? tr("Revert \"%1\" to Saved").arg(doc->displayName()) : tr("Revert to Saved"));
-    mActions->actionRevert->setEnabled(false/*doc != 0 && doc->isModified()*/);
+    mActions->actionRevert->setEnabled(doc != 0 && doc->fileName().length() && doc->isLuaDocument() && doc->isModified());
 
     mActions->actionClose->setText(doc ? tr("Close \"%1\"").arg(doc->displayName()) : tr("Close"));
     mActions->actionClose->setEnabled(doc != 0);

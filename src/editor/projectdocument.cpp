@@ -86,3 +86,8 @@ bool ProjectDocument::save(const QString &filePath, QString &error)
     setFileName(filePath);
     return true;
 }
+
+bool ProjectDocument::revertToSaved()
+{
+    return false;
+}

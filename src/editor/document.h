@@ -60,6 +60,7 @@ public:
     virtual QString extension() const = 0;
     virtual QString filter() const = 0;
     virtual bool save(const QString &filePath, QString &error) = 0;
+    virtual bool revertToSaved() = 0;
 
     QString displayName() const;
 

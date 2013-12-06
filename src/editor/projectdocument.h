@@ -32,6 +32,7 @@ public:
     QString extension() const { return QLatin1String(".pzs"); }
     QString filter() const { return tr("ScriptEd files (*.pzs)"); }
     bool save(const QString &filePath, QString &error);
+    bool revertToSaved();
 
     Project *project() const
     { return mProject; }
