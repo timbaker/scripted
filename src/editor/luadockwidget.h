@@ -75,8 +75,11 @@ public:
     explicit LuaDockWidget(QWidget *parent = 0);
     ~LuaDockWidget();
 
+    void disableDragAndDrop();
+
 private slots:
     void setList();
+    void activated(const QModelIndex &index);
 
 private:
     Ui::LuaDockWidget *ui;

@@ -241,6 +241,7 @@ void EditMode::currentDocumentTabChanged(int index)
 
 void EditMode::documentTabCloseRequested(int index)
 {
+    index = docman()->indexOf(docman()->projectDocuments().at(index));
     MainWindow::instance()->documentCloseRequested(index);
 }
 

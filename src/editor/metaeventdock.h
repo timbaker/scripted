@@ -42,8 +42,11 @@ public:
     explicit MetaEventDock(QWidget *parent = 0);
     ~MetaEventDock();
 
+    void disableDragAndDrop();
+
 private slots:
     void setList();
+    void activated(const QModelIndex &index);
 
 private:
     Ui::MetaEventDock *ui;

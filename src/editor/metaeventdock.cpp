@@ -21,8 +21,11 @@
 #include "node.h"
 #include "metaeventmanager.h"
 #include "preferences.h"
+#include "projectactions.h"
 
 #include <QMimeData>
+
+Q_DECLARE_METATYPE(MetaEventInfo*)
 
 const QString METAEVENT_MIME_TYPE = QLatin1String("application/x-pzdraft-event");
 
@@ -67,6 +70,8 @@ MetaEventDock::MetaEventDock(QWidget *parent) :
     ui->treeView->setHeaderHidden(true);
     ui->treeView->setDragEnabled(true);
 
+    connect(ui->treeView, SIGNAL(activated(QModelIndex)), SLOT(activated(QModelIndex)));
+
     connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(setList()));
     connect(eventmgr(), SIGNAL(infoChanged(MetaEventInfo*)), SLOT(setList())); // FIXME: multiple calls
 
@@ -78,14 +83,29 @@ MetaEventDock::~MetaEventDock()
     delete ui;
 }
 
+void MetaEventDock::disableDragAndDrop()
+{
+    ui->treeView->setDragEnabled(false);
+}
+
 void MetaEventDock::setList()
 {
     mModel->setRowCount(0);
     foreach (MetaEventInfo *info, eventmgr()->events()) {
         if (!info->node()) continue;
         QList<QStandardItem*> items;
-        items += new QStandardItem(info->node() ? info->node()->label() : tr("FIXME"));
+        QStandardItem *item = new QStandardItem(info->node() ? info->node()->label() : tr("FIXME"));
+        item->setEditable(false);
+        item->setData(QVariant::fromValue(info));
+        items += item;
         mModel->appendRow(items);
     }
+}
+
+void MetaEventDock::activated(const QModelIndex &index)
+{
+    QStandardItem *item = mModel->itemFromIndex(index);
+    MetaEventInfo *info = item->data().value<MetaEventInfo*>();
+    ProjectActions::instance()->openLuaFile(info->path());
 }
 

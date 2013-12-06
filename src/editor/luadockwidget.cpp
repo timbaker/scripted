@@ -21,6 +21,7 @@
 #include "luamanager.h"
 #include "node.h"
 #include "preferences.h"
+#include "projectactions.h"
 
 #include <QFileInfo>
 #include <QMimeData>
@@ -36,6 +37,8 @@ LuaDockWidget::LuaDockWidget(QWidget *parent) :
     ui->listView->setDragEnabled(true);
     ui->listView->setDragDropMode(QAbstractItemView::DragOnly);
 
+    connect(ui->listView, SIGNAL(activated(QModelIndex)), SLOT(activated(QModelIndex)));
+
     connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(setList()));
 
     setList();
@@ -46,9 +49,20 @@ LuaDockWidget::~LuaDockWidget()
     delete ui;
 }
 
+void LuaDockWidget::disableDragAndDrop()
+{
+    ui->listView->setDragEnabled(false);
+}
+
 void LuaDockWidget::setList()
 {
     ((LuaItemModel*)ui->listView->model())->reset();
+}
+
+void LuaDockWidget::activated(const QModelIndex &index)
+{
+    if (LuaInfo *info = luamgr()->commands().at(index.row()))
+        ProjectActions::instance()->openLuaFile(info->path());
 }
 
 /////

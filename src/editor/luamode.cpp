@@ -24,6 +24,7 @@
 #include "luadocument.h"
 #include "luaeditor.h"
 #include "mainwindow.h"
+#include "metaeventdock.h"
 #include "projectactions.h"
 #include "projectdocument.h"
 #include "scriptscene.h"
@@ -112,12 +113,16 @@ void LuaModePerDocumentStuff::updateDocumentTab()
 
 LuaMode::LuaMode(QObject *parent) :
     IMode(parent),
+    mEventsDock(new MetaEventDock),
     mLuaDock(new LuaDockWidget),
     mToolBar(new LuaModeToolBar),
     mCurrentDocumentStuff(0)
 {
     setDisplayName(tr("Lua"));
 //    setIcon(QIcon(QLatin1String(":images/24x24/document-new.png")));
+
+    mEventsDock->disableDragAndDrop();
+    mLuaDock->disableDragAndDrop();
 
     mMainWindow = new EmbeddedMainWindow;
     mMainWindow->setObjectName(QLatin1String("LuaMode.Widget"));
@@ -141,7 +146,9 @@ LuaMode::LuaMode(QObject *parent) :
     mMainWindow->setCentralWidget(w);
     mMainWindow->addToolBar(mToolBar);
 
+    mMainWindow->registerDockWidget(mEventsDock);
     mMainWindow->registerDockWidget(mLuaDock);
+    mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mEventsDock);
     mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mLuaDock);
 
     setWidget(mMainWindow);
@@ -211,6 +218,7 @@ void LuaMode::currentDocumentTabChanged(int index)
 
 void LuaMode::documentTabCloseRequested(int index)
 {
+    index = docman()->indexOf(docman()->luaDocuments().at(index));
     MainWindow::instance()->documentCloseRequested(index);
 }
 

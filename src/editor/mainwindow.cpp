@@ -128,13 +128,11 @@ bool MainWindow::confirmSave()
     if (!mCurrentDocumentStuff || !mCurrentDocumentStuff->document()->isModified())
         return true;
 
-    if (mCurrentDocumentStuff->document()->isLuaDocument() &&
-            ModeManager::instance()->currentMode() != mLuaMode)
-        ModeManager::instance()->setCurrentMode(mLuaMode);
+    if (mCurrentDocumentStuff->document()->isLuaDocument())
+        switchToLuaMode();
 
-    if (mCurrentDocumentStuff->document()->isProjectDocument() &&
-            ModeManager::instance()->currentMode() != mEditMode)
-        ModeManager::instance()->setCurrentMode(mEditMode);
+    if (mCurrentDocumentStuff->document()->isProjectDocument())
+        switchToEditMode();
 
     if (isMinimized())
         setWindowState(windowState() & (~Qt::WindowMinimized | Qt::WindowActive));
@@ -215,6 +213,16 @@ void MainWindow::openLastFiles()
     mSettings.endGroup();
 }
 
+void MainWindow::switchToEditMode()
+{
+    ModeManager::instance()->setCurrentMode(mEditMode);
+}
+
+void MainWindow::switchToLuaMode()
+{
+    ModeManager::instance()->setCurrentMode(mLuaMode);
+}
+
 void MainWindow::documentAdded(Document *doc)
 {
     mUndoGroup->addStack(doc->undoStack());
@@ -240,9 +248,9 @@ void MainWindow::currentDocumentChanged(Document *doc)
 
     if (mCurrentDocumentStuff) {
         if (doc->isProjectDocument())
-            ModeManager::instance()->setCurrentMode(mEditMode); // handles new documents
+            switchToEditMode(); // handles new documents
         if (doc->isLuaDocument())
-            ModeManager::instance()->setCurrentMode(mLuaMode); // handles new documents
+            switchToLuaMode(); // handles new documents
         mUndoGroup->setActiveStack(mCurrentDocumentStuff->document()->undoStack());
         connect(doc, SIGNAL(cleanChanged()), ProjectActions::instance(), SLOT(updateActions()));
         connect(doc, SIGNAL(fileNameChanged()), ProjectActions::instance(), SLOT(updateActions()));

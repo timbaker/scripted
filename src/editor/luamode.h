@@ -28,6 +28,7 @@
 class LuaDockWidget;
 class LuaEditor;
 class LuaMode;
+class MetaEventDock;
 
 class QTabWidget;
 
@@ -84,6 +85,7 @@ protected:
     EmbeddedMainWindow *mMainWindow;
     QTabWidget *mTabWidget;
     LuaModeToolBar *mToolBar;
+    MetaEventDock *mEventsDock;
     LuaDockWidget *mLuaDock;
 
     LuaModePerDocumentStuff *mCurrentDocumentStuff;

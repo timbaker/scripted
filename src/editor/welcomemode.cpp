@@ -32,6 +32,8 @@
 #include <QLabel>
 #include <QSettings>
 
+#define SCENE_WIDTH 400
+
 static QRectF sceneRectOfItem(QGraphicsItem *item)
 {
     return item->mapToScene(item->boundingRect()).boundingRect();
@@ -39,7 +41,7 @@ static QRectF sceneRectOfItem(QGraphicsItem *item)
 
 namespace WelcomeModeNS {
 
-LinkItem::LinkItem(const QString &text1, const QString &text2, QGraphicsItem *parent) :
+LinkItem::LinkItem(int width, const QString &text1, const QString &text2, QGraphicsItem *parent) :
     QGraphicsItem(parent)
 {
     QGraphicsRectItem *bg = new QGraphicsRectItem(this);
@@ -55,7 +57,7 @@ LinkItem::LinkItem(const QString &text1, const QString &text2, QGraphicsItem *pa
 
     if (!text2.isEmpty()) {
         QGraphicsTextItem *item2 = new QGraphicsTextItem(this);
-        QString s = QFontMetrics(item2->font()).elidedText(text2, Qt::ElideRight, 400 - 40);
+        QString s = QFontMetrics(item2->font()).elidedText(text2, Qt::ElideRight, width);
         item2->setPlainText(s);
         item2->setDefaultTextColor(QColor("#6b6b6b"));
         item2->setPos(0, item1->boundingRect().height());
@@ -64,7 +66,7 @@ LinkItem::LinkItem(const QString &text1, const QString &text2, QGraphicsItem *pa
     }
 
     mBoundingRect.translate(-mBoundingRect.topLeft());
-    mBoundingRect.setRight(400);
+    mBoundingRect.setWidth(width);
     bg->setRect(mBoundingRect);
 
     //        setFlag(ItemHasNoContents);
@@ -126,36 +128,48 @@ WelcomeMode::WelcomeMode(QObject *parent) :
     item->setPos(x + 24 + 6, y);
     QRectF r = sceneRectOfItem(item) | sceneRectOfItem(pitem);
     r.translate(0, 12);
-    QGraphicsLineItem *line = scene->addLine(r.left(), r.bottom(), 400, r.bottom());
+    QGraphicsLineItem *line = scene->addLine(r.left(), r.bottom(), SCENE_WIDTH, r.bottom());
     line->setPen(QPen(Qt::gray));
 
     x = 40;
     y = r.bottom() + 16;
     WelcomeModeNS::LinkItem *link;
-    mNewItem = link = new WelcomeModeNS::LinkItem(tr("New Project"));
+    link = new WelcomeModeNS::LinkItem(160 - x, tr("New Project"));
     scene->addItem(link);
     link->setPos(x + 6, y);
-    connect(mNewItem, SIGNAL(clicked()), SLOT(linkClicked()));
+    connect(link, SIGNAL(clicked()), ProjectActions::instance(), SLOT(newProject()));
 
     y += 30;
-    mOpenItem = link = new WelcomeModeNS::LinkItem(tr("Open Project"));
+    link = new WelcomeModeNS::LinkItem(160 - x, tr("Open Project"));
     scene->addItem(link);
     link->setPos(x + 6, y);
-    connect(mOpenItem, SIGNAL(clicked()), SLOT(linkClicked()));
+    connect(link, SIGNAL(clicked()), ProjectActions::instance(), SLOT(openProject()));
+
+    y = r.bottom() + 16;
+    link = new WelcomeModeNS::LinkItem(160 - x, tr("New Lua File"));
+    scene->addItem(link);
+    link->setPos(x + 160, y);
+    connect(link, SIGNAL(clicked()), ProjectActions::instance(), SLOT(newLuaFile()));
+
+    y += 30;
+    link = new WelcomeModeNS::LinkItem(160 - x, tr("Open Lua File"));
+    scene->addItem(link);
+    link->setPos(x + 160, y);
+    connect(link, SIGNAL(clicked()), ProjectActions::instance(), SLOT(openLuaFile()));
 
     y += sceneRectOfItem(link).height() + 14;
 //    QGraphicsLineItem *line2 = scene->addLine(x, y, 300, y);
 //    line2->setPen(QPen(Qt::gray));
 
 //    y += 36;
-    item = scene->addText(tr("Recent Projects"), QFont(QLatin1String("Helvetica"), 16, 1));
+    item = scene->addText(tr("Recent Documents"), QFont(QLatin1String("Helvetica"), 16, 1));
     item->setPos(x, y);
 
     y += item->boundingRect().height() + 12;
     mRecentItemsY = y;
     setRecentFiles();
 
-    scene->setSceneRect(0, 0, 400, 600);
+    scene->setSceneRect(0, 0, SCENE_WIDTH, 600);
 
     {
         QDirModel *model = new QDirModel(this);
@@ -299,7 +313,7 @@ void WelcomeMode::setRecentFiles()
     int x = 40;
     int y = mRecentItemsY;
     foreach (QString f, prefs()->recentFiles()) {
-        WelcomeModeNS::LinkItem *link = new WelcomeModeNS::LinkItem(QFileInfo(f).fileName(), QDir::toNativeSeparators(f));
+        WelcomeModeNS::LinkItem *link = new WelcomeModeNS::LinkItem(SCENE_WIDTH - x, QFileInfo(f).fileName(), QDir::toNativeSeparators(f));
         ui->graphicsView->scene()->addItem(link);
         link->setPos(x + 6, y);
         mRecentItems += link;
@@ -308,7 +322,7 @@ void WelcomeMode::setRecentFiles()
         y += link->boundingRect().height() + 12;
     }
 
-    QRectF sceneRect(0, 0, 400, 300);
+    QRectF sceneRect(0, 0, SCENE_WIDTH, 300);
     if (mRecentItems.size())
         sceneRect |= sceneRectOfItem(mRecentItems.last());
     ui->graphicsView->setSceneRect(sceneRect);
@@ -317,8 +331,6 @@ void WelcomeMode::setRecentFiles()
 void WelcomeMode::linkClicked()
 {
     WelcomeModeNS::LinkItem *link = static_cast<WelcomeModeNS::LinkItem *>(sender());
-    if (link == mNewItem) ProjectActions::instance()->newProject();
-    if (link == mOpenItem) ProjectActions::instance()->openProject();
     int index = mRecentItems.indexOf(link);
     if (index >= 0) {
         QString fileName = prefs()->recentFiles().at(index);

@@ -35,7 +35,7 @@ class LinkItem : public QObject, public QGraphicsItem
     Q_OBJECT
     Q_INTERFACES(QGraphicsItem)
 public:
-    LinkItem(const QString &text1, const QString &text2 = QString(), QGraphicsItem *parent = 0);
+    LinkItem(int width, const QString &text1, const QString &text2 = QString(), QGraphicsItem *parent = 0);
     QRectF boundingRect() const;
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 
@@ -77,8 +77,6 @@ private:
     QFileSystemModel *mFSModel;
 
     int mRecentItemsY;
-    WelcomeModeNS::LinkItem *mNewItem;
-    WelcomeModeNS::LinkItem *mOpenItem;
     QList<WelcomeModeNS::LinkItem*> mRecentItems;
 };
 

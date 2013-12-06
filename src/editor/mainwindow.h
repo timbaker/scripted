@@ -77,6 +77,9 @@ public:
 
     void openLastFiles();
 
+    void switchToEditMode();
+    void switchToLuaMode();
+
 public slots:
     void documentAdded(Document *doc);
     void currentDocumentChanged(Document *doc);

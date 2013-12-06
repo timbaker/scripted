@@ -62,6 +62,9 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
 
     connect(mActions->actionEditInputsOutputs, SIGNAL(triggered()), SLOT(sceneScriptDialog()));
     connect(mActions->actionRemoveUnknowns, SIGNAL(triggered()), SLOT(removeUnknowns()));
+
+    mActions->actionAboutQt->setMenuRole(QAction::AboutQtRole);
+    connect(mActions->actionAboutQt, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
 }
 
 Document *ProjectActions::document()
@@ -139,7 +142,11 @@ bool ProjectActions::openLuaFile(const QString &fileName)
 {
     int n = docman()->findDocument(fileName);
     if (n != -1) {
-        docman()->setCurrentDocument(n);
+        Document *doc = docman()->documentAt(n);
+        if (doc != docman()->currentDocument())
+            docman()->setCurrentDocument(n);
+        else
+            mainwin()->switchToLuaMode();
         return true;
     }
 
@@ -156,8 +163,11 @@ bool ProjectActions::openProject(const QString &fileName)
 {
     int n = docman()->findDocument(fileName);
     if (n != -1) {
-        docman()->setCurrentDocument(n);
-//        MainWindow::instance()->switchToEditMode();
+        Document *doc = docman()->documentAt(n);
+        if (doc != docman()->currentDocument())
+            docman()->setCurrentDocument(n);
+        else
+            mainwin()->switchToEditMode();
         return true;
     }
 
