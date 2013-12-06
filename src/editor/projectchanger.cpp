@@ -595,11 +595,11 @@ public:
 class AddVariable : public ProjectChange
 {
 public:
-    AddVariable(ProjectChanger *changer, BaseNode *node, int index, ScriptVariable *cxn) :
+    AddVariable(ProjectChanger *changer, BaseNode *node, int index, ScriptVariable *var) :
         ProjectChange(changer),
         mNode(node),
         mIndex(index),
-        mVariable(cxn)
+        mVariable(var)
     {
     }
 
@@ -621,15 +621,17 @@ public:
     void undo()
     {
         if (mNode->isProjectRootNode()) {
-//            mChanger->beforeRemoveVariable(mIndex, mVariable);
+            mChanger->beforeRemoveVariable(mNode, mIndex, mVariable);
             mNode->removeVariable(mVariable);
             mChanger->afterRemoveVariable(mNode, mIndex, mVariable);
         } else {
-            ScriptVariable *var = mNode->variable(mVariable->name());
+            // See AddInput class for why we don't use mVariable & mIndex
+            ScriptVariable *var = mNode->variable(mVariable->name()); // var might == mVariable
             if (!var->isKnown()) {
                 int index = mNode->indexOf(var);
+                mChanger->beforeRemoveVariable(mNode, index, var);
                 mNode->removeVariable(var);
-                mChanger->afterRemoveVariable(mNode, index, mVariable);
+                mChanger->afterRemoveVariable(mNode, index, var);
             }
 
         }
@@ -648,8 +650,8 @@ public:
 class RemoveVariable : public AddVariable
 {
 public:
-    RemoveVariable(ProjectChanger *changer, BaseNode *node, int index, ScriptVariable *cxn) :
-        AddVariable(changer, node, index, cxn)
+    RemoveVariable(ProjectChanger *changer, BaseNode *node, int index, ScriptVariable *var) :
+        AddVariable(changer, node, index, var)
     { }
     void redo() { AddVariable::undo(); }
     void undo() { AddVariable::redo(); }
