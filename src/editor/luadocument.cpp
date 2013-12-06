@@ -118,6 +118,8 @@ bool LuaDocument::save(const QString &filePath, QString &error)
     }
 
     error.clear();
+    if (mEditor)
+        mEditor->document()->setModified(false);
     undoStack()->setClean(); // useless
     setFileName(filePath);
     return true;
