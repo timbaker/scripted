@@ -100,7 +100,8 @@ public:
     {
         xml.writeStartElement(QLatin1String("event-node"));
         xml.writeAttribute(QLatin1String("id"), QString::number(node->id()));
-        xml.writeAttribute(QLatin1String("name"), node->label());
+        xml.writeAttribute(QLatin1String("eventname"), node->eventName());
+        xml.writeAttribute(QLatin1String("label"), node->label());
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
 
         foreach (ScriptVariable *var, node->variables())
@@ -120,7 +121,7 @@ public:
     {
         xml.writeStartElement(QLatin1String("lua-node"));
         xml.writeAttribute(QLatin1String("id"), QString::number(node->id()));
-        xml.writeAttribute(QLatin1String("name"), node->label());
+        xml.writeAttribute(QLatin1String("label"), node->label());
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
 
         xml.writeStartElement(QLatin1String("source"));
@@ -144,7 +145,7 @@ public:
     {
         xml.writeStartElement(QLatin1String("script-node"));
         xml.writeAttribute(QLatin1String("id"), QString::number(node->id()));
-        xml.writeAttribute(QLatin1String("name"), node->label());
+        xml.writeAttribute(QLatin1String("label"), node->label());
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
 
         xml.writeStartElement(QLatin1String("source"));

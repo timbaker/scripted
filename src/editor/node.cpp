@@ -247,8 +247,9 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
 /////
 
 
-MetaEventNode::MetaEventNode(int id, const QString &name) :
-    BaseNode(id, name),
+MetaEventNode::MetaEventNode(int id, const QString &eventName, const QString &label) :
+    BaseNode(id, label),
+    mEventName(eventName),
     mInfo(0)
 {
     insertOutput(0, new NodeOutput(QLatin1String("Output")));
@@ -284,6 +285,7 @@ bool MetaEventNode::syncWithInfo()
 void MetaEventNode::initFrom(const MetaEventNode *other)
 {
     BaseNode::initFrom(other);
+    mEventName = other->mEventName;
     mInfo = other->mInfo;
 }
 

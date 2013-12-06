@@ -417,8 +417,7 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
             stream >> eventName;
             if (MetaEventInfo *info = eventmgr()->info(eventName)) {
                 if (MetaEventNode *node = info->node()) { // may go to NULL if a MetaEvents.lua couldn't be reloaded
-                    MetaEventNode *newNode = new MetaEventNode(mDocument->project()->mNextID++, node->label());
-                    newNode->initFrom(node);
+                    MetaEventNode *newNode = new MetaEventNode(mDocument->project()->mNextID++, *node);
                     newNode->setPos(event->scenePos());
                     mDocument->changer()->beginUndoCommand(mDocument->undoStack());
                     mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), newNode);

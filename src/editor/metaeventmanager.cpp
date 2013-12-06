@@ -166,21 +166,22 @@ bool MetaEventFile::read(const QString &fileName)
     LuaNode node(0, QFileInfo(fileName).baseName());
 
     for (int i = 0; i < lv.mTableValue.size(); i++) {
-        LuaValue *k = lv.mTableValue.mKeys[i];
+//        LuaValue *k = lv.mTableValue.mKeys[i];
         LuaValue *v = lv.mTableValue.mValues[i];
         if (!v->isTable()) return false;
-        MetaEventNode node(0, QString());
+        MetaEventNode node(0, QString(), QString());
         for (int j = 0; j < v->mTableValue.size(); j++) {
             LuaValue *k2 = v->mTableValue.mKeys[j];
             LuaValue *v2 = v->mTableValue.mValues[j];
             if (k2->isString(QLatin1String("name"))) {
                 if (v2->mType != LUA_TSTRING) return false;
+                node.setEventName(v2->toString());
                 node.setLabel(v2->toString());
             }
             if (k2->isString(QLatin1String("variables"))) {
                 if (!v2->isTable()) return false;
                 for (int m = 0; m < v2->mTableValue.size(); m++) {
-                    LuaValue *k3 = v2->mTableValue.mKeys[m];
+//                    LuaValue *k3 = v2->mTableValue.mKeys[m];
                     LuaValue *v3 = v2->mTableValue.mValues[m];
                     if (!v3->isTable()) return false;
                     QMap<QString,QString> ssm = v3->mTableValue.toStringStringMap();

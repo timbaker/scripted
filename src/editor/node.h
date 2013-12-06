@@ -295,8 +295,11 @@ protected:
 class MetaEventNode : public BaseNode
 {
 public:
-    MetaEventNode(int id, const QString &label);
+    MetaEventNode(int id, const QString &eventName, const QString &label);
     MetaEventNode(int id, const MetaEventNode &other);
+
+    void setEventName(const QString &name) { mEventName = name; }
+    QString eventName() { return mEventName; }
 
     bool isKnown(const ScriptVariable *var);
     bool isKnown(const NodeInput *input);
@@ -313,6 +316,7 @@ public:
     virtual MetaEventNode *asEventNode() { return this; }
 
 private:
+    QString mEventName; // immutable
     MetaEventInfo *mInfo;
 };
 

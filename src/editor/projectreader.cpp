@@ -189,12 +189,19 @@ private:
             xml.raiseError(tr("missing or invalid node ID"));
             return 0;
         }
-        const QString name = atts.value(QLatin1String("name")).toString();
+        const QString eventName = atts.value(QLatin1String("eventname")).toString();
+        if (eventName.isEmpty()) {
+            xml.raiseError(tr("Empty or missing event name"));
+            return 0;
+        }
+        QString label = atts.value(QLatin1String("label")).toString();
+        if (label.isEmpty())
+            label = eventName;
         double x, y;
         if (!getDoublePair(atts, QLatin1String("pos"), x, y))
             return 0;
 
-        MetaEventNode *node = new MetaEventNode(id, name);
+        MetaEventNode *node = new MetaEventNode(id, eventName, label);
         node->setPos(x, y);
 
         while (xml.readNextStartElement()) {
@@ -231,12 +238,12 @@ private:
             xml.raiseError(tr("missing or invalid node ID"));
             return 0;
         }
-        const QString name = atts.value(QLatin1String("name")).toString();
+        const QString label = atts.value(QLatin1String("label")).toString();
         double x, y;
         if (!getDoublePair(atts, QLatin1String("pos"), x, y))
             return 0;
 
-        LuaNode *node = new LuaNode(id, name);
+        LuaNode *node = new LuaNode(id, label);
         node->setPos(x, y);
 
         while (xml.readNextStartElement()) {
@@ -275,12 +282,12 @@ private:
             xml.raiseError(tr("missing or invalid node ID"));
             return 0;
         }
-        const QString name = atts.value(QLatin1String("name")).toString();
+        const QString label = atts.value(QLatin1String("label")).toString();
         double x, y;
         if (!getDoublePair(atts, QLatin1String("pos"), x, y))
             return 0;
 
-        ScriptNode *node = new ScriptNode(id, name);
+        ScriptNode *node = new ScriptNode(id, label);
         node->setPos(x, y);
 
         while (xml.readNextStartElement()) {

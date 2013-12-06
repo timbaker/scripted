@@ -62,7 +62,19 @@ void NodePropertiesDialog::setNode(BaseNode *node)
     mNode = node;
     mSyncDepth++;
     ui->labelEdit->setText(mNode->label());
-    ui->IDlabel->setText(tr("ID: %1").arg(node->id()));
+    QString type;
+    if (node->isEventNode()) type = tr("Event");
+    else if (node->isLuaNode()) type = tr("Lua");
+    else if (node->isScriptNode()) type = tr("Script");
+    else Q_ASSERT(false);
+    ui->typeLabel->setText(type);
+    ui->IDlabel->setText(QString::number(node->id()));
+    if (MetaEventNode *enode = node->asEventNode())
+        ui->eventName->setText(enode->eventName());
+    else {
+        ui->eventNameLabel->hide();
+        ui->eventName->hide();
+    }
     QString source;
     if (LuaNode *lnode = mNode->asLuaNode())
         source = lnode->source();
@@ -71,15 +83,9 @@ void NodePropertiesDialog::setNode(BaseNode *node)
     if (ScriptNode *snode = mNode->asScriptNode())
         source = snode->source();
     ui->sourceEdit->setText(QDir::toNativeSeparators(source));
-    setPropertiesTable();
     setConnectionsTable();
     mSyncDepth--;
     syncUI();
-}
-
-void NodePropertiesDialog::setPropertiesTable()
-{
-    ui->propertiesTable->setNode(mNode);
 }
 
 void NodePropertiesDialog::setConnectionsTable()

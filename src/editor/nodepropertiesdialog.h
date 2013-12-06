@@ -34,7 +34,6 @@ public:
     ~NodePropertiesDialog();
 
     void setNode(BaseNode *node);
-    void setPropertiesTable();
     void setConnectionsTable();
 
 private slots:
