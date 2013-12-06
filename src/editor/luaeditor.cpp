@@ -59,17 +59,54 @@ Highlighter::Highlighter(QTextDocument *parent) :
                     << "\\blocal\\b" << "\\bnil\\b" << "\\bnot\\b"
                     << "\\bor\\b" << "\\brepeat\\b" << "\\breturn\\b"
                     << "\\bthen\\b" << "\\btrue\\b" << "\\buntil\\b"
-                    << "\\bwhile\\b";
+                    << "\\bwhile\\b" << "\\brequire\\b";
     foreach (const QString &pattern, keywordPatterns) {
         rule.pattern = QRegExp(pattern);
         rule.format = keywordFormat;
         highlightingRules.append(rule);
     }
 
+    // Numbers
+    QTextCharFormat numbers;
+    numbers.setForeground(Qt::magenta);
+    rule.pattern = QRegExp("[0-9]");
+    rule.format = numbers;
+    highlightingRules.append(rule);
+
+    // Single-line comment
     singleLineCommentFormat.setForeground(Qt::red);
     rule.pattern = QRegExp("--[^\n]*");
     rule.format = singleLineCommentFormat;
     highlightingRules.append(rule);
+
+    // "String"
+    quotationFormat.setForeground(Qt::darkGreen);
+    rule.pattern = QRegExp("\".*\"");
+    rule.pattern = QRegExp( "(?:^|[^\\\\'])(\"(?:\\\\\"|\\\\(?!\")|[^\\\\\"^ä^ö^ü])*\")" );
+    rule.pattern.setMinimal(true);
+    rule.format = quotationFormat;
+    highlightingRules.append(rule);
+
+    // 'String'
+    quotationFormat.setForeground(Qt::darkGreen);
+    rule.pattern = QRegExp("\'.*\'");
+    rule.pattern = QRegExp( "(?:^|[^\\\\\"])(\'(?:\\\\\'|\\\\(?!\')|[^\\\\\'])*\')" );
+    rule.pattern.setMinimal(true);
+    rule.format = quotationFormat;
+    highlightingRules.append(rule);
+
+    // Function name()
+    functionFormat.setFontWeight(QFont::Bold);
+    functionFormat.setForeground(Qt::darkCyan);
+    rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
+    rule.format = functionFormat;
+    highlightingRules.append(rule);
+
+    // Multi-line comment --[[ ]]
+    commentStartExpression = QRegExp("--\\[\\["); // --[[
+    commentEndExpression = QRegExp("\\]\\]"); // ]]
+    multiLineCommentFormat.setForeground(Qt::red);
+
 }
 
 void Highlighter::highlightBlock(const QString &text)
@@ -88,7 +125,7 @@ void Highlighter::highlightBlock(const QString &text)
             index = expression.indexIn(text, index + length);
         }
     }
-return; ///////////////
+//return; ///////////////
     setCurrentBlockState(0);
     int startIndex = 0;
     if (previousBlockState() != 1)
@@ -138,7 +175,7 @@ void Highlighter::findMatches(const QString &text, TextBlockData *data, char ch1
 LuaEditor::LuaEditor()
 {
 #if 1
-    mCurrentLineColor = QColor(Qt::yellow).lighter(160);
+    mCurrentLineColor = QColor(128, 255, 255, 32);
 #else
     const QPalette palette = QApplication::palette();
     const QColor &fg = palette.color(QPalette::Highlight);

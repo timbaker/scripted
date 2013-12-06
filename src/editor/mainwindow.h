@@ -80,6 +80,8 @@ public:
     void switchToEditMode();
     void switchToLuaMode();
 
+    QUndoGroup *undoGroup() { return mUndoGroup; }
+
 public slots:
     void documentAdded(Document *doc);
     void currentDocumentChanged(Document *doc);

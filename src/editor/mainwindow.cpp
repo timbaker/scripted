@@ -45,22 +45,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->statusBar->hide();
 
-    QAction *undoAction = mUndoGroup->createUndoAction(this, tr("Undo"));
-    QAction *redoAction = mUndoGroup->createRedoAction(this, tr("Redo"));
-    undoAction->setShortcuts(QKeySequence::Undo);
-    redoAction->setShortcuts(QKeySequence::Redo);
-    QIcon undoIcon(QLatin1String(":images/16x16/edit-undo.png"));
-    undoIcon.addFile(QLatin1String(":images/24x24/edit-undo.png"));
-    QIcon redoIcon(QLatin1String(":images/16x16/edit-redo.png"));
-    redoIcon.addFile(QLatin1String(":images/24x24/edit-redo.png"));
-    undoAction->setIcon(undoIcon);
-    redoAction->setIcon(redoIcon);
-//    Tiled::Utils::setThemeIcon(undoAction, "edit-undo");
-//    Tiled::Utils::setThemeIcon(redoAction, "edit-redo");
-    ui->menuEdit->insertAction(ui->menuEdit->actions().at(0), undoAction);
-    ui->menuEdit->insertAction(ui->menuEdit->actions().at(1), redoAction);
-    ui->menuEdit->insertSeparator(ui->menuEdit->actions().at(2));
-
     new ProjectActions(ui);
 
     new ToolManager;

@@ -38,7 +38,7 @@
 #include <QUndoStack>
 #include <QVBoxLayout>
 
-LuaModeToolBar::LuaModeToolBar(QWidget *parent) :
+LuaModeToolBar::LuaModeToolBar(LuaMode *mode, QWidget *parent) :
     QToolBar(parent)
 {
     setWindowTitle(tr("Lua ToolBar"));
@@ -49,8 +49,8 @@ LuaModeToolBar::LuaModeToolBar(QWidget *parent) :
     addAction(actions->actionSaveProject);
     addAction(actions->actionSaveProjectAs);
     addSeparator();
-//    addAction(actions->menuEdit->actions().first());
-//    addAction(actions->menuEdit->actions().at(1));
+    addAction(mode->mUndoAction);
+    addAction(mode->mRedoAction);
 }
 
 /////
@@ -110,10 +110,24 @@ QWidget *LuaModePerDocumentStuff::widget() const
 void LuaModePerDocumentStuff::activate()
 {
     ToolManager::instance()->setScene(0);
+
+    connect(mMode->mUndoAction, SIGNAL(triggered()), mEditor, SLOT(undo()));
+    connect(mMode->mRedoAction, SIGNAL(triggered()), mEditor, SLOT(redo()));
+
+    connect(mEditor, SIGNAL(undoAvailable(bool)), mMode, SLOT(updateUndoAction(bool)));
+    connect(mEditor, SIGNAL(redoAvailable(bool)), mMode, SLOT(updateRedoAction(bool)));
+
+    mMode->updateUndoAction(mEditor->document()->isUndoAvailable());
+    mMode->updateRedoAction(mEditor->document()->isRedoAvailable());
 }
 
 void LuaModePerDocumentStuff::deactivate()
 {
+    disconnect(mMode->mUndoAction, SIGNAL(triggered()), mEditor, SLOT(undo()));
+    disconnect(mMode->mRedoAction, SIGNAL(triggered()), mEditor, SLOT(redo()));
+
+    disconnect(mEditor, SIGNAL(undoAvailable(bool)), mMode, SLOT(updateUndoAction(bool)));
+    disconnect(mEditor, SIGNAL(redoAvailable(bool)), mMode, SLOT(updateRedoAction(bool)));
 }
 
 void LuaModePerDocumentStuff::updateDocumentTab()
@@ -147,7 +161,9 @@ LuaMode::LuaMode(QObject *parent) :
     IMode(parent),
     mEventsDock(new MetaEventDock),
     mLuaDock(new LuaDockWidget),
-    mToolBar(new LuaModeToolBar),
+    mUndoAction(new QAction(tr("Undo"), this)),
+    mRedoAction(new QAction(tr("Redo"), this)),
+    mToolBar(new LuaModeToolBar(this)),
     mCurrentDocumentStuff(0)
 {
     setDisplayName(tr("Lua"));
@@ -184,6 +200,23 @@ LuaMode::LuaMode(QObject *parent) :
     mMainWindow->addDockWidget(Qt::LeftDockWidgetArea, mLuaDock);
 
     setWidget(mMainWindow);
+
+#if 1
+    mUndoAction->setShortcuts(QKeySequence::Undo);
+    mRedoAction->setShortcuts(QKeySequence::Redo);
+    QIcon undoIcon(QLatin1String(":images/16x16/edit-undo.png"));
+    undoIcon.addFile(QLatin1String(":images/24x24/edit-undo.png"));
+    QIcon redoIcon(QLatin1String(":images/16x16/edit-redo.png"));
+    redoIcon.addFile(QLatin1String(":images/24x24/edit-redo.png"));
+    mUndoAction->setIcon(undoIcon);
+    mRedoAction->setIcon(redoIcon);
+    mUndoAction->setVisible(false);
+    mRedoAction->setVisible(false);
+
+    Ui::MainWindow *actions = ProjectActions::instance()->actions();
+    actions->menuEdit->insertAction(ProjectActions::instance()->undoAction(), mRedoAction);
+    actions->menuEdit->insertAction(mRedoAction, mUndoAction);
+#endif
 
     connect(mTabWidget, SIGNAL(currentChanged(int)),
             SLOT(currentDocumentTabChanged(int)));
@@ -243,6 +276,9 @@ void LuaMode::onActiveStateChanged(bool active)
         if (mCurrentDocumentStuff)
             mCurrentDocumentStuff->deactivate();
     }
+
+    mUndoAction->setVisible(active);
+    mRedoAction->setVisible(active);
 }
 
 void LuaMode::currentDocumentTabChanged(int index)
@@ -300,4 +336,14 @@ void LuaMode::documentAboutToClose(int index, Document *doc)
         index = docs.indexOf(doc);
         mTabWidget->removeTab(index);
     }
+}
+
+void LuaMode::updateUndoAction(bool enable)
+{
+    mUndoAction->setEnabled(enable);
+}
+
+void LuaMode::updateRedoAction(bool enable)
+{
+    mRedoAction->setEnabled(enable);
 }

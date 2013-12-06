@@ -37,7 +37,7 @@ class LuaModeToolBar : public QToolBar
 {
     Q_OBJECT
 public:
-    LuaModeToolBar(QWidget *parent = 0);
+    LuaModeToolBar(LuaMode *mode, QWidget *parent = 0);
 };
 
 class LuaModePerDocumentStuff : public QObject
@@ -65,6 +65,8 @@ protected:
     LuaEditor *mEditor;
     QWidget *mWidget;
     QLabel *mSyntaxLabel;
+
+    friend class LuaMode;
 };
 
 class LuaMode : public IMode
@@ -85,9 +87,14 @@ private slots:
     void currentDocumentChanged(Document *doc);
     void documentAboutToClose(int index, Document *doc);
 
+    void updateUndoAction(bool enable);
+    void updateRedoAction(bool enable);
+
 protected:
     EmbeddedMainWindow *mMainWindow;
     QTabWidget *mTabWidget;
+    QAction *mUndoAction; // must be before mToolBar
+    QAction *mRedoAction; // must be before mToolBar
     LuaModeToolBar *mToolBar;
     MetaEventDock *mEventsDock;
     LuaDockWidget *mLuaDock;
@@ -95,7 +102,9 @@ protected:
     LuaModePerDocumentStuff *mCurrentDocumentStuff;
     QMap<Document*,LuaModePerDocumentStuff*> mDocumentStuff;
 
+
     friend class LuaModePerDocumentStuff;
+    friend class LuaModeToolBar;
 };
 
 #endif // LUAMODE_H

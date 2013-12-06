@@ -38,6 +38,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QSettings>
+#include <QUndoGroup>
 
 static const QLatin1String KEY_OPEN_PROJECT_DIRECTORY("OpenProjectDirectory");
 static const QLatin1String KEY_SAVE_PROJECT_DIRECTORY("SaveProjectDirectory");
@@ -50,6 +51,22 @@ ProjectActions::ProjectActions(Ui::MainWindow *actions, QObject *parent) :
     QObject(parent),
     mActions(actions)
 {
+    mUndoAction = mainwin()->undoGroup()->createUndoAction(this, tr("Undo"));
+    mRedoAction = mainwin()->undoGroup()->createRedoAction(this, tr("Redo"));
+    mUndoAction->setShortcuts(QKeySequence::Undo);
+    mRedoAction->setShortcuts(QKeySequence::Redo);
+    QIcon undoIcon(QLatin1String(":images/16x16/edit-undo.png"));
+    undoIcon.addFile(QLatin1String(":images/24x24/edit-undo.png"));
+    QIcon redoIcon(QLatin1String(":images/16x16/edit-redo.png"));
+    redoIcon.addFile(QLatin1String(":images/24x24/edit-redo.png"));
+    mUndoAction->setIcon(undoIcon);
+    mRedoAction->setIcon(redoIcon);
+//    Tiled::Utils::setThemeIcon(undoAction, "edit-undo");
+//    Tiled::Utils::setThemeIcon(redoAction, "edit-redo");
+    mActions->menuEdit->insertAction(mActions->menuEdit->actions().at(0), mUndoAction);
+    mActions->menuEdit->insertAction(mActions->menuEdit->actions().at(1), mRedoAction);
+    mActions->menuEdit->insertSeparator(mActions->menuEdit->actions().at(2));
+
     mActions->actionNewProject->setShortcut(QKeySequence::New);
     mActions->actionSaveProject->setShortcut(QKeySequence::Save);
     mActions->actionOpenProject->setShortcut(QKeySequence::Open);
@@ -579,6 +596,9 @@ void ProjectActions::updateActions()
 {
     Document *doc = docman()->currentDocument();
     ProjectDocument *pdoc = projectDoc();
+
+    mUndoAction->setVisible(!doc || !doc->isLuaDocument());
+    mRedoAction->setVisible(!doc || !doc->isLuaDocument());
 
     mActions->actionSaveProject->setText(doc ? tr("Save \"%1\"").arg(doc->displayName()) : tr("Save"));
     mActions->actionSaveProject->setEnabled(doc != 0 && doc->isModified());

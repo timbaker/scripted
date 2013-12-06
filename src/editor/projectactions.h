@@ -36,6 +36,9 @@ public:
     Document *document();
     ProjectDocument *projectDoc();
 
+    QAction *undoAction() { return mUndoAction; }
+    QAction *redoAction() { return mRedoAction; }
+
 public slots:
     void newProject();
     void newLuaFile();
@@ -87,6 +90,8 @@ public slots:
 
 private:
     Ui::MainWindow *mActions;
+    QAction *mUndoAction;
+    QAction *mRedoAction;
 };
 
 #endif // PROJECTACTIONS_H
