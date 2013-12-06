@@ -24,6 +24,7 @@
 #include "projectdocument.h"
 #include "scriptvariable.h"
 
+#include <QApplication>
 #include <QMimeData>
 #include <QPainter>
 #include <QScrollBar>
@@ -100,7 +101,17 @@ QSize ScriptVariablesDelegate::sizeHint(const QStyleOptionViewItem &option,
 #if 1
     if (index.parent().isValid())
         return QSize();
-    return QSize(qMax(BOXSIZE, option.fontMetrics.boundingRect(index.data(Qt::DisplayRole).toString()).width()) + INSET * 2,
+#ifndef QT_NO_DEBUG
+    static bool reported = false;
+    if (!reported) {
+        noise() << "linespacing actually" << option.fontMetrics.lineSpacing();
+        reported = true;
+    }
+#endif
+    QString label = index.data(Qt::DisplayRole).toString();
+    int labelWidth = option.fontMetrics.boundingRect(label).width();
+    labelWidth++; //
+    return QSize(qMax(BOXSIZE, labelWidth) + INSET * 2,
                  BOXSIZE + INSET * 2 + option.fontMetrics.lineSpacing());
 #else
     const ScriptVariablesModel *m = static_cast<const ScriptVariablesModel*>(index.model());
@@ -334,12 +345,13 @@ ScriptVariablesView::ScriptVariablesView(QWidget *parent) :
 
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
 
-    QStyleOptionViewItem option;
-    option.init(this);
+    setFont(QApplication::font("QListView")); // bit of weirdness here...
+    QStyleOptionViewItem option = viewOptions();
 
     int itemHeight = ScriptVariablesDelegate::BOXSIZE + ScriptVariablesDelegate::INSET * 2;
     itemHeight += option.fontMetrics.lineSpacing();
-    setFixedHeight(itemHeight + frameWidth() * 2 + horizontalScrollBar()->height());
+    noise() << "linespacing thought to be" << option.fontMetrics.lineSpacing() << "scrollbar height" << horizontalScrollBar()->sizeHint().height() << "framwidth" << frameWidth();
+    setFixedHeight(itemHeight + frameWidth() * 2 + horizontalScrollBar()->sizeHint().height());
 
     setDragDropMode(QAbstractItemView::DragOnly);
 
