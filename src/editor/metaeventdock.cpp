@@ -23,6 +23,8 @@
 #include "preferences.h"
 #include "projectactions.h"
 
+#include <QDir>
+#include <QFileInfo>
 #include <QMimeData>
 
 Q_DECLARE_METATYPE(MetaEventInfo*)
@@ -48,7 +50,8 @@ QMimeData *MetaEventModel::mimeData(const QModelIndexList &indexes) const
     QDataStream stream(&encodedData, QIODevice::WriteOnly);
     foreach (const QModelIndex &index, indexes) {
         if (QStandardItem *item = itemFromIndex(index)) {
-            stream << item->text();
+            MetaEventInfo *info = item->data().value<MetaEventInfo*>();
+            stream << info->eventName() << info->path();
         }
     }
 
@@ -70,12 +73,17 @@ MetaEventDock::MetaEventDock(QWidget *parent) :
     ui->treeView->setHeaderHidden(true);
     ui->treeView->setDragEnabled(true);
 
+    mTimer.setInterval(500);
+    mTimer.setSingleShot(true);
+    connect(&mTimer, SIGNAL(timeout()), SLOT(setList()));
+
+    connect(ui->dirComboBox, SIGNAL(currentIndexChanged(int)), SLOT(dirSelected(int)));
     connect(ui->treeView, SIGNAL(activated(QModelIndex)), SLOT(activated(QModelIndex)));
 
     connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(setList()));
-    connect(eventmgr(), SIGNAL(infoChanged(MetaEventInfo*)), SLOT(setList())); // FIXME: multiple calls
+    connect(eventmgr(), SIGNAL(infoChanged(MetaEventInfo*)), &mTimer, SLOT(start()));
 
-    setList();
+    setDirCombo();
 }
 
 MetaEventDock::~MetaEventDock()
@@ -91,14 +99,18 @@ void MetaEventDock::disableDragAndDrop()
 void MetaEventDock::setList()
 {
     mModel->setRowCount(0);
-    foreach (MetaEventInfo *info, eventmgr()->events()) {
-        if (!info->node()) continue;
-        QList<QStandardItem*> items;
-        QStandardItem *item = new QStandardItem(info->node() ? info->node()->label() : tr("FIXME"));
-        item->setEditable(false);
-        item->setData(QVariant::fromValue(info));
-        items += item;
-        mModel->appendRow(items);
+    if (ui->dirComboBox->currentIndex() != -1) {
+        QString fileName = prefs()->gameDirectories().at(ui->dirComboBox->currentIndex());
+        fileName = QDir(fileName).filePath(QLatin1String("media/lua/MetaGame/MetaEvents.lua"));
+        foreach (MetaEventInfo *info, eventmgr()->events(fileName)) {
+            if (!info->node()) continue;
+            QList<QStandardItem*> items;
+            QStandardItem *item = new QStandardItem(info->eventName());
+            item->setEditable(false);
+            item->setData(QVariant::fromValue(info));
+            items += item;
+            mModel->appendRow(items);
+        }
     }
 }
 
@@ -107,5 +119,19 @@ void MetaEventDock::activated(const QModelIndex &index)
     QStandardItem *item = mModel->itemFromIndex(index);
     MetaEventInfo *info = item->data().value<MetaEventInfo*>();
     ProjectActions::instance()->openLuaFile(info->path());
+}
+
+void MetaEventDock::dirSelected(int index)
+{
+    setList();
+}
+
+void MetaEventDock::setDirCombo()
+{
+    ui->dirComboBox->clear();
+    foreach (QString path, prefs()->gameDirectories()) {
+        QFileInfo info(path);
+        ui->dirComboBox->addItem(info.fileName());
+    }
 }
 

@@ -21,111 +21,83 @@
 #include "projectactions.h"
 #include "preferences.h"
 
-#include <QBoxLayout>
-#include <QCompleter>
-#include <QDirModel>
-#include <QEvent>
-#include <QFileDialog>
 #include <QFileSystemModel>
 #include <QHeaderView>
-#include <QLabel>
-#include <QLineEdit>
-#include <QMouseEvent>
-#include <QToolButton>
-
-ScriptsView::ScriptsView(QWidget *parent)
-    : QTreeView(parent)
-{
-    setRootIsDecorated(false);
-    setHeaderHidden(true);
-    setItemsExpandable(false);
-    setUniformRowHeights(true);
-    setDragEnabled(true);
-    setDefaultDropAction(Qt::MoveAction);
-
-    connect(prefs(), SIGNAL(scriptsDirectoryChanged()), this, SLOT(onScriptsDirectoryChanged()));
-
-    QDir mapsDir(prefs()->scriptsDirectory());
-    if (!mapsDir.exists())
-        mapsDir.setPath(QDir::currentPath());
-
-    QFileSystemModel *model = mFSModel = new QFileSystemModel;
-    model->setRootPath(mapsDir.absolutePath());
-
-    model->setFilter(QDir::AllDirs | QDir::NoDot | QDir::Files);
-    QStringList filters;
-    filters << QLatin1String("*.pzs");
-    model->setNameFilters(filters);
-    model->setNameFilterDisables(false); // hide filtered files
-
-    setModel(model);
-
-    QHeaderView* hHeader = header();
-    hHeader->hideSection(1); // Size
-    hHeader->hideSection(2);
-    hHeader->hideSection(3);
-
-    setRootIndex(model->index(mapsDir.absolutePath()));
-
-    header()->setStretchLastSection(false);
-#if QT_VERSION >= 0x050000
-    header()->setSectionResizeMode(0, QHeaderView::Stretch);
-    header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-#else
-    header()->setResizeMode(0, QHeaderView::Stretch);
-    header()->setResizeMode(1, QHeaderView::ResizeToContents);
-#endif
-
-    connect(this, SIGNAL(activated(QModelIndex)), SLOT(onActivated(QModelIndex)));
-}
-
-QSize ScriptsView::sizeHint() const
-{
-    return QSize(130, 100);
-}
-
-void ScriptsView::mousePressEvent(QMouseEvent *event)
-{
-    QModelIndex index = indexAt(event->pos());
-    if (index.isValid()) {
-        // Prevent drag-and-drop starting when clicking on an unselected item.
-        setDragEnabled(selectionModel()->isSelected(index));
-
-        // Hack: disable dragging folders.
-        // FIXME: the correct way to do this would be to override the flags()
-        // method of QFileSystemModel.
-        if (model()->isDir(index))
-            setDragEnabled(false);
-    }
-
-    QTreeView::mousePressEvent(event);
-}
-
-void ScriptsView::onScriptsDirectoryChanged()
-{
-    QDir mapsDir(prefs()->scriptsDirectory());
-    if (!mapsDir.exists())
-        mapsDir.setPath(QDir::currentPath());
-    model()->setRootPath(mapsDir.canonicalPath());
-    setRootIndex(model()->index(mapsDir.absolutePath()));
-}
-
-void ScriptsView::onActivated(const QModelIndex &index)
-{
-    QString path = model()->filePath(index);
-    QFileInfo fileInfo(path);
-    if (fileInfo.isDir()) {
-        prefs()->setScriptsDirectory(fileInfo.canonicalFilePath());
-    }
-    if (fileInfo.suffix() == QLatin1String("pzs"))
-        ProjectActions::instance()->openProject(fileInfo.canonicalFilePath());
-}
-
-/////
 
 ScriptsDock::ScriptsDock(QWidget *parent) :
     QDockWidget(parent),
     ui(new Ui::ScriptsDock)
 {
     ui->setupUi(this);
+
+    QTreeView *t = ui->treeView;
+
+    t->setRootIsDecorated(false);
+    t->setHeaderHidden(true);
+    t->setItemsExpandable(true);
+    t->setUniformRowHeights(true);
+    t->setDragEnabled(true);
+    t->setDefaultDropAction(Qt::CopyAction);
+
+    mModel = new QFileSystemModel;
+    mModel->setFilter(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Files);
+    QStringList filters;
+    filters << QLatin1String("*.pzs");
+    mModel->setNameFilters(filters);
+    mModel->setNameFilterDisables(false); // hide filtered files
+    t->setModel(mModel);
+
+    QHeaderView* hHeader = t->header();
+    hHeader->hideSection(1); // Size
+    hHeader->hideSection(2);
+    hHeader->hideSection(3);
+
+    hHeader->setStretchLastSection(false);
+#if QT_VERSION >= 0x050000
+    hHeader->setSectionResizeMode(0, QHeaderView::Stretch);
+#else
+    hHeader->setResizeMode(0, QHeaderView::Stretch);
+#endif
+
+    connect(ui->treeView, SIGNAL(activated(QModelIndex)), SLOT(activated(QModelIndex)));
+    connect(ui->dirComboBox, SIGNAL(currentIndexChanged(int)), SLOT(dirSelected(int)));
+    connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(gameDirectoriesChanged()));
+
+    setDirCombo();
+}
+
+void ScriptsDock::gameDirectoriesChanged()
+{
+    setDirCombo();
+}
+
+void ScriptsDock::activated(const QModelIndex &index)
+{
+    if (mModel->isDir(index)) return;
+    QString fileName = mModel->filePath(index);
+    ProjectActions::instance()->openProject(fileName);
+}
+
+void ScriptsDock::dirSelected(int index)
+{
+    if (index != -1) {
+        QDir dir(prefs()->gameDirectories().at(index));
+        dir = dir.filePath("media/metascripts");
+        if (dir.exists()) {
+            mModel->setRootPath(dir.absolutePath());
+            ui->treeView->setRootIndex(mModel->index(mModel->rootPath()));
+            return;
+        }
+    }
+    mModel->setRootPath(qApp->applicationDirPath());
+    ui->treeView->setRootIndex(mModel->index(mModel->rootPath()));
+}
+
+void ScriptsDock::setDirCombo()
+{
+    ui->dirComboBox->clear();
+    foreach (QString path, prefs()->gameDirectories()) {
+        QFileInfo info(path);
+        ui->dirComboBox->addItem(info.fileName());
+    }
 }

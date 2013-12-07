@@ -57,6 +57,8 @@ typedef ScriptView ProjectView;
 
 
 extern const QString METAEVENT_MIME_TYPE;
+extern const QString VARIABLE_MIME_TYPE;
+
 
 #ifdef QT_NO_DEBUG
 inline QNoDebug noise() { return QNoDebug(); }

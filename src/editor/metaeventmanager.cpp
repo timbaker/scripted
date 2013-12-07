@@ -41,12 +41,43 @@ MetaEventManager::MetaEventManager(QObject *parent) :
     connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(gameDirectoriesChanged()));
 }
 
-MetaEventInfo *MetaEventManager::info(const QString &eventName)
+MetaEventInfo *MetaEventManager::info(const QString &source, const QString &eventName)
 {
-    if (mEventInfo.contains(eventName))
-        return mEventInfo[eventName];
+    QString path = source;
+    QFileInfo fileInfo(path);
+    if (fileInfo.exists())
+        path = fileInfo.canonicalFilePath();
+    else
+        return 0;
+
+    if (mEventsByFile.contains(path) && mEventsByFile[path].contains(eventName)) {
+        MetaEventInfo *info = mEventsByFile[path][eventName];
+        if (info->node())
+            return info;
+    }
+
+    if (!readEventFile(path))
+        return 0;
+
+    if (mEventsByFile.contains(path) && mEventsByFile[path].contains(eventName)) {
+        MetaEventInfo *info = mEventsByFile[path][eventName];
+        if (info->node())
+            return info;
+    }
 
     return 0;
+}
+
+QList<MetaEventInfo *> MetaEventManager::events(const QString &source)
+{
+    QString path = QDir::cleanPath(source);
+    QFileInfo fileInfo(path);
+    if (fileInfo.exists())
+        path = fileInfo.canonicalFilePath();
+
+    if (mEventsByFile.contains(path))
+        return mEventsByFile[path].values();
+    return QList<MetaEventInfo*>();
 }
 
 bool MetaEventManager::readEventFiles()
@@ -69,42 +100,51 @@ bool MetaEventManager::readEventFiles()
 
 bool MetaEventManager::readEventFile(const QString &fileName)
 {
-    MetaEventFile file;
-    if (file.read(fileName)) {
-        QList<MetaEventInfo*> oldEvents = mEventsByFile[fileName];
-        QList<MetaEventInfo*> &newEvents = mEventsByFile[fileName];
-        newEvents.clear();
-        foreach (MetaEventNode *node, file.takeNodes()) {
-            MetaEventInfo *info = mEventInfo[node->label()];
-            if (info) {
-                delete info->node();
-                node->setInfo(info);
-                info->mNode = node;
-                info->mPath = fileName;
-                emit infoChanged(info);
-            } else {
-                info = new MetaEventInfo;
-                info->mNode = node;
-                info->mPath = fileName;
-                node->setInfo(info);
-                mEventInfo[node->label()] = info;
-                emit infoChanged(info);
-            }
-            newEvents += info;
-        }
-        // FIXME: an event with the same name could have come from another file
-        foreach (MetaEventInfo *info, oldEvents) {
-            if (!newEvents.contains(info)) {
-                delete info->node();
-                info->mNode = 0;
-                emit infoChanged(info);
-            }
-        }
+    QMap<QString,MetaEventInfo*> oldEvents = mEventsByFile[fileName];
+    QMap<QString,MetaEventInfo*> &newEvents = mEventsByFile[fileName];
+//    newEvents.clear();
 
+    bool ok = false;
+
+    if (QFileInfo(fileName).exists()) {
+
+        // Watch the file even if it fails to load
         mFileSystemWatcher.addPath(fileName);
-        return true;
+
+        MetaEventFile file;
+        if (file.read(fileName)) {
+            foreach (MetaEventNode *node, file.takeNodes()) {
+                MetaEventInfo *info;
+                if (oldEvents.contains(node->eventName())) {
+                    info = oldEvents[node->eventName()];
+                    delete info->node();
+                    oldEvents.remove(node->eventName());
+                } else {
+                    info = new MetaEventInfo;
+                }
+                info->mNode = node;
+                info->mPath = fileName;
+                info->mEventName = node->eventName();
+                node->setInfo(info);
+                newEvents[info->eventName()] = info;
+            }
+
+            foreach (MetaEventInfo *info, newEvents)
+                emit infoChanged(info);
+
+            ok = true;
+        }
     }
-    return false;
+
+    // Handle events that were in this file but aren't anymore.
+    // This also handles a file being deleted.
+    foreach (MetaEventInfo *info, oldEvents) {
+        delete info->node();
+        info->mNode = 0;
+        emit infoChanged(info);
+    }
+
+    return ok;
 }
 
 void MetaEventManager::gameDirectoriesChanged()
@@ -125,9 +165,8 @@ void MetaEventManager::fileChangedTimeout()
             noise() << "MetaEventManager::fileChanged" << path;
             mFileSystemWatcher.removePath(path);
             QFileInfo info(path);
-            if (info.exists()) {
-                readEventFile(QFileInfo(path).canonicalFilePath());
-            }
+            // This also handles the file not existing anymore
+            readEventFile(QFileInfo(path).canonicalFilePath());
         }
     }
 
@@ -154,7 +193,6 @@ bool MetaEventFile::read(const QString &fileName)
     if (!QFileInfo(fileName).exists())
         return false;
 
-#if 1
     LuaState L;
     if (!L.loadFile(fileName))
         return false;
@@ -164,6 +202,8 @@ bool MetaEventFile::read(const QString &fileName)
         return false;
 
     LuaNode node(0, QFileInfo(fileName).baseName());
+
+    QStringList eventNames;
 
     for (int i = 0; i < lv.mTableValue.size(); i++) {
 //        LuaValue *k = lv.mTableValue.mKeys[i];
@@ -194,68 +234,13 @@ bool MetaEventFile::read(const QString &fileName)
                 }
             }
         }
+        if (node.eventName().isEmpty()) return false;
+        if (eventNames.contains(node.eventName())) return false;
+        eventNames += node.eventName();
         mNodes += new MetaEventNode(0, node);
     }
 
     return new LuaNode(0, node);
-#else
-    if (lua_State *L = luaL_newstate()) {
-        luaL_openlibs(L);
-        int status = luaL_loadfile(L, fileName.toLatin1().data());
-        if (status == LUA_OK) {
-            status = lua_pcall(L, 0, 0, -1); // call the closure?
-            if (status == LUA_OK) {
-                lua_getglobal(L, "events");
-                int tblidx = lua_gettop(L);
-                if (lua_istable(L, tblidx)) { // events = { ... }
-                    lua_pushnil(L); // push space on stack for the key
-                    while (lua_next(L, tblidx) != 0) { // pop a key, push key then value
-                        MetaEventNode *node = new MetaEventNode(0, QString());
-                        if (!lua_istable(L, -1))
-                            return false; // FIXME: lua_close
-                        lua_pushnil(L); // space for key
-                        while (lua_next(L, -2) != 0) { // pop a key, push key then value
-                            const char *key = lua_isstring(L, -2) ? lua_tostring(L, -2) : "";
-                            if (!strcmp(key, "name")) {
-                                node->setName(lua_tostring(L, -1));
-                            } else if (!strcmp(key, "variables")) {
-                                if (!lua_istable(L, -1))
-                                    return false; // FIXME: lua_close
-                                lua_pushnil(L); // space for key
-                                while (lua_next(L, -2) != 0) { // pop a key, push key then value
-                                    if (!lua_istable(L, -1))
-                                        return false; // FIXME: lua_close
-                                    QMap<QString,QString> kv;
-                                    lua_pushnil(L); // space for key
-                                    while (lua_next(L, -2) != 0) { // pop a key, push key then value
-                                        const char *key = lua_tostring(L, -2);
-                                        const char *value = lua_tostring(L, -1);
-                                        kv[QLatin1String(key)] = QLatin1String(value);
-                                        lua_pop(L, 1); // pop value
-                                    }
-                                    node->insertVariable(node->variableCount(),
-                                                         new ScriptVariable(kv[QLatin1String("type")],
-                                                         kv[QLatin1String("name")],
-                                            kv[QLatin1String("value")]));
-                                    lua_pop(L, 1); // pop value
-                                }
-                            }
-                            lua_pop(L, 1); // pop value
-                        }
-                        lua_pop(L, 1); // pop value
-                        if (node->name().isEmpty())
-                            return false;
-                        mNodes += node;
-                    }
-                }
-            }
-        }
-        lua_close(L);
-        return true;
-    }
-
-    return false;
-#endif
 }
 
 QList<MetaEventNode *> MetaEventFile::takeNodes()

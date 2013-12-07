@@ -27,10 +27,12 @@ class MetaEventInfo
 {
 public:
     QString path() const { return mPath; }
+    QString eventName() const { return mEventName; }
     MetaEventNode *node() const { return mNode; }
 
 private:
     QString mPath; // the MetaEvents.lua file we came from
+    QString mEventName;
     MetaEventNode *mNode;
 
     friend class MetaEventManager;
@@ -58,8 +60,8 @@ class MetaEventManager : public QObject, public Singleton<MetaEventManager>
 public:
     explicit MetaEventManager(QObject *parent = 0);
 
-    MetaEventInfo *info(const QString &eventName);
-    QList<MetaEventInfo*> events() { return mEventInfo.values(); }
+    MetaEventInfo *info(const QString &source, const QString &eventName);
+    QList<MetaEventInfo*> events(const QString &source);
     bool readEventFiles();
 
 signals:
@@ -74,8 +76,7 @@ public slots:
     void fileChangedTimeout();
 
 private:
-    QMap<QString,MetaEventInfo*> mEventInfo;
-    QMap<QString,QList<MetaEventInfo*> > mEventsByFile;
+    QMap<QString,QMap<QString,MetaEventInfo*> > mEventsByFile;
 
     FileSystemWatcher mFileSystemWatcher;
     QSet<QString> mChangedFiles;

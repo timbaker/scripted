@@ -216,6 +216,10 @@ private:
                 if (NodeOutput *output = readOutput())
                     node->insertOutput(node->outputCount(), output);
 #endif
+            } else if (xml.name() == QLatin1String("source")) {
+                const QXmlStreamAttributes atts = xml.attributes();
+                node->setSource(getRelativeFile(atts, "file"));
+                xml.skipCurrentElement();
             } else if (xml.name() == QLatin1String("variable")) {
                 if (ScriptVariable *v = readVariable(false)) {
                     node->insertVariable(node->variableCount(), v);
@@ -419,11 +423,11 @@ private:
         if (fileName == QLatin1String("."))
             return relativeTo;
         if (QDir::isRelativePath(fileName)) {
-            QString path = relativeTo + QLatin1Char('/') + fileName;
+            QString path = QDir(relativeTo).filePath(fileName);
             QFileInfo info(path);
             if (info.exists())
                 return info.canonicalFilePath();
-            return path;
+            return QDir::cleanPath(path);
         }
         return fileName;
     }

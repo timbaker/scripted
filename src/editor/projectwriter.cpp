@@ -18,6 +18,7 @@
 #include "projectwriter.h"
 
 #include "luamanager.h"
+#include "metaeventmanager.h"
 #include "node.h"
 #include "project.h"
 #include "scriptmanager.h"
@@ -103,6 +104,12 @@ public:
         xml.writeAttribute(QLatin1String("eventname"), node->eventName());
         xml.writeAttribute(QLatin1String("label"), node->label());
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
+
+        xml.writeStartElement(QLatin1String("source"));
+        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->info()
+                           ? node->info()->path()
+                           : node->source()));
+        xml.writeEndElement();
 
         foreach (ScriptVariable *var, node->variables())
             writeVariable(var);

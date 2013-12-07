@@ -305,6 +305,9 @@ public:
     bool isKnown(const NodeInput *input);
     bool isKnown(const NodeOutput *output);
 
+    void setSource(const QString &path) { mSource = path; }
+    QString source() { return mSource; }
+
     void setInfo(MetaEventInfo *info) { mInfo = info; }
     MetaEventInfo *info() const { return mInfo; }
 
@@ -316,7 +319,8 @@ public:
     virtual MetaEventNode *asEventNode() { return this; }
 
 private:
-    QString mEventName; // immutable
+    QString mSource; // path to MetaEvents.lua
+    QString mEventName;
     MetaEventInfo *mInfo;
 };
 

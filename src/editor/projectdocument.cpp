@@ -46,7 +46,7 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
         }
         if (MetaEventNode *enode = node->asEventNode()) {
             Q_ASSERT(enode->outputCount() == 1);
-            if (MetaEventInfo *info = eventmgr()->info(enode->eventName())) {
+            if (MetaEventInfo *info = eventmgr()->info(enode->source(), enode->eventName())) {
                 enode->setInfo(info);
                 enode->syncWithInfo();
             }

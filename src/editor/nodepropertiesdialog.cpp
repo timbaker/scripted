@@ -81,7 +81,7 @@ void NodePropertiesDialog::setNode(BaseNode *node)
     if (LuaNode *lnode = mNode->asLuaNode())
         source = lnode->source();
     if (MetaEventNode *enode = mNode->asEventNode())
-        source = enode->info() ? enode->info()->path() : QString();
+        source = enode->source();
     if (ScriptNode *snode = mNode->asScriptNode())
         source = snode->source();
     ui->sourceEdit->setText(QDir::toNativeSeparators(source));

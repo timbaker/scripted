@@ -189,7 +189,7 @@ void NodeItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 
         if (openRect().contains(event->pos())) {
             if (MetaEventNode *enode = mNode->asEventNode())
-                ProjectActions::instance()->openLuaFile(enode->info()->path());
+                ProjectActions::instance()->openLuaFile(enode->source());
             if (LuaNode *lnode = mNode->asLuaNode())
                 ProjectActions::instance()->openLuaFile(lnode->source());
             if (ScriptNode *snode = mNode->asScriptNode())
@@ -731,8 +731,6 @@ void BaseVariableItem::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
     QGraphicsItem::mousePressEvent(event);
 }
-
-static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
 
 void BaseVariableItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {

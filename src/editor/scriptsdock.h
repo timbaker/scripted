@@ -27,34 +27,23 @@ namespace Ui {
 class ScriptsDock;
 }
 
-class ScriptsView : public QTreeView
-{
-    Q_OBJECT
-
-public:
-    ScriptsView(QWidget *parent = 0);
-
-    QSize sizeHint() const;
-
-    void mousePressEvent(QMouseEvent *event);
-
-    QFileSystemModel *model() const { return mFSModel; }
-
-private slots:
-    void onScriptsDirectoryChanged();
-    void onActivated(const QModelIndex &index);
-
-private:
-    QFileSystemModel *mFSModel;
-};
-
 class ScriptsDock : public QDockWidget
 {
+    Q_OBJECT
 public:
     ScriptsDock(QWidget *parent = 0);
 
+private slots:
+    void gameDirectoriesChanged();
+    void activated(const QModelIndex &index);
+    void dirSelected(int index);
+
+private:
+    void setDirCombo();
+
 private:
     Ui::ScriptsDock *ui;
+    QFileSystemModel *mModel;
 };
 
 #endif // SCRIPTSDOCK_H

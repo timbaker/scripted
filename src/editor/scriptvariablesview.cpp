@@ -30,6 +30,8 @@
 #include <QScrollBar>
 #include <QStandardItemModel>
 
+const QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
+
 class ScriptVariablesDelegate : public QAbstractItemDelegate
 {
 public:
@@ -214,8 +216,6 @@ QModelIndex ScriptVariablesModel::parent(const QModelIndex &child) const
 {
     return QModelIndex();
 }
-
-static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
 
 QStringList ScriptVariablesModel::mimeTypes() const
 {

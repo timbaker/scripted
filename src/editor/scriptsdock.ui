@@ -27,19 +27,15 @@
     <property name="bottomMargin">
      <number>2</number>
     </property>
+    <item row="1" column="0">
+     <widget class="QTreeView" name="treeView"/>
+    </item>
     <item row="0" column="0">
-     <widget class="ScriptsView" name="treeView"/>
+     <widget class="QComboBox" name="dirComboBox"/>
     </item>
    </layout>
   </widget>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>ScriptsView</class>
-   <extends>QTreeView</extends>
-   <header>scriptsdock.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

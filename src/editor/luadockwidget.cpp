@@ -87,6 +87,7 @@ void LuaDockWidget::gameDirectoriesChanged()
 
 void LuaDockWidget::activated(const QModelIndex &index)
 {
+    if (mModel->isDir(index)) return;
     QString fileName = mModel->filePath(index);
     ProjectActions::instance()->openLuaFile(fileName);
 }

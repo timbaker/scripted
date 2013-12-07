@@ -20,6 +20,7 @@
 
 #include <QDockWidget>
 #include <QStandardItemModel>
+#include <QTimer>
 
 class MetaEventModel : public QStandardItemModel
 {
@@ -47,10 +48,15 @@ public:
 private slots:
     void setList();
     void activated(const QModelIndex &index);
+    void dirSelected(int index);
+
+private:
+    void setDirCombo();
 
 private:
     Ui::MetaEventDock *ui;
     MetaEventModel *mModel;
+    QTimer mTimer;
 };
 
 #endif // METAEVENTDOCK_H

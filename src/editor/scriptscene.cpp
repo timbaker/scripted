@@ -355,9 +355,6 @@ void ScriptScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     BaseGraphicsScene::mouseReleaseEvent(event);
 }
 
-static QString COMMAND_MIME_TYPE = QLatin1String("application/x-pzdraft-command");
-static QString VARIABLE_MIME_TYPE = QLatin1String("application/x-pzdraft-variable");
-
 void ScriptScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 {
     qDebug() << event->mimeData()->formats();
@@ -418,10 +415,12 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
         QDataStream stream(&encodedData, QIODevice::ReadOnly);
         while (!stream.atEnd()) {
             QString eventName;
-            stream >> eventName;
-            if (MetaEventInfo *info = eventmgr()->info(eventName)) {
+            QString source;
+            stream >> eventName >> source;
+            if (MetaEventInfo *info = eventmgr()->info(source, eventName)) {
                 if (MetaEventNode *node = info->node()) { // may go to NULL if a MetaEvents.lua couldn't be reloaded
                     MetaEventNode *newNode = new MetaEventNode(mDocument->project()->mNextID++, *node);
+                    newNode->setSource(info->path());
                     newNode->setPos(event->scenePos());
                     mDocument->changer()->beginUndoCommand(mDocument->undoStack());
                     mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), newNode);

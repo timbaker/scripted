@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     new ScriptManager;
 
     new LuaManager;
-    luamgr()->readLuaFiles();
+//    luamgr()->readLuaFiles();
 
     new MetaEventManager;
     eventmgr()->readEventFiles();
