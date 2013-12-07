@@ -43,6 +43,7 @@ EditModeToolBar::EditModeToolBar(QWidget *parent) :
     QToolBar(parent)
 {
     setWindowTitle(tr("Editing ToolBar"));
+    setObjectName("EditMode.ToolBar");
 
     Ui::MainWindow *actions = ProjectActions::instance()->actions();
     addAction(actions->actionNewProject);

@@ -42,6 +42,7 @@ LuaModeToolBar::LuaModeToolBar(LuaMode *mode, QWidget *parent) :
     QToolBar(parent)
 {
     setWindowTitle(tr("Lua ToolBar"));
+    setObjectName("LuaMode.ToolBar");
 
     Ui::MainWindow *actions = ProjectActions::instance()->actions();
     addAction(actions->actionNewLuaFile);
