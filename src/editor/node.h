@@ -330,6 +330,9 @@ public:
     bool isKnown(const NodeInput *input);
     bool isKnown(const NodeOutput *output);
 
+    void setInfo(LuaInfo *info) { mInfo = info; }
+    LuaInfo *info() const { return mInfo; }
+
     void setSource(const QString &path) { mSource = path; }
     QString source() { return mSource; }
 
@@ -341,7 +344,8 @@ public:
     virtual bool isLuaNode() { return true; }
     virtual LuaNode *asLuaNode() { return this; }
 
-    QString mSource; // (relative) path to .lua
+private:
+    QString mSource; // path to .lua
     LuaInfo *mInfo;
 };
 
@@ -417,7 +421,7 @@ public:
     virtual ScriptNode *asScriptNode() { return this; }
 
 private:
-    QString mSource; // (relative) path to .pzs
+    QString mSource; // path to .pzs
     ScriptInfo *mInfo;
     QList<BaseNode*> mNodes;
 };

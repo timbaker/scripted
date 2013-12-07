@@ -90,7 +90,7 @@ void NodeItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 {
     QColor color = Qt::black;
     if (LuaNode *lnode = mNode->asLuaNode())
-        if (!lnode->mInfo || !lnode->mInfo->node())
+        if (!lnode->info() || !lnode->info()->node())
             color = Qt::red;
     if (MetaEventNode *enode = mNode->asEventNode())
         if (!enode->info() || !enode->info()->node())
@@ -234,7 +234,7 @@ void NodeItem::infoChanged(ScriptInfo *info)
 void NodeItem::infoChanged(LuaInfo *info)
 {
     if (LuaNode *node = mNode->asLuaNode()) {
-        if (node->mInfo == info) {
+        if (node->info() == info) {
             if (node->syncWithInfo())
                 syncWithNode();
             update();

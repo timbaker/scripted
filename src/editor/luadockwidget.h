@@ -21,51 +21,12 @@
 #include "editor_global.h"
 
 #include <QDockWidget>
-#include <QAbstractItemModel>
+
+class QFileSystemModel;
 
 namespace Ui {
 class LuaDockWidget;
 }
-
-class LuaItemModel : public QAbstractItemModel
-{
-public:
-    LuaItemModel(QObject *parent);
-    ~LuaItemModel();
-
-    int rowCount(const QModelIndex &parent) const;
-    int columnCount(const QModelIndex &parent) const;
-    Qt::ItemFlags flags(const QModelIndex &index) const;
-    QVariant data(const QModelIndex &index, int role) const;
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-    QModelIndex index(int row, int column, const QModelIndex &parent) const;
-    QModelIndex parent(const QModelIndex &child) const;
-    QStringList mimeTypes() const;
-    QMimeData *mimeData(const QModelIndexList &indexes) const;
-
-    void reset();
-
-private:
-    class Item
-    {
-    public:
-        Item() :
-            mInfo(0)
-        {
-        }
-
-        Item(LuaInfo *info) :
-            mInfo(info)
-        {
-        }
-
-        LuaInfo *mInfo;
-        QString mLabel;
-    };
-
-    Item *itemAt(const QModelIndex &index) const;
-    QList<Item*> mItems;
-};
 
 class LuaDockWidget : public QDockWidget
 {
@@ -78,11 +39,16 @@ public:
     void disableDragAndDrop();
 
 private slots:
-    void setList();
+    void gameDirectoriesChanged();
     void activated(const QModelIndex &index);
+    void dirSelected(int index);
+
+private:
+    void setDirCombo();
 
 private:
     Ui::LuaDockWidget *ui;
+    QFileSystemModel *mModel;
 };
 
 #endif // LUADOCKWIDGET_H

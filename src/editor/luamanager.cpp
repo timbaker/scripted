@@ -101,30 +101,6 @@ bool LuaManager::readLuaFiles()
         }
     }
 
-#if 0
-    if (LuaInfo *dt = new LuaInfo(tr("CheckInventoryItem"))) {
-        dt->insertVariable(dt->variableCount(), new ScriptVariable(QLatin1String("Actor"), tr("Entity"), QString("some value")));
-        dt->insertVariable(dt->variableCount(), new ScriptVariable(QLatin1String("InventoryItem"), tr("Item"), QString("some value")));
-        dt->insertInput(dt->inputCount(), new NodeInput(tr("Input1")));
-        dt->insertInput(dt->inputCount(), new NodeInput(tr("Input2")));
-        dt->insertInput(dt->inputCount(), new NodeInput(tr("Input3")));
-        dt->insertOutput(dt->outputCount(), new NodeOutput(tr("Output1")));
-        dt->insertOutput(dt->outputCount(), new NodeOutput(tr("Output2")));
-
-        mCommands += dt;
-    }
-
-    if (LuaInfo *dt = new LuaInfo(tr("GiveItem"))) {
-        dt->insertVariable(dt->variableCount(), new ScriptVariable(QLatin1String("Actor"), tr("Entity"), QString("some value")));
-        dt->insertVariable(dt->variableCount(), new ScriptVariable(QLatin1String("InventoryItem"), tr("Item"), QString("some value")));
-        dt->insertInput(dt->inputCount(), new NodeInput(tr("Input1")));
-        dt->insertInput(dt->inputCount(), new NodeInput(tr("Input2")));
-        dt->insertOutput(dt->outputCount(), new NodeOutput(tr("Output1")));
-
-        mCommands += dt;
-    }
-#endif
-
     return true;
 }
 

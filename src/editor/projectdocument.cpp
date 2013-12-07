@@ -40,7 +40,7 @@ ProjectDocument::ProjectDocument(Project *prj, const QString &fileName) :
     foreach (BaseNode *node, mProject->rootNode()->nodes()) {
         if (LuaNode *lnode = node->asLuaNode()) {
             if (LuaInfo *info = luamgr()->luaInfo(lnode->source())) {
-                lnode->mInfo = info;
+                lnode->setInfo(info);
                 lnode->syncWithInfo();
             }
         }

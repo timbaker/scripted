@@ -362,20 +362,25 @@ void ScriptScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 {
     qDebug() << event->mimeData()->formats();
 
-    mDragHasPZS = false;
+    mDragScriptInfo = 0;
+    mDragLuaInfo = 0;
     foreach (const QUrl &url, event->mimeData()->urls()) {
         QFileInfo info(url.toLocalFile());
         if (!info.exists()) continue;
         if (!info.isFile()) continue;
-        if (info.suffix() != QLatin1String("pzs")) continue;
-        mDragHasPZS = true;
-        break;
+        if (info.suffix() == QLatin1String("pzs")) {
+            if (mDragScriptInfo = scriptmgr()->scriptInfo(info.canonicalFilePath()))
+                break;
+        }
+        if (info.suffix() == QLatin1String("lua")) {
+            if (mDragLuaInfo = luamgr()->luaInfo(info.canonicalFilePath()))
+                break;
+        }
     }
 
-    if (!event->mimeData()->hasFormat(COMMAND_MIME_TYPE) &&
-            !event->mimeData()->hasFormat(VARIABLE_MIME_TYPE) &&
+    if (!event->mimeData()->hasFormat(VARIABLE_MIME_TYPE) &&
             !event->mimeData()->hasFormat(METAEVENT_MIME_TYPE) &&
-            !mDragHasPZS) {
+            !mDragScriptInfo && !mDragLuaInfo) {
         event->ignore();
         return;
     }
@@ -389,9 +394,8 @@ void ScriptScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
 
     // NodeItem accepts VARIABLE_MIME_TYPE
     if (!event->isAccepted() &&
-            (event->mimeData()->hasFormat(COMMAND_MIME_TYPE) ||
-             event->mimeData()->hasFormat(METAEVENT_MIME_TYPE) ||
-             mDragHasPZS)) {
+            (event->mimeData()->hasFormat(METAEVENT_MIME_TYPE) ||
+             mDragScriptInfo || mDragLuaInfo)) {
         event->accept();
         event->setDropAction(Qt::CopyAction);
     }
@@ -428,45 +432,28 @@ void ScriptScene::dropEvent(QGraphicsSceneDragDropEvent *event)
         return;
     }
 
-    if (mDragHasPZS) {
-        foreach (const QUrl &url, event->mimeData()->urls()) {
-            QFileInfo info(url.toLocalFile());
-            if (!info.exists()) continue;
-            if (!info.isFile()) continue;
-            if (info.suffix() != QLatin1String("pzs")) continue;
-            if (ScriptInfo *scriptInfo = scriptmgr()->scriptInfo(info.absoluteFilePath())) {
-                ScriptNode *node = new ScriptNode(mDocument->project()->mNextID++, scriptInfo->node()->label());
-                node->initFrom(scriptInfo->node());
-                node->setPos(event->scenePos());
-                node->setInfo(scriptInfo);
-                node->setSource(scriptInfo->path());
-                mDocument->changer()->beginUndoCommand(mDocument->undoStack());
-                mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
-                mDocument->changer()->endUndoCommand();
-            }
-        }
+    if (mDragScriptInfo) {
+        ScriptNode *node = new ScriptNode(mDocument->project()->mNextID++, mDragScriptInfo->node()->label());
+        node->initFrom(mDragScriptInfo->node());
+        node->setPos(event->scenePos());
+        node->setInfo(mDragScriptInfo);
+        node->setSource(mDragScriptInfo->path());
+        mDocument->changer()->beginUndoCommand(mDocument->undoStack());
+        mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
+        mDocument->changer()->endUndoCommand();
         return;
     }
 
-    if (!event->mimeData()->hasFormat(COMMAND_MIME_TYPE))
-        return;
-
-    QByteArray encodedData = event->mimeData()->data(COMMAND_MIME_TYPE);
-    QDataStream stream(&encodedData, QIODevice::ReadOnly);
-    while (!stream.atEnd()) {
-        QString path;
-        stream >> path;
-        if (LuaInfo *def = luamgr()->luaInfo(path)) {
-            if (LuaNode *lnode = def->node()) { // may go to NULL if a .lua file couldn't be reloaded
-                LuaNode *node = new LuaNode(mDocument->project()->mNextID++, def->node()->label());
-                node->initFrom(lnode);
-                node->mInfo = def;
-                node->setPos(event->scenePos());
-                //            node->mComment = tr("Added by drag-and-drop.");
-                mDocument->changer()->beginUndoCommand(mDocument->undoStack());
-                mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
-                mDocument->changer()->endUndoCommand();
-            }
+    if (mDragLuaInfo) {
+        if (LuaNode *lnode = mDragLuaInfo->node()) { // may go to NULL if a .lua file couldn't be reloaded
+            LuaNode *node = new LuaNode(mDocument->project()->mNextID++, mDragLuaInfo->node()->label());
+            node->initFrom(lnode);
+            node->setInfo(mDragLuaInfo);
+            node->setSource(mDragLuaInfo->path());
+            node->setPos(event->scenePos());
+            mDocument->changer()->beginUndoCommand(mDocument->undoStack());
+            mDocument->changer()->doAddNode(mDocument->project()->rootNode()->nodeCount(), node);
+            mDocument->changer()->endUndoCommand();
         }
     }
 }

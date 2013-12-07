@@ -24,7 +24,7 @@
 #include "projectactions.h"
 
 #include <QFileInfo>
-#include <QMimeData>
+#include <QFileSystemModel>
 
 LuaDockWidget::LuaDockWidget(QWidget *parent) :
     QDockWidget(parent),
@@ -32,16 +32,42 @@ LuaDockWidget::LuaDockWidget(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    LuaItemModel *model = new LuaItemModel(ui->listView);
-    ui->listView->setModel(model);
-    ui->listView->setDragEnabled(true);
-    ui->listView->setDragDropMode(QAbstractItemView::DragOnly);
+    QTreeView *t = ui->treeView;
 
-    connect(ui->listView, SIGNAL(activated(QModelIndex)), SLOT(activated(QModelIndex)));
+    t->setRootIsDecorated(false);
+    t->setHeaderHidden(true);
+    t->setItemsExpandable(true);
+    t->setUniformRowHeights(true);
+    t->setDragEnabled(true);
+    t->setDefaultDropAction(Qt::CopyAction);
 
-    connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(setList()));
+    mModel = new QFileSystemModel;
+    mModel->setFilter(QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Files);
+    QStringList filters;
+    filters << QLatin1String("*.lua");
+    mModel->setNameFilters(filters);
+    mModel->setNameFilterDisables(false); // hide filtered files
+    t->setModel(mModel);
 
-    setList();
+    QHeaderView* hHeader = t->header();
+    hHeader->hideSection(1); // Size
+    hHeader->hideSection(2);
+    hHeader->hideSection(3);
+
+    hHeader->setStretchLastSection(false);
+#if QT_VERSION >= 0x050000
+    hHeader->setSectionResizeMode(0, QHeaderView::Stretch);
+//    hHeader->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+#else
+    hHeader->setResizeMode(0, QHeaderView::Stretch);
+//    hHeader->setResizeMode(1, QHeaderView::ResizeToContents);
+#endif
+
+    connect(ui->treeView, SIGNAL(activated(QModelIndex)), SLOT(activated(QModelIndex)));
+    connect(ui->dirComboBox, SIGNAL(currentIndexChanged(int)), SLOT(dirSelected(int)));
+    connect(prefs(), SIGNAL(gameDirectoriesChanged()), SLOT(gameDirectoriesChanged()));
+
+    setDirCombo();
 }
 
 LuaDockWidget::~LuaDockWidget()
@@ -51,138 +77,40 @@ LuaDockWidget::~LuaDockWidget()
 
 void LuaDockWidget::disableDragAndDrop()
 {
-    ui->listView->setDragEnabled(false);
+    ui->treeView->setDragEnabled(false);
 }
 
-void LuaDockWidget::setList()
+void LuaDockWidget::gameDirectoriesChanged()
 {
-    ((LuaItemModel*)ui->listView->model())->reset();
+    setDirCombo();
 }
 
 void LuaDockWidget::activated(const QModelIndex &index)
 {
-    if (LuaInfo *info = luamgr()->commands().at(index.row()))
-        ProjectActions::instance()->openLuaFile(info->path());
+    QString fileName = mModel->filePath(index);
+    ProjectActions::instance()->openLuaFile(fileName);
 }
 
-/////
-
-LuaItemModel::LuaItemModel(QObject *parent) :
-    QAbstractItemModel(parent)
+void LuaDockWidget::dirSelected(int index)
 {
-
-}
-
-LuaItemModel::~LuaItemModel()
-{
-    qDeleteAll(mItems);
-}
-
-int LuaItemModel::rowCount(const QModelIndex &parent) const
-{
-    if (parent.isValid())
-        return 0;
-
-    return mItems.size();
-}
-
-int LuaItemModel::columnCount(const QModelIndex &parent) const
-{
-    return parent.isValid() ? 0 : 1;
-}
-
-Qt::ItemFlags LuaItemModel::flags(const QModelIndex &index) const
-{
-    Qt::ItemFlags flags = QAbstractItemModel::flags(index);
-    if (itemAt(index))
-        flags |= Qt::ItemIsDragEnabled;
-    return flags;
-}
-
-QVariant LuaItemModel::data(const QModelIndex &index, int role) const
-{
-    if (role == Qt::DisplayRole) {
-        if (Item *item = itemAt(index)) {
-            return item->mLabel;
+    if (index != -1) {
+        QDir dir(prefs()->gameDirectories().at(index));
+        dir = dir.filePath("media/lua/MetaGame");
+        if (dir.exists()) {
+            mModel->setRootPath(dir.absolutePath());
+            ui->treeView->setRootIndex(mModel->index(mModel->rootPath()));
+            return;
         }
     }
-#if 0
-    if (role == Qt::ToolTipRole) {
-        if (Item *item = toItem(index)) {
-            return item->mDefinition->mName;
-        }
+    mModel->setRootPath(qApp->applicationDirPath());
+    ui->treeView->setRootIndex(mModel->index(mModel->rootPath()));
+}
+
+void LuaDockWidget::setDirCombo()
+{
+    ui->dirComboBox->clear();
+    foreach (QString path, prefs()->gameDirectories()) {
+        QFileInfo info(path);
+        ui->dirComboBox->addItem(info.fileName());
     }
-#endif
-    return QVariant();
-}
-
-QVariant LuaItemModel::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    Q_UNUSED(section)
-    Q_UNUSED(orientation)
-    if (role == Qt::SizeHintRole)
-        return QSize(1, 1);
-    return QVariant();
-}
-
-QModelIndex LuaItemModel::index(int row, int column, const QModelIndex &parent) const
-{
-    if (parent.isValid() || mItems.isEmpty())
-        return QModelIndex();
-
-    return createIndex(row, column, mItems.at(row));
-}
-
-QModelIndex LuaItemModel::parent(const QModelIndex &child) const
-{
-    return QModelIndex();
-}
-
-static QString COMMAND_MIME_TYPE = QLatin1String("application/x-pzdraft-command");
-
-QStringList LuaItemModel::mimeTypes() const
-{
-    return QStringList() << COMMAND_MIME_TYPE;
-}
-
-QMimeData *LuaItemModel::mimeData(const QModelIndexList &indexes) const
-{
-    QMimeData *mimeData = new QMimeData();
-    QByteArray encodedData;
-
-    QDataStream stream(&encodedData, QIODevice::WriteOnly);
-    foreach (const QModelIndex &index, indexes) {
-        if (Item *item = itemAt(index)) {
-            stream << item->mInfo->path(); // FIXME: path/to/file.lua
-        }
-    }
-
-    mimeData->setData(COMMAND_MIME_TYPE, encodedData);
-    return mimeData;
-}
-
-void LuaItemModel::reset()
-{
-    if (mItems.size()) {
-        beginRemoveRows(QModelIndex(), 0, mItems.size() - 1);
-        qDeleteAll(mItems);
-        mItems.clear();
-        endRemoveRows();
-    }
-    if (int count = luamgr()->commands().size()) {
-        beginInsertRows(QModelIndex(), 0, count - 1);
-        foreach (LuaInfo *info, luamgr()->commands()) {
-            Item *item = new Item(info);
-            item->mLabel = QFileInfo(info->path()).baseName();
-            mItems += item;
-        }
-        endInsertRows();
-    }
-}
-
-LuaItemModel::Item *LuaItemModel::itemAt(const QModelIndex &index) const
-{
-    if (index.isValid())
-        return static_cast<Item*>(index.internalPointer());
-    return 0;
 }

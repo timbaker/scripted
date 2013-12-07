@@ -220,7 +220,8 @@ private:
     InputOrOutputItem mConnectTo;
     GridItem *mGridItem;
     ScriptAreaItem *mAreaItem;
-    bool mDragHasPZS;
+    ScriptInfo *mDragScriptInfo;
+    LuaInfo *mDragLuaInfo;
 
     friend class ScriptAreaItem;
 };

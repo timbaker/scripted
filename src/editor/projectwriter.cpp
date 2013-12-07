@@ -125,8 +125,8 @@ public:
         writeDoublePair(QLatin1String("pos"), node->pos().x(), node->pos().y());
 
         xml.writeStartElement(QLatin1String("source"));
-        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->mInfo
-                           ? node->mInfo->path()
+        xml.writeAttribute(QLatin1String("file"), relativeFileName(node->info()
+                           ? node->info()->path()
                            : node->source()));
         xml.writeEndElement();
 
