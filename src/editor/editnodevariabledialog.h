@@ -30,7 +30,7 @@ class EditNodeVariableDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit EditNodeVariableDialog(ScriptVariable *var, QWidget *parent = 0);
+    explicit EditNodeVariableDialog(ProjectDocument *doc, ScriptVariable *var, QWidget *parent = 0);
     ~EditNodeVariableDialog();
 
     QString value() const;

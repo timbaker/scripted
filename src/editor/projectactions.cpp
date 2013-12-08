@@ -549,8 +549,10 @@ void ProjectActions::variableProperties(ScriptVariable *var)
                     ScriptVariable newVar2(var2);
                     if (d.name() != var->name())
                         newVar2.setVariableRef(0, d.name());
+#if 0 // If the type changed, that will break nodes using this variable
                     if (d.type() != var->type())
                         newVar2.setVariableRef(-1, QString());
+#endif
                     doc->changer()->doChangeVariable(var2, &newVar2);
                 }
             }
@@ -584,7 +586,7 @@ void ProjectActions::connectionsDialog(BaseNode *node, const QString &outputName
 
 void ProjectActions::editNodeVariableValue(ScriptVariable *var)
 {
-    EditNodeVariableDialog d(var, MainWindow::instance());
+    EditNodeVariableDialog d(projectDoc(), var, MainWindow::instance());
     if (d.exec() == QDialog::Accepted) {
         ProjectDocument *doc = projectDoc();
         doc->changer()->beginUndoCommand(doc->undoStack());

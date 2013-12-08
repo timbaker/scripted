@@ -18,17 +18,62 @@
 #include "editnodevariabledialog.h"
 #include "ui_editnodevariabledialog.h"
 
+#include "node.h"
+#include "project.h"
+#include "projectdocument.h"
 #include "scriptvariable.h"
 
-EditNodeVariableDialog::EditNodeVariableDialog(ScriptVariable *var, QWidget *parent) :
+EditNodeVariableDialog::EditNodeVariableDialog(ProjectDocument *doc, ScriptVariable *var, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::EditNodeVariableDialog)
 {
     ui->setupUi(this);
 
-    ui->name->setText(var->name());
-    ui->type->setText(var->type());
+    ui->name->setText(tr("\"%1\" (name is <i>%2</i>)<br>Type: %3")
+                      .arg(var->label())
+                      .arg(var->name())
+                      .arg(var->type()));
     ui->value->setText(var->value());
+    if (var->node() && var->node()->isEventNode())
+        ui->value->setEnabled(false);
+
+    if (var->variableRef().length()) {
+        QString text;
+        if (BaseNode *node = doc->project()->rootNode()->nodeByID(var->variableRefID())) {
+            if (ScriptVariable *refVar = node->variable(var->variableRef())) {
+                text = tr("Variable: \"%1\" (name is %2)")
+                        .arg(refVar->label().toHtmlEscaped())
+                        .arg(refVar->name().toHtmlEscaped());
+                if (node->isProjectRootNode())
+                    text += tr("<br>Source: current project");
+                else
+                    text += tr("<br>Source: node \"%1\" ID %2")
+                            .arg(node->label().toHtmlEscaped())
+                            .arg(node->id());
+                text += tr("<br>Type: %1").arg(refVar->type());
+                if (!var->acceptsType(refVar))
+                    text += tr("<br><span style=\"color:#ff0000\">The type of the referenced variable is incompatible with this variable's type.</span>");
+            } else {
+                text = tr("Variable: name is %1")
+                        .arg(var->variableRef().toHtmlEscaped());
+                if (node->isProjectRootNode())
+                    text += tr("<br>Source: current project");
+                else
+                    text += tr("<br>Source: node \"%1\" ID %2")
+                            .arg(node->label().toHtmlEscaped())
+                            .arg(node->id());
+                text += tr("<br><span style=\"color:#ff0000\">The variable \"%1\" is unknown.</span>")
+                        .arg(var->variableRef().toHtmlEscaped());
+            }
+        } else {
+            text = tr("Variable: \"%1\"<br>Source: node ID %2")
+                    .arg(var->variableRef().toHtmlEscaped())
+                    .arg(var->variableRefID());
+            text += tr("<br><span style=\"color:#ff0000\">The source node is invalid.</span>");
+        }
+        ui->reference->setText(text);
+    } else
+        ui->reference->setText(tr("&lt;none&gt;"));
 }
 
 EditNodeVariableDialog::~EditNodeVariableDialog()

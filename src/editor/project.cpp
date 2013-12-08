@@ -90,3 +90,16 @@ bool Project::isValidVariableName(const QString &name, int index)
             return false;
     return true;
 }
+
+bool Project::isValidVariableValue(ScriptVariable *var)
+{
+    if (var->variableRef().length()) {
+        if (BaseNode *node = rootNode()->nodeByID(var->variableRefID())) {
+            if (ScriptVariable *var2 = node->variable(var->variableRef()))
+                return var->acceptsType(var2);
+        }
+        return false;
+    } else {
+        return true; // FIXME: maybe check for valid integer, boolean, etc
+    }
+}

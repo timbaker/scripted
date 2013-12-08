@@ -21,7 +21,7 @@
 #include "editor_global.h"
 
 #include <QList>
-#include <QString>
+#include <QStringList>
 
 class ScriptVariable
 {
@@ -36,6 +36,11 @@ public:
 
     void setType(const QString &type) { mType = type; }
     const QString &type() const { return mType; }
+
+    QStringList types() const
+    {
+        return mType.split(TypeSeparator, QString::SkipEmptyParts);
+    }
 
     void setName(const QString &name) { mName = name; }
     const QString &name() const { return mName; }
@@ -60,6 +65,10 @@ public:
     }
 
     bool isKnown() const;
+
+    bool acceptsType(ScriptVariable *other) const;
+
+    static const QString TypeSeparator;
 
 private:
     BaseNode *mNode;

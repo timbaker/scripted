@@ -680,7 +680,7 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
         painter->fillRect(valueRect, QColor(128, 128, 128, 32));
 
     QColor color = Qt::black;
-    if (!mVariable->isKnown())
+    if (!mVariable->isKnown() || !mScene->document()->project()->isValidVariableValue(mVariable))
         color = Qt::red;
     if (mDropHighlight)
         color = Qt::green;
@@ -697,12 +697,13 @@ void BaseVariableItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *
     QRectF r = valueRect.adjusted(3,0,-3,0);
     QString value = valueString();
     if (mVariable->variableRef().length()) {
-        if (BaseNode *node = mScene->document()->project()->rootNode()->nodeByID(mVariable->variableRefID()))
+        if (BaseNode *node = mScene->document()->project()->rootNode()->nodeByID(mVariable->variableRefID())) {
             if (node->isEventNode()) {
                 painter->fillRect(valueRect.adjusted(1,1,-2,-2), QColor(255, 255, 155));
                 if (option->state & QStyle::State_MouseOver)
                     painter->fillRect(valueRect, QColor(128, 128, 128, 32));
             }
+        }
 
         QFont font = painter->font();
         font.setItalic(true);
@@ -793,8 +794,7 @@ void BaseVariableItem::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
             doc->changer()->endUndoCommand();
             return;
         }
-        if (valueRect(boundingRect()).contains(event->pos()) &&
-                mVariable->variableRef().isEmpty()) {
+        if (boundingRect().contains(event->pos())) {
             ProjectActions::instance()->editNodeVariableValue(mVariable);
             return;
         }
@@ -815,7 +815,7 @@ void BaseVariableItem::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
         bool accept = false;
         foreach (QString varName, varNames) {
             if (ScriptVariable *var = mScene->document()->project()->resolveVariable(varName)) {
-                if (var->type() == mVariable->type()) {
+                if (mVariable->acceptsType(var)) {
                     accept = true;
                     break;
                 }
@@ -850,7 +850,7 @@ void BaseVariableItem::dropEvent(QGraphicsSceneDragDropEvent *event)
         QStringList varNames = getDropData(event);
         foreach (QString varName, varNames) {
             if (ScriptVariable *var = doc->project()->resolveVariable(varName)) {
-                if (var->type() == mVariable->type()) {
+                if (mVariable->acceptsType(var)) {
                     doc->changer()->beginUndoCommand(doc->undoStack());
                     if (var->node() == doc->project()->rootNode() ||
                             var->node()->isEventNode())

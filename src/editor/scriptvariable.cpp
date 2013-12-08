@@ -19,6 +19,8 @@
 
 #include "node.h"
 
+const QString ScriptVariable::TypeSeparator = QLatin1String(",");
+
 ScriptVariable::ScriptVariable(const QString &type, const QString &name,
                                const QString &label, const QString &value) :
     mNode(0),
@@ -71,4 +73,14 @@ ScriptVariable::ScriptVariable(const ScriptVariable *other, BaseNode *node) :
 bool ScriptVariable::isKnown() const
 {
     return mNode && mNode->isKnown(this);
+}
+
+bool ScriptVariable::acceptsType(ScriptVariable *other) const
+{
+    QStringList myTypes = types();
+    foreach (QString otherType, other->types())
+        if (!myTypes.contains(otherType))
+            return false;
+
+    return true;
 }
