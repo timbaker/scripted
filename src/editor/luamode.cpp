@@ -71,6 +71,10 @@ LuaModePerDocumentStuff::LuaModePerDocumentStuff(LuaMode *mode, LuaDocument *doc
     font.setPointSize(10);
     mEditor->setFont(font);
 
+    QFontMetrics metrics(font);
+    const int tabStop = 4;
+    mEditor->setTabStopWidth(tabStop * metrics.width(QLatin1Char(' ')));
+
     /*highlighter =*/ new Highlighter(mEditor->document());
 
     QFrame *frame = new QFrame;
