@@ -173,6 +173,10 @@ bool BaseNode::syncWithInfo(BaseNode *infoNode)
     QList<ScriptVariable*> variables, myUnknownVariables;
     foreach (ScriptVariable *var, infoNode->variables()) {
         if (ScriptVariable *myVar = variable(var->name())) {
+            if (myVar->type() != var->type()) {
+                myVar->setType(var->type());
+                changed = true;
+            }
             if (myVar->label() != var->label()) {
                 myVar->setLabel(var->label());
                 changed = true;
