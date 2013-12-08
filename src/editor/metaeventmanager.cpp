@@ -237,6 +237,7 @@ bool MetaEventFile::read(const QString &fileName)
         if (node.eventName().isEmpty()) return false;
         if (eventNames.contains(node.eventName())) return false;
         eventNames += node.eventName();
+        node.setSource(fileName);
         mNodes += new MetaEventNode(0, node);
     }
 
