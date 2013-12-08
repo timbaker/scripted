@@ -49,4 +49,5 @@ void ProjectTreeDock::activated(const QModelIndex &index)
 void ProjectTreeDock::currentDocumentChanged(Document *doc)
 {
     ui->treeView->model()->setDocument(doc);
+    ui->treeView->expandAll();
 }

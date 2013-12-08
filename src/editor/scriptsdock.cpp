@@ -32,7 +32,7 @@ ScriptsDock::ScriptsDock(QWidget *parent) :
 
     QTreeView *t = ui->treeView;
 
-    t->setRootIsDecorated(false);
+    t->setRootIsDecorated(true);
     t->setHeaderHidden(true);
     t->setItemsExpandable(true);
     t->setUniformRowHeights(true);
